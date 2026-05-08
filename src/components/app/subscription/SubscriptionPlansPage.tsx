@@ -1,0 +1,172 @@
+'use client'
+
+import { useMemo, useState } from 'react'
+import { Check, Crown, Sparkles } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
+import { Separator } from '@/components/ui/separator'
+
+type Plan = {
+  id: 'free' | 'pro' | 'enterprise'
+  name: string
+  priceMonthly: number | null
+  priceYearly: number | null
+  blurb: string
+  highlight?: boolean
+  features: string[]
+}
+
+const PLANS: Plan[] = [
+  {
+    id: 'free',
+    name: 'Free',
+    priceMonthly: 0,
+    priceYearly: 0,
+    blurb: 'Try the platform and build momentum.',
+    features: ['1 interview template', 'Basic question generation', 'Local drafts'],
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    priceMonthly: 9.99,
+    priceYearly: 99,
+    blurb: 'Best for consistent, serious interview prep.',
+    highlight: true,
+    features: ['Unlimited interviews', 'Advanced analytics overview', 'Priority generation', 'Exportable reports'],
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    priceMonthly: null,
+    priceYearly: null,
+    blurb: 'Teams, cohorts, and custom scoring pipelines.',
+    features: ['Team workspaces', 'Custom rubrics', 'SSO & audit logs', 'Dedicated support'],
+  },
+]
+
+export function SubscriptionPlansPage() {
+  const [yearly, setYearly] = useState(false)
+
+  const featureMatrix = useMemo(() => {
+    const all = new Set<string>()
+    for (const p of PLANS) for (const f of p.features) all.add(f)
+    return Array.from(all)
+  }, [])
+
+  return (
+    <div className="animate-fade-up space-y-6">
+      <div className="dashboard-card p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-semibold text-foreground">Pricing</div>
+            <div className="text-xs text-muted-foreground">Toggle billing and upgrade instantly</div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={['text-xs font-semibold', yearly ? 'text-muted-foreground' : 'text-foreground'].join(' ')}>Monthly</span>
+            <Switch checked={yearly} onCheckedChange={setYearly} />
+            <span className={['text-xs font-semibold', yearly ? 'text-foreground' : 'text-muted-foreground'].join(' ')}>Yearly</span>
+            {yearly ? (
+              <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-200">
+                <Sparkles className="h-3 w-3" /> Save ~17%
+              </span>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
+          {PLANS.map((p) => {
+            const price = yearly ? p.priceYearly : p.priceMonthly
+            const priceLabel = price === null ? 'Custom' : price === 0 ? 'Free' : `$${price}`
+            const period = price === null || price === 0 ? '' : yearly ? '/year' : '/month'
+            return (
+              <div
+                key={p.id}
+                className={[
+                  'relative overflow-hidden rounded-3xl border p-6',
+                  p.highlight
+                    ? 'border-white/10 bg-gradient-to-br from-primary/15 via-transparent to-purple-500/10 shadow-glow-sm'
+                    : 'border-border bg-input/10',
+                ].join(' ')}
+              >
+                {p.highlight ? (
+                  <span className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full border border-white/10 bg-input/20 px-2 py-1 text-[10px] font-semibold text-foreground">
+                    <Crown className="h-3 w-3 text-amber-300" /> Popular
+                  </span>
+                ) : null}
+
+                <div className="text-sm font-semibold text-foreground">{p.name}</div>
+                <div className="mt-2 flex items-end gap-2">
+                  <div className="text-3xl font-black tracking-tight text-foreground">{priceLabel}</div>
+                  <div className="pb-1 text-xs text-muted-foreground">{period}</div>
+                </div>
+                <div className="mt-2 text-xs text-muted-foreground">{p.blurb}</div>
+
+                <Separator className="my-5" />
+
+                <ul className="space-y-2 text-sm">
+                  {p.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-muted-foreground">
+                      <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-xl bg-input/20 text-[var(--hq-display-blue)]">
+                        <Check className="h-3.5 w-3.5" />
+                      </span>
+                      <span className="leading-relaxed">{f}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  type="button"
+                  className={[
+                    'mt-6 inline-flex h-11 w-full items-center justify-center rounded-2xl text-xs font-semibold btn-micro',
+                    p.highlight
+                      ? 'bg-gradient-primary text-white shadow-glow-sm hover:shadow-glow'
+                      : 'border border-border bg-input/15 text-foreground hover:bg-input/25',
+                  ].join(' ')}
+                >
+                  {p.id === 'free' ? 'Current plan' : p.id === 'enterprise' ? 'Contact sales' : 'Upgrade to Pro'}
+                </button>
+
+                {p.highlight ? (
+                  <div
+                    className="pointer-events-none absolute -inset-1 rounded-[2rem] opacity-25 blur-xl"
+                    style={{ background: 'linear-gradient(90deg, rgba(79,110,247,0.8), rgba(124,58,237,0.8))' }}
+                    aria-hidden
+                  />
+                ) : null}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      <div className="dashboard-card p-6">
+        <div className="text-sm font-semibold text-foreground">Feature comparison</div>
+        <div className="mt-1 text-xs text-muted-foreground">A quick matrix for stakeholders</div>
+
+        <div className="mt-4 overflow-hidden rounded-2xl border border-border">
+          <div className="grid grid-cols-12 gap-3 bg-input/15 px-4 py-3 text-[11px] font-semibold text-muted-foreground">
+            <div className="col-span-6">Feature</div>
+            <div className="col-span-2 text-center">Free</div>
+            <div className="col-span-2 text-center">Pro</div>
+            <div className="col-span-2 text-center">Ent</div>
+          </div>
+          <div className="divide-y divide-border/60">
+            {featureMatrix.map((f) => {
+              const has = (planId: Plan['id']) => PLANS.find((p) => p.id === planId)?.features.includes(f)
+              return (
+                <div key={f} className="grid grid-cols-12 items-center gap-3 px-4 py-3 text-sm">
+                  <div className="col-span-6 text-muted-foreground">{f}</div>
+                  {(['free', 'pro', 'enterprise'] as const).map((pid) => (
+                    <div key={pid} className="col-span-2 text-center">
+                      {has(pid) ? <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-input/20 text-emerald-300"><Check className="h-4 w-4" /></span> : <span className="text-muted-foreground/50">—</span>}
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
