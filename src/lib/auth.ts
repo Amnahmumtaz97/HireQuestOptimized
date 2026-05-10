@@ -11,6 +11,8 @@ const credentialsSchema = z.object({
 })
 
 export const authOptions: NextAuthOptions = {
+  // Avoid session fetch returning HTML due to host/proxy URL mismatches (dev, Docker, etc.)
+  trustHost: true,
   session: {
     strategy: 'jwt',
   },

@@ -1,9 +1,16 @@
 import mongoose from 'mongoose'
 
-const MONGODB_URI = process.env.MONGODB_URI
-
-if (!MONGODB_URI) {
-  throw new Error('Missing MONGODB_URI environment variable')
+/**
+ * Do not throw at module load time: `auth.ts` imports this file, and the NextAuth
+ * route must be able to load so `/api/auth/session` returns JSON. Missing URI is
+ * enforced when a connection is actually requested.
+ */
+function getMongoUri(): string {
+  const uri = process.env.MONGODB_URI
+  if (!uri?.trim()) {
+    throw new Error('Missing MONGODB_URI environment variable')
+  }
+  return uri
 }
 
 function formatMongoConnectionError(error: unknown): Error {
@@ -46,7 +53,9 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
   }
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI).catch((error: unknown) => {
+    const uri = getMongoUri()
+    cached.promise = mongoose.connect(uri).catch((error: unknown) => {
+      cached.promise = null
       throw formatMongoConnectionError(error)
     })
   }
