@@ -42,7 +42,8 @@ export const DropdownMenuSubContent = React.forwardRef<
   <DropdownMenuPrimitive.SubContent
     ref={ref}
     className={cn(
-      "z-50 min-w-[8rem] overflow-hidden rounded-xl border border-border bg-surface-strong p-1 text-foreground shadow-elegant",
+      "z-50 min-w-[8rem] overflow-hidden rounded-xl border border-border bg-surface-strong/95 backdrop-blur-xl p-1 text-foreground shadow-elegant",
+      "ring-1 ring-[color-mix(in_oklab,var(--primary)_18%,transparent)]",
       "data-[state=open]:animate-in data-[state=closed]:animate-out",
       "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
       "data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
@@ -62,7 +63,8 @@ export const DropdownMenuContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        "z-50 min-w-[11rem] overflow-hidden rounded-xl border border-border bg-surface-strong p-1 text-foreground shadow-elegant",
+        "z-50 min-w-[11rem] overflow-hidden rounded-xl border border-border bg-surface-strong/95 backdrop-blur-xl p-1 text-foreground shadow-elegant",
+        "ring-1 ring-[color-mix(in_oklab,var(--primary)_18%,transparent)]",
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
         "data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
@@ -83,7 +85,7 @@ export const DropdownMenuItem = React.forwardRef<
     ref={ref}
     className={cn(
       "relative flex cursor-default select-none items-center rounded-lg px-2 py-1.5 text-sm outline-none transition-colors",
-      "focus:bg-input/30 focus:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "focus:bg-input/35 focus:text-foreground hover:bg-input/25 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       inset && "pl-8",
       className,
     )}
@@ -100,7 +102,7 @@ export const DropdownMenuCheckboxItem = React.forwardRef<
     ref={ref}
     className={cn(
       "relative flex cursor-default select-none items-center rounded-lg py-1.5 pl-8 pr-2 text-sm outline-none transition-colors",
-      "focus:bg-input/30 focus:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "focus:bg-input/35 focus:text-foreground hover:bg-input/25 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className,
     )}
     checked={checked}

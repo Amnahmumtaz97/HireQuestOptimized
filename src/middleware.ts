@@ -28,5 +28,10 @@ export default withAuth(
 )
 
 export const config = {
-  matcher: ['/pricing/:path*', '/dashboard/:path*', '/app', '/app/:path*'],
+  // Only protect app + admin areas. Exclude /api (NextAuth session), /_next, static files.
+  matcher: [
+    '/dashboard/:path*',
+    '/app',
+    '/app/:path*',
+  ],
 }

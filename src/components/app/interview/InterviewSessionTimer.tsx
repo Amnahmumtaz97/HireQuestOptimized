@@ -70,10 +70,8 @@ export function InterviewSessionTimer({
   return (
     <div
       className={[
-        'inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm tabular-nums',
-        isExpired
-          ? 'border-red-500/50 bg-red-500/10 text-red-200'
-          : 'border-border bg-input/20 text-foreground',
+        'card-enhanced inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm tabular-nums',
+        isExpired ? 'border-red-500/50 bg-red-600/10 text-red-200' : 'border-border bg-input/20 text-foreground',
       ].join(' ')}
       role="timer"
       aria-live="polite"

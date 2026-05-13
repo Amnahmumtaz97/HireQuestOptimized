@@ -6,6 +6,7 @@ import { formatGeneratedQuestion } from '@/lib/interview-questions/clean-questio
 import { parseGeminiQuestionJsonArray } from '@/lib/interview-questions/parse-gemini-json'
 import { generateDiagramImageDataUrl, type DiagramKind } from '@/lib/gemini/generate-diagram-image'
 import { isGeminiRateLimitError, resolveTextModelChain } from '@/lib/gemini/model-fallback'
+import { formatIndustryDisplay, formatRoleCategoryDisplay } from '@/utils/dashboard/interview-labels'
 
 const DEFAULT_MODEL = 'gemini-2.0-flash'
 
@@ -49,7 +50,7 @@ function getGenerativeModel(genAI: GoogleGenerativeAI, modelId: string) {
 }
 
 function roleLabel(params: InterviewGenerationParams): string {
-  return `${params.industryKey} / ${params.roleCategoryKey}`.replace(/_/g, ' ')
+  return `${formatIndustryDisplay(params.industryKey)} / ${formatRoleCategoryDisplay(params.industryKey, params.roleCategoryKey)}`
 }
 
 function buildBatchPrompt(params: InterviewGenerationParams): string {

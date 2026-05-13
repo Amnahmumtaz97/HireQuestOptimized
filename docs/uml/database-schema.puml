@@ -1,0 +1,104 @@
+@startuml HireQuest_Logical_Data_Model
+' Logical / relational view. Maps cleanly to SQL; in MongoDB you may embed\n'
+' session.configuration, denormalize question order via questionRefs[], etc.\n'
+' https://plantuml.com/ie-diagram
+
+skinparam shadowing false
+skinparam linetype ortho
+
+title HireQuest — logical database schema (PK/FK, normalized M:N)
+
+hide circle
+
+entity "**users**" as users {
+  * **\_id** : string <<PK>>
+  --
+  * **email** : string <<UK>>
+  **first_name** : string
+  **last_name** : string
+  **password_hash** : string
+  **phone_number** : string <<nullable>>
+  **role** : enum(user, admin)
+  **created_at** : datetime
+  **updated_at** : datetime
+}
+
+entity "**subscriptions**" as subscriptions {
+  * **\_id** : string <<PK>>
+  --
+  * **user_id** : string <<FK>> <<UK>>
+  **plan** : string
+  **status** : string
+  **billing_cycle** : string
+  **renewal_date** : date
+  **payment_history** : json
+}
+
+entity "**sessions**" as sessions {
+  * **\_id** : string <<PK>>
+  --
+  * **user_id** : string <<FK>>
+  **configuration** : json
+  **status** : string
+  **start_time** : datetime <<nullable>>
+  **end_time** : datetime <<nullable>>
+}
+
+entity "**questions**" as questions {
+  * **\_id** : string <<PK>>
+  --
+  **text** : text
+  **domain** : string
+  **level** : string
+  **category** : string
+  **ideal_answer** : text
+}
+
+entity "**session_questions**" as session_questions {
+  * **\_id** : string <<PK>>
+  --
+  * **session_id** : string <<FK>>
+  * **question_id** : string <<FK>>
+  * **position** : int
+  ..
+  <<UK>> (session_id, question_id)
+}
+
+entity "**responses**" as responses {
+  * **\_id** : string <<PK>>
+  --
+  * **session_id** : string <<FK>>
+  * **question_id** : string <<FK>>
+  **transcribed_text** : text
+  **submitted_at** : datetime
+}
+
+entity "**evaluation_reports**" as evaluation_reports {
+  * **\_id** : string <<PK>>
+  --
+  * **session_id** : string <<FK>> <<UK>>
+  **overall_score** : decimal
+  **dimension_scores** : json
+  **recommendations** : json
+  **generated_at** : datetime
+}
+
+users ||--o| subscriptions : "subscribes (0..1)"
+users ||--o{ sessions : "owns"
+sessions ||--o{ session_questions : "includes"
+questions ||--o{ session_questions : "used in"
+sessions ||--o{ responses : "captures"
+questions ||--o{ responses : "answered by"
+sessions ||--|| evaluation_reports : "has report"
+
+note bottom of subscriptions
+  **Single FK rule:** store **user_id** here (not **subscription_ref** on users)
+  to avoid update anomalies. Application can still expose a convenience link.
+end note
+
+note bottom of session_questions
+  Normalizes **sessions ↔ questions** **N:M** with **ordering**.
+  Alternative (document store): **sessions.question_refs[]** holds ordered ids.
+end note
+
+@enduml

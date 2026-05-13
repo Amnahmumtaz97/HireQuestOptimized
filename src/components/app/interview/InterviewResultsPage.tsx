@@ -4,10 +4,11 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { ArrowLeft, Briefcase, ChevronDown, ChevronUp, Flag, ListChecks } from 'lucide-react'
+import type { InterviewConfig } from '@/components/app/dashboard/types'
 import { DashboardPageHeader } from '@/components/app/dashboard/DashboardPageHeader'
 import { InterviewQuestionMarkdown } from '@/components/app/interview/InterviewQuestionMarkdown'
 import { formatGeneratedQuestion } from '@/lib/interview-questions/clean-question-text'
-import { formatDifficultyLabel, formatInterviewTypeLabel } from '@/utils/dashboard/interview-labels'
+import { formatDifficultyLabel, formatInterviewTypeLabel, formatIndustryDisplay, formatRoleCategoryDisplay } from '@/utils/dashboard/interview-labels'
 
 type ResultsSession = {
   _id: string
@@ -34,6 +35,7 @@ export function InterviewResultsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [showAnswers, setShowAnswers] = useState(false)
+  const [interviewConfigs, setInterviewConfigs] = useState<InterviewConfig[]>([])
 
   useEffect(() => {
     if (!id) return
@@ -60,6 +62,23 @@ export function InterviewResultsPage() {
       cancelled = true
     }
   }, [id])
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadConfigs() {
+      try {
+        const res = await fetch('/api/interview-config')
+        const data = await res.json()
+        if (!cancelled && res.ok) setInterviewConfigs((data.configs ?? []) as InterviewConfig[])
+      } catch {
+        /* ignore */
+      }
+    }
+    void loadConfigs()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const answerByIndex = useMemo(() => {
     const map = new Map<number, string>()
@@ -125,11 +144,11 @@ export function InterviewResultsPage() {
               <Briefcase className="h-5 w-5" />
             </span>
             <div>
-              <div className="text-lg font-semibold capitalize text-foreground">
-                {session.roleCategoryKey.replace(/_/g, ' ')}
+              <div className="text-lg font-semibold text-foreground">
+                {formatRoleCategoryDisplay(session.industryKey, session.roleCategoryKey, interviewConfigs)}
               </div>
               <div className="text-xs text-muted-foreground">
-                {session.industryKey} · {formatInterviewTypeLabel(session.interviewType)} ·{' '}
+                {formatIndustryDisplay(session.industryKey, interviewConfigs)} · {formatInterviewTypeLabel(session.interviewType)} ·{' '}
                 {formatDifficultyLabel(session.difficulty)}
               </div>
             </div>

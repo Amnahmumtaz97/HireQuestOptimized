@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { DifficultySelector, type Difficulty } from '@/components/app/DifficultySelector'
@@ -12,12 +12,12 @@ import {
   Plus, RotateCcw, Activity, CheckCircle2,
   Clock, Sparkles, CreditCard,
   Briefcase, Tag, AlarmClock, ArrowLeft, ArrowRight,
-  Trash2, Lightbulb, ListChecks,
+  Trash2, Lightbulb, ListChecks, Check, ChevronDown, Leaf, Mountain,
 } from 'lucide-react'
 import { ProgressRing } from '@/components/dashboard/ProgressRing'
 import { AIAssistantCard } from '@/components/dashboard/AIAssistantCard'
 import { defaultMonthToDateRange } from '@/utils/dashboard/date'
-import { formatDifficultyLabel, formatInterviewTypeLabel } from '@/utils/dashboard/interview-labels'
+import { formatDifficultyLabel, formatInterviewTypeLabel, formatIndustryDisplay, formatRoleCategoryDisplay } from '@/utils/dashboard/interview-labels'
 import { InterviewDeleteModal } from '@/components/app/InterviewDeleteModal'
 import { DashboardDateCalendarButton } from '@/components/app/dashboard/DashboardDateCalendarButton'
 import { useToast } from '@/components/ui/toast'
@@ -25,7 +25,6 @@ import { IconCard, IconGrid } from '@/components/ui/icon-card'
 import { getIndustryIcon, getRoleIcon } from '@/lib/icon-mapping'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import type { InterviewConfig, InterviewSession } from '@/components/app/dashboard/types'
 
 // Types moved to `src/components/app/dashboard/types.ts`.
@@ -115,6 +114,7 @@ export function AppDashboardPanel() {
   const [sessions, setSessions] = useState<InterviewSession[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
+  const [interviewConfigs, setInterviewConfigs] = useState<InterviewConfig[]>([])
 
   const loadSessions = useCallback(async () => {
     setIsLoading(true)
@@ -134,6 +134,23 @@ export function AppDashboardPanel() {
   useEffect(() => {
     void loadSessions()
   }, [loadSessions])
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadConfigs() {
+      try {
+        const res = await fetch('/api/interview-config')
+        const data = await res.json()
+        if (!cancelled && res.ok) setInterviewConfigs((data.configs ?? []) as InterviewConfig[])
+      } catch {
+        /* ignore */
+      }
+    }
+    void loadConfigs()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const displayedSessions = useMemo(() => {
     const startMs = startDate ? new Date(`${startDate}T00:00:00`).getTime() : Number.NEGATIVE_INFINITY
@@ -177,106 +194,71 @@ export function AppDashboardPanel() {
 
   return (
     <div className="animate-fade-up space-y-6 sm:space-y-7">
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="xl:col-span-2">
-          <Card className="relative overflow-hidden p-6">
-            <div className="pointer-events-none absolute inset-0 bg-mesh opacity-25" aria-hidden />
-            <div className="pointer-events-none absolute -inset-8 bg-gradient-to-r from-primary/18 via-purple-500/10 to-cyan-400/10 blur-2xl" aria-hidden />
-
-            <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex gap-2">
-                <Button variant="primary" size="sm" onClick={() => router.push('/app/new-interview')}>
-                  <Plus className="h-4 w-4" aria-hidden /> <span className="hidden sm:inline">New</span>
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => router.push('/app/interviews')}>
-                  <MessageSquare className="h-4 w-4 text-muted-foreground" aria-hidden /> <span className="hidden sm:inline">Manage</span>
-                </Button>
-              </div>
-
-              <div className="shrink-0">
-                <div className="relative w-full max-w-[280px] overflow-hidden rounded-3xl border border-glass-strong bg-input/8 p-4 ring-neon lottie-wrapper">
-                  <div
-                    className="pointer-events-none absolute -inset-10 opacity-35 blur-2xl"
-                    style={{ background: 'linear-gradient(135deg, rgba(79,110,247,0.35), rgba(124,58,237,0.18), rgba(34,211,238,0.14))' }}
-                    aria-hidden
-                  />
-                  <div className="relative">
-                    <div className="overflow-hidden rounded-2xl border border-glass bg-black/10">
-                      <DotLottieReact src="/Robot%20Automation%20Gif.lottie" autoplay loop className="lottie-illustration" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </motion.div>
-      </div>
-
       {/* Stats Grid */}
       <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
-        <Card className="p-5">
+        <Card className="hq-stat-card hq-stat-card--blue">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/75">Total interviews</div>
-              <div className="mt-2 font-mono text-3xl font-semibold tracking-tight text-gradient">
+              <div className="hq-stat-label">Total interviews</div>
+              <div className="hq-stat-value hq-stat-value--blue">
                 {isLoading ? '—' : totalInterviews}
               </div>
-              <div className="mt-1 text-xs text-muted-foreground">In selected range</div>
+              <div className="hq-stat-sub">In selected range</div>
             </div>
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-glass bg-input/10 ring-neon">
+            <span className="hq-stat-icon-wrap hq-stat-icon-wrap--blue">
               <User className="h-5 w-5 text-primary-glow" aria-hidden />
             </span>
           </div>
         </Card>
 
-        <Card className="p-5">
+        <Card className="hq-stat-card hq-stat-card--green">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/75">Completion rate</div>
-              <div className="mt-2 font-mono text-3xl font-semibold tracking-tight text-foreground">
+              <div className="hq-stat-label">Completion rate</div>
+              <div className="hq-stat-value hq-stat-value--green">
                 {isLoading ? '—' : `${completionRate}%`}
               </div>
               {!isLoading && totalInterviews > 0 ? (
-                <div className="mt-3 h-2 rounded-full bg-input/12 overflow-hidden border border-glass">
+                <div className="hq-stat-progress">
                   <div
-                    className="h-full rounded-full bg-gradient-primary"
+                    className="hq-stat-progress-bar"
                     style={{ width: `${completionPct}%` }}
                     aria-hidden
                   />
                 </div>
               ) : (
-                <div className="mt-3 text-xs text-muted-foreground">No sessions yet</div>
+                <div className="hq-stat-sub">No sessions yet</div>
               )}
             </div>
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-glass bg-input/10">
+            <span className="hq-stat-icon-wrap hq-stat-icon-wrap--green">
               <Activity className="h-5 w-5 text-amber-400" aria-hidden />
             </span>
           </div>
         </Card>
 
-        <Card className="p-5">
+        <Card className="hq-stat-card hq-stat-card--amber">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/75">In progress</div>
-              <div className="mt-2 font-mono text-3xl font-semibold tracking-tight text-foreground">
+              <div className="hq-stat-label">In progress</div>
+              <div className="hq-stat-value hq-stat-value--amber">
                 {isLoading ? '—' : inProgress}
               </div>
-              <div className="mt-1 text-xs text-muted-foreground">Live now</div>
+              <div className="hq-stat-sub">Live now</div>
             </div>
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-glass bg-input/10">
+            <span className="hq-stat-icon-wrap hq-stat-icon-wrap--amber">
               <Clock className="h-5 w-5 text-emerald-400" aria-hidden />
             </span>
           </div>
         </Card>
 
-        <Card className="p-5">
+        <Card className="hq-stat-card hq-stat-card--purple">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/75">Subscription</div>
-              <div className="mt-2 text-lg font-semibold tracking-tight text-foreground">Active</div>
-              <div className="mt-1 text-xs text-muted-foreground">$9.99 / month</div>
+              <div className="hq-stat-label">Subscription</div>
+              <div className="hq-stat-value hq-stat-value--purple hq-stat-value--text">Active</div>
+              <div className="hq-stat-sub">$9.99 / month</div>
             </div>
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-glass bg-input/10">
+            <span className="hq-stat-icon-wrap hq-stat-icon-wrap--purple">
               <CreditCard className="h-5 w-5 text-purple-300" aria-hidden />
             </span>
           </div>
@@ -328,12 +310,14 @@ export function AppDashboardPanel() {
         ) : (
           <div className="flex max-h-[min(28rem,60vh)] flex-col gap-2 overflow-y-auto pr-1">
             {displayedSessions.map((s) => (
-              <div key={s._id} className="hq-interview-row">
+              <div key={s._id} className="hq-interview-row flex-wrap items-start sm:flex-nowrap sm:items-center">
                 <div className="hq-int-icon">
                   <Briefcase className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="hq-int-name capitalize">{s.roleCategoryKey.replace(/_/g, ' ')}</div>
+                  <div className="hq-int-name">
+                    {formatRoleCategoryDisplay(s.industryKey, s.roleCategoryKey, interviewConfigs)}
+                  </div>
                   <div className="hq-int-meta">
                     <span>
                       {s.createdAt
@@ -351,7 +335,7 @@ export function AppDashboardPanel() {
                     </span>
                   </div>
                 </div>
-                <div className="flex flex-shrink-0 items-center gap-2">
+                <div className="flex w-full flex-shrink-0 items-center justify-end gap-2 sm:w-auto sm:justify-start">
                   <span className={`${statusTagClass(s.status)} capitalize`}>{s.status.replace('_', ' ')}</span>
                   <button
                     type="button"
@@ -388,10 +372,13 @@ export function InterviewsPanel() {
   const [filter, setFilter] = useState<'all' | 'created' | 'in_progress' | 'completed'>('all')
   const [query, setQuery] = useState('')
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'Easy' | 'Medium' | 'Hard'>('all')
+  const [difficultyOpen, setDifficultyOpen] = useState(false)
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [page, setPage] = useState(1)
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
+  const difficultyMenuRef = useRef<HTMLDivElement | null>(null)
+  const [interviewConfigs, setInterviewConfigs] = useState<InterviewConfig[]>([])
 
   const loadSessions = useCallback(async () => {
     setIsLoading(true)
@@ -413,8 +400,36 @@ export function InterviewsPanel() {
   }, [loadSessions])
 
   useEffect(() => {
+    let cancelled = false
+    async function loadConfigs() {
+      try {
+        const res = await fetch('/api/interview-config')
+        const data = await res.json()
+        if (!cancelled && res.ok) setInterviewConfigs((data.configs ?? []) as InterviewConfig[])
+      } catch {
+        /* ignore */
+      }
+    }
+    void loadConfigs()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
     setPage(1)
   }, [filter, query, difficultyFilter, startDate, endDate])
+
+  useEffect(() => {
+    if (!difficultyOpen) return
+    const onDocClick = (e: MouseEvent) => {
+      if (difficultyMenuRef.current && !difficultyMenuRef.current.contains(e.target as Node)) {
+        setDifficultyOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onDocClick)
+    return () => document.removeEventListener('mousedown', onDocClick)
+  }, [difficultyOpen])
 
   const filtered = useMemo(
     () => {
@@ -432,12 +447,12 @@ export function InterviewsPanel() {
         })
         .filter((s) => {
           if (!q) return true
-          const role = s.roleCategoryKey?.replace(/_/g, ' ') ?? ''
-          const industry = s.industryKey ?? ''
-          return `${role} ${industry}`.toLowerCase().includes(q)
+          const role = formatRoleCategoryDisplay(s.industryKey, s.roleCategoryKey, interviewConfigs).toLowerCase()
+          const industry = formatIndustryDisplay(s.industryKey, interviewConfigs).toLowerCase()
+          return `${role} ${industry}`.includes(q)
         })
     },
-    [sessions, filter, query, difficultyFilter, startDate, endDate],
+    [sessions, filter, query, difficultyFilter, startDate, endDate, interviewConfigs],
   )
 
   const sorted = useMemo(() => (
@@ -452,6 +467,16 @@ export function InterviewsPanel() {
   const difficultyColor: Record<string, string> = {
     Easy: 'text-emerald-400', Medium: 'text-amber-400', Hard: 'text-red-400',
   }
+  const difficultyOptions: Array<{ key: 'all' | 'Easy' | 'Medium' | 'Hard'; label: string; icon: React.ReactNode; iconClass: string }> = [
+    { key: 'all', label: 'All', icon: <BarChart2 className="h-3.5 w-3.5" />, iconClass: 'text-[var(--hq-display-blue)]' },
+    { key: 'Easy', label: 'Easy', icon: <Leaf className="h-3.5 w-3.5" />, iconClass: 'text-emerald-400' },
+    { key: 'Medium', label: 'Medium', icon: <Activity className="h-3.5 w-3.5" />, iconClass: 'text-amber-400' },
+    { key: 'Hard', label: 'Hard', icon: <Mountain className="h-3.5 w-3.5" />, iconClass: 'text-rose-400' },
+  ]
+  const selectedDifficulty = difficultyOptions.find((o) => o.key === difficultyFilter) ?? difficultyOptions[0]
+
+  const interviewCardActionClass =
+    'btn-micro inline-flex min-h-9 min-w-[10.75rem] shrink-0 items-center justify-center rounded-xl px-3 py-2 text-xs font-semibold sm:min-h-10 sm:min-w-[11.5rem] sm:text-sm'
 
   const pageSize = 9
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize))
@@ -472,17 +497,17 @@ export function InterviewsPanel() {
   }, [safePage, totalPages])
 
   return (
-    <div className="space-y-4 animate-fade-up">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
+    <div className="space-y-5 animate-fade-up">
+      <div className="hq-interviews-toolbar flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-glass bg-input/10 p-2.5 sm:p-3">
+        <div className="hq-segmented-tabs flex flex-wrap items-center gap-1.5">
           {(['all', 'created', 'in_progress', 'completed'] as const).map((f) => (
             <button
               key={f}
               type="button"
               onClick={() => setFilter(f)}
               className={[
-                'hq-panel-btn btn-micro',
-                filter === f ? 'hq-panel-btn--active' : '',
+                'hq-panel-btn hq-segment-tab btn-micro',
+                filter === f ? 'hq-segment-tab--active hq-panel-btn--active' : '',
               ].join(' ')}
             >
               {f === 'all' ? 'All' : statusLabel[f]}
@@ -498,53 +523,113 @@ export function InterviewsPanel() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 rounded-2xl border border-border bg-input/10 p-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="hq-filter-command grid grid-cols-1 gap-4 rounded-3xl border border-glass bg-input/10 p-4 sm:grid-cols-2 lg:grid-cols-4">
         <label className="space-y-1">
           <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/80">Search</span>
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Role, industry…"
-            className="h-10 w-full rounded-xl border border-border bg-input/15 px-3 text-sm"
+            className="hq-filter-field"
           />
         </label>
         <label className="space-y-1">
           <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/80">Difficulty</span>
-          <select
-            value={difficultyFilter}
-            onChange={(e) => setDifficultyFilter(e.target.value as typeof difficultyFilter)}
-            className="h-10 w-full rounded-xl border border-border bg-input/15 px-3 text-sm"
-          >
-            <option value="all">All</option>
-            <option value="Easy">Easy</option>
-            <option value="Medium">Medium</option>
-            <option value="Hard">Hard</option>
-          </select>
+          <div ref={difficultyMenuRef} className="relative">
+            <button
+              type="button"
+              aria-haspopup="listbox"
+              aria-expanded={difficultyOpen}
+              onClick={() => setDifficultyOpen((o) => !o)}
+              className="hq-filter-field hq-difficulty-trigger inline-flex w-full items-center justify-between gap-2 border-[color-mix(in_oklab,var(--primary)_45%,var(--hq-border))]"
+            >
+              <span className="inline-flex min-w-0 items-center gap-2.5">
+                <span
+                  className={[
+                    'inline-flex h-6 w-6 items-center justify-center rounded-md border border-border/60 bg-input/40',
+                    selectedDifficulty.iconClass,
+                  ].join(' ')}
+                >
+                  {selectedDifficulty.icon}
+                </span>
+                <span className="truncate text-sm text-foreground">{selectedDifficulty.label}</span>
+              </span>
+              <ChevronDown
+                className={['h-4 w-4 shrink-0 text-muted-foreground transition-transform', difficultyOpen ? 'rotate-180' : ''].join(' ')}
+              />
+            </button>
+
+            {difficultyOpen ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.98, y: -6 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.16, ease: 'easeOut' }}
+                className="hq-difficulty-menu absolute left-0 right-0 z-50 mt-1 overflow-hidden rounded-xl border border-border/80 backdrop-blur-md"
+              >
+                <div role="listbox" aria-label="Difficulty" className="p-1">
+                  {difficultyOptions.map((opt) => {
+                    const isSelected = difficultyFilter === opt.key
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        role="option"
+                        aria-selected={isSelected}
+                        onClick={() => {
+                          setDifficultyFilter(opt.key)
+                          setDifficultyOpen(false)
+                        }}
+                        className={[
+                          'hq-difficulty-option flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors',
+                          isSelected ? 'bg-primary/15 text-foreground' : 'text-muted-foreground hover:bg-muted/80',
+                        ].join(' ')}
+                      >
+                        <span className="inline-flex items-center gap-2.5">
+                          <span
+                            className={[
+                              'inline-flex h-6 w-6 items-center justify-center rounded-md border border-border/60 bg-input/40',
+                              opt.iconClass,
+                            ].join(' ')}
+                          >
+                            {opt.icon}
+                          </span>
+                          <span>{opt.label}</span>
+                        </span>
+                        {isSelected ? <Check className="h-4 w-4 text-primary" /> : null}
+                      </button>
+                    )
+                  })}
+                </div>
+              </motion.div>
+            ) : null}
+          </div>
         </label>
         <label className="space-y-1">
           <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/80">From</span>
-          <input
-            type="date"
+          <DashboardDateCalendarButton
+            id="interviews-start-date"
+            label="From"
             value={startDate}
-            onChange={(e) => {
-              const v = e.target.value
-              setStartDate(v)
-              if (endDate && v && v > endDate) setEndDate(v)
+            fullWidth
+            maxDate={endDate || undefined}
+            onChange={(iso) => {
+              setStartDate(iso)
+              if (endDate && iso > endDate) setEndDate(iso)
             }}
-            className="h-10 w-full rounded-xl border border-border bg-input/15 px-3 text-sm"
           />
         </label>
         <label className="space-y-1">
           <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/80">To</span>
-          <input
-            type="date"
+          <DashboardDateCalendarButton
+            id="interviews-end-date"
+            label="To"
             value={endDate}
-            onChange={(e) => {
-              const v = e.target.value
-              setEndDate(v)
-              if (startDate && v && v < startDate) setStartDate(v)
+            fullWidth
+            minDate={startDate || undefined}
+            onChange={(iso) => {
+              setEndDate(iso)
+              if (startDate && iso < startDate) setStartDate(iso)
             }}
-            className="h-10 w-full rounded-xl border border-border bg-input/15 px-3 text-sm"
           />
         </label>
       </div>
@@ -579,7 +664,7 @@ export function InterviewsPanel() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="hq-int-name font-semibold truncate capitalize">
-                      {s.roleCategoryKey.replace(/_/g, ' ')}
+                      {formatRoleCategoryDisplay(s.industryKey, s.roleCategoryKey, interviewConfigs)}
                     </div>
                     <div className="text-[11px] text-muted-foreground truncate">{s.industryKey}</div>
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -603,12 +688,20 @@ export function InterviewsPanel() {
 
                 <div className="flex flex-wrap items-center justify-end gap-2">
                   {s.status === 'created' ? (
-                    <button type="button" onClick={() => router.push(`/app/interviews/${s._id}`)} className="hq-btn-primary hq-btn-lg">
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/app/interviews/${s._id}`)}
+                      className={['hq-btn-primary', interviewCardActionClass].join(' ')}
+                    >
                       Start Interview
                     </button>
                   ) : null}
                   {s.status === 'in_progress' ? (
-                    <button type="button" onClick={() => router.push(`/app/interviews/${s._id}`)} className="hq-btn-outline-accent btn-micro">
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/app/interviews/${s._id}`)}
+                      className={['hq-btn-outline-accent', interviewCardActionClass].join(' ')}
+                    >
                       Resume
                     </button>
                   ) : null}
@@ -616,7 +709,7 @@ export function InterviewsPanel() {
                     <button
                       type="button"
                       onClick={() => router.push(`/app/interviews/${s._id}/results`)}
-                      className="hq-panel-btn min-h-9 px-4 py-2 text-xs font-semibold"
+                      className={['hq-panel-btn', interviewCardActionClass].join(' ')}
                     >
                       View Results
                     </button>
@@ -833,11 +926,19 @@ export function CreateInterviewWizard() {
     }
   }, [interviewType, stepStates.roleDone, stepStates.topicsDone, wizardStep])
 
+  /** Slider only applies to mixed interviews; single-type sessions use an explicit ratio for storage/API. */
+  const technicalQuestionRatioForApi = useMemo(() => {
+    if (interviewType === 'both') return technicalRatio
+    if (interviewType === 'technical') return 100
+    if (interviewType === 'behavioral') return 0
+    return technicalRatio
+  }, [interviewType, technicalRatio])
+
   const draftPayload = useMemo(() => ({
     industryKey, roleCategoryKey, interviewType, topics, difficulty, totalQuestions,
-    technicalQuestionRatio: technicalRatio,
+    technicalQuestionRatio: technicalQuestionRatioForApi,
     durationMinutes: isDurationEnabled ? Number(duration) || null : null,
-  }), [industryKey, roleCategoryKey, interviewType, topics, difficulty, totalQuestions, technicalRatio, isDurationEnabled, duration])
+  }), [industryKey, roleCategoryKey, interviewType, topics, difficulty, totalQuestions, technicalQuestionRatioForApi, isDurationEnabled, duration])
 
   const saveDraft = async () => {
     setActionError(''); setActionMessage(''); setIsSavingDraft(true)
@@ -1124,13 +1225,15 @@ export function CreateInterviewWizard() {
                           <SelectCard title="20" subtitle="Standard (~10 min)" selected={totalQuestions === 20} onClick={() => setTotalQuestions(20)} />
                           <SelectCard title="30" subtitle="Thorough (~15 min)" selected={totalQuestions === 30} onClick={() => setTotalQuestions(30)} />
                         </div>
-                        <div className="rounded-2xl border border-border bg-input/20 p-4">
-                          <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
-                            <span>Technical: <strong className="text-foreground">{technicalRatio}%</strong></span>
-                            <span>Behavioral: <strong className="text-foreground">{100 - technicalRatio}%</strong></span>
+                        {interviewType === 'both' ? (
+                          <div className="rounded-2xl border border-border bg-input/20 p-4">
+                            <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+                              <span>Technical: <strong className="text-foreground">{technicalRatio}%</strong></span>
+                              <span>Behavioral: <strong className="text-foreground">{100 - technicalRatio}%</strong></span>
+                            </div>
+                            <input type="range" min={0} max={100} value={technicalRatio} onChange={(e) => setTechnicalRatio(Number(e.target.value))} className="w-full accent-primary" />
                           </div>
-                          <input type="range" min={0} max={100} value={technicalRatio} onChange={(e) => setTechnicalRatio(Number(e.target.value))} className="w-full accent-primary" />
-                        </div>
+                        ) : null}
                       </div>
 
                       <div className="space-y-3">
@@ -1164,7 +1267,16 @@ export function CreateInterviewWizard() {
                           <div className="text-sm text-muted-foreground">Difficulty</div>
                           <div className="text-sm font-semibold text-foreground">{formatDifficultyLabel(difficulty)}</div>
                           <div className="text-sm text-muted-foreground">Questions</div>
-                          <div className="text-sm font-semibold text-foreground">{totalQuestions} (Tech {technicalRatio}% / Beh {100 - technicalRatio}%)</div>
+                          <div className="text-sm font-semibold text-foreground">
+                            {totalQuestions}
+                            {interviewType === 'both'
+                              ? ` (Tech ${technicalRatio}% / Beh ${100 - technicalRatio}%)`
+                              : interviewType === 'technical'
+                                ? ' (all technical)'
+                                : interviewType === 'behavioral'
+                                  ? ' (all behavioral)'
+                                  : ''}
+                          </div>
                           <div className="text-sm text-muted-foreground">Duration</div>
                           <div className="text-sm font-semibold text-foreground">{isDurationEnabled ? (duration ? `${duration} min` : '—') : 'No limit'}</div>
                         </div>
@@ -1305,7 +1417,15 @@ export function CreateInterviewWizard() {
                 <li className="flex justify-between gap-2">
                   <span className="text-muted-foreground">Topic mix</span>
                   <span className="text-right font-medium">
-                    {topics.length > 0 ? `${technicalRatio}% tech` : '—'}
+                    {topics.length === 0
+                      ? '—'
+                      : interviewType === 'both'
+                        ? `${technicalRatio}% tech / ${100 - technicalRatio}% behavioral`
+                        : interviewType === 'technical'
+                          ? '100% technical'
+                          : interviewType === 'behavioral'
+                            ? '100% behavioral'
+                            : '—'}
                   </span>
                 </li>
                 <li className="flex justify-between gap-2">

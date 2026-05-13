@@ -18,6 +18,9 @@ import {
 } from 'recharts'
 import { BarChart2, Download, Filter, Radar as RadarIcon } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useTheme } from '@/components/providers/ThemeProvider'
+import type { InterviewConfig } from '@/components/app/dashboard/types'
+import { formatIndustryDisplay, formatRoleCategoryDisplay } from '@/utils/dashboard/interview-labels'
 
 type InterviewSession = {
   _id: string
@@ -40,14 +43,32 @@ function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n))
 }
 
-function formatRole(roleCategoryKey: string): string {
-  return roleCategoryKey.replace(/_/g, ' ')
-}
-
 export function ResultsOverviewPage() {
+  const { theme } = useTheme()
+  const isLight = theme === 'light'
+  const chartGrid = isLight ? 'rgba(15,17,23,0.08)' : 'rgba(255,255,255,0.06)'
+  const chartTick = isLight ? 'rgba(15,17,23,0.55)' : 'rgba(255,255,255,0.6)'
+  const chartPolar = isLight ? 'rgba(15,17,23,0.1)' : 'rgba(255,255,255,0.08)'
+  const tooltipStyle = isLight
+    ? {
+        background: 'rgba(255, 255, 255, 0.96)',
+        border: '1px solid rgba(15, 17, 23, 0.1)',
+        borderRadius: 14,
+        backdropFilter: 'blur(10px)',
+        color: '#0f1117',
+      }
+    : {
+        background: 'rgba(17, 24, 39, 0.85)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: 14,
+        backdropFilter: 'blur(10px)',
+        color: 'white',
+      }
+
   const [sessions, setSessions] = useState<InterviewSession[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'in_progress'>('completed')
+  const [interviewConfigs, setInterviewConfigs] = useState<InterviewConfig[]>([])
 
   useEffect(() => {
     let cancelled = false
@@ -64,6 +85,23 @@ export function ResultsOverviewPage() {
       }
     }
     void load()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadConfigs() {
+      try {
+        const res = await fetch('/api/interview-config')
+        const data = await res.json()
+        if (!cancelled && res.ok) setInterviewConfigs((data.configs ?? []) as InterviewConfig[])
+      } catch {
+        /* ignore */
+      }
+    }
+    void loadConfigs()
     return () => {
       cancelled = true
     }
@@ -137,7 +175,7 @@ export function ResultsOverviewPage() {
             </div>
           </div>
 
-          <div className="mt-4 h-[260px] w-full">
+          <div className="mt-4 h-[200px] sm:h-[260px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={scoreTimeline}>
                 <defs>
@@ -146,18 +184,10 @@ export function ResultsOverviewPage() {
                     <stop offset="100%" stopColor="#4f6ef7" stopOpacity={0.05} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
-                <XAxis dataKey="label" tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis domain={[40, 100]} tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <RechartsTooltip
-                  contentStyle={{
-                    background: 'rgba(17, 24, 39, 0.85)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: 14,
-                    backdropFilter: 'blur(10px)',
-                    color: 'white',
-                  }}
-                />
+                <CartesianGrid stroke={chartGrid} vertical={false} />
+                <XAxis dataKey="label" tick={{ fill: chartTick, fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis domain={[40, 100]} tick={{ fill: chartTick, fontSize: 11 }} axisLine={false} tickLine={false} />
+                <RechartsTooltip contentStyle={tooltipStyle} />
                 <Legend />
                 <Area type="monotone" dataKey="score" name="Score" stroke="#4f6ef7" fill="url(#hqScore)" strokeWidth={2} />
                 <Area type="monotone" dataKey="completion" name="Completion %" stroke="#7c3aed" fill="transparent" strokeWidth={2} />
@@ -177,20 +207,12 @@ export function ResultsOverviewPage() {
             </span>
           </div>
 
-          <div className="mt-4 h-[260px]">
+          <div className="mt-4 h-[200px] sm:h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={radar}>
-                <PolarGrid stroke="rgba(255,255,255,0.08)" />
-                <PolarAngleAxis dataKey="skill" tick={{ fill: 'rgba(255,255,255,0.65)', fontSize: 11 }} />
-                <RechartsTooltip
-                  contentStyle={{
-                    background: 'rgba(17, 24, 39, 0.85)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: 14,
-                    backdropFilter: 'blur(10px)',
-                    color: 'white',
-                  }}
-                />
+                <PolarGrid stroke={chartPolar} />
+                <PolarAngleAxis dataKey="skill" tick={{ fill: chartTick, fontSize: 11 }} />
+                <RechartsTooltip contentStyle={tooltipStyle} />
                 <Radar dataKey="value" stroke="#22d3ee" fill="rgba(34,211,238,0.18)" />
               </RadarChart>
             </ResponsiveContainer>
@@ -256,8 +278,12 @@ export function ResultsOverviewPage() {
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <div className="truncate text-sm font-semibold text-foreground capitalize">{formatRole(s.roleCategoryKey)}</div>
-                          <div className="truncate text-xs text-muted-foreground">{s.industryKey}</div>
+                          <div className="truncate text-sm font-semibold text-foreground">
+                            {formatRoleCategoryDisplay(s.industryKey, s.roleCategoryKey, interviewConfigs)}
+                          </div>
+                          <div className="truncate text-xs text-muted-foreground">
+                            {formatIndustryDisplay(s.industryKey, interviewConfigs)}
+                          </div>
                         </div>
                         <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold badge-${s.status.replace('_', '-')}`}>
                           {s.status.replace('_', ' ')}

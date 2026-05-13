@@ -10,6 +10,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import { useReveal } from '@/hooks/use-reveal'
 
@@ -54,7 +55,7 @@ function PracticeChip({
   return (
     <div
       className={[
-        'glass rounded-2xl border border-white/10 p-3 flex items-center gap-3 hover-lift animate-fade-up',
+        'glass rounded-2xl border border-border/30 p-3 flex items-center gap-3 hover-lift animate-fade-up',
         className,
       ].join(' ')}
       style={{ animationDelay: delay }}
@@ -79,14 +80,9 @@ export function Hero() {
       ref={ref}
       className="relative overflow-hidden pt-28 pb-20 sm:pt-32 sm:pb-24 lg:pt-36 lg:pb-28"
     >
-      {/* Background layers */}
+      {/* Background layers (mesh/grid kept; large radial wash removed) */}
       <div className="absolute inset-0 bg-mesh pointer-events-none" aria-hidden />
       <div className="absolute inset-0 grid-bg pointer-events-none" aria-hidden />
-      <div
-        className="absolute -top-40 left-1/2 -translate-x-1/2 h-[500px] w-[900px] rounded-full blur-3xl opacity-60 pointer-events-none"
-        style={{ background: 'var(--gradient-radial)' }}
-        aria-hidden
-      />
 
       <div className="relative mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1.02fr_0.98fr] lg:items-center">
         <div className="max-w-2xl text-left">
@@ -127,14 +123,20 @@ export function Hero() {
             className="reveal mt-9 flex flex-col gap-3 sm:flex-row sm:items-center"
             style={{ transitionDelay: '240ms' }}
           >
-            <button className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-primary px-7 text-sm font-semibold text-foreground shadow-[0_0_30px_-6px_var(--primary)] transition-all hover:scale-[1.03] hover:shadow-[0_0_44px_-4px_var(--primary)]">
+            <Link
+              href="/app/new-interview"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-primary px-7 text-sm font-semibold text-foreground shadow-[0_0_30px_-6px_var(--primary)] transition-all hover:scale-[1.03] hover:shadow-[0_0_44px_-4px_var(--primary)]"
+            >
               Try Prep AI Now
               <ArrowRight className="h-4 w-4" />
-            </button>
-            <button className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-border px-7 text-sm font-semibold text-foreground transition-all hover:bg-input/30">
+            </Link>
+            <Link
+              href="/pricing"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-border px-7 text-sm font-semibold text-foreground transition-all hover:bg-input/30"
+            >
               <Play className="h-4 w-4" />
               See our plans
-            </button>
+            </Link>
           </div>
 
           <div className="reveal mt-8 grid max-w-xl gap-3 sm:grid-cols-2" style={{ transitionDelay: '320ms' }}>
@@ -172,7 +174,7 @@ export function Hero() {
 
         <div className="reveal relative" style={{ transitionDelay: '240ms' }}>
           <div className="relative overflow-hidden rounded-[2rem] glass-strong shimmer-border p-4 sm:p-5 glow-ring-strong animate-brain-glow">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,oklch(0.72_0.18_250_/0.18),transparent_35%),radial-gradient(circle_at_bottom_right,oklch(0.78_0.16_195_/0.16),transparent_42%)]" />
+            {/* Decorative inner radial overlays removed for cleaner appearance */}
             <div className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[oklch(0.08_0.03_265)] min-h-[520px] sm:min-h-[600px]">
               <Image
                 src="/hero-ai-brain.jpg"
@@ -220,10 +222,7 @@ export function Hero() {
                       />
                     </div>
 
-                    <div
-                      className="absolute inset-0 pointer-events-none"
-                      style={{ background: 'radial-gradient(circle at 50% 45%, transparent 0%, transparent 35%, oklch(0.08 0.03 265 / 0.35) 68%, oklch(0.08 0.03 265 / 0.82) 100%)' }}
-                    />
+                    {/* inner subtle overlay removed */}
                   </div>
                 </div>
               </div>
@@ -242,14 +241,7 @@ export function Hero() {
             </div>
           </div>
 
-          <div
-            className="absolute -bottom-24 left-1/2 h-72 w-[96%] -translate-x-1/2 rounded-full blur-[96px] opacity-30 pointer-events-none"
-            style={{
-              background:
-                'radial-gradient(ellipse 78% 62% at 50% 48%, color-mix(in oklab, var(--primary) 30%, transparent) 0%, color-mix(in oklab, var(--primary-glow) 16%, transparent) 34%, transparent 78%)',
-            }}
-            aria-hidden
-          />
+          {/* bottom decorative radial blur removed */}
         </div>
       </div>
     </section>

@@ -17,7 +17,7 @@ export function AIAssistantCard() {
         <div className="icon-wrap-purple flex-shrink-0">
           <Zap className="h-6 w-6" />
         </div>
-        
+
         {/* Content */}
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-semibold text-foreground">AI Interview Assistant</h3>

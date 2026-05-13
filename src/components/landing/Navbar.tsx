@@ -17,12 +17,12 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
   const { theme, toggleTheme } = useTheme()
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
 
   const role = session?.user?.role
   const isAdmin = role === 'admin'
-  const isAuthenticated = Boolean(role)
-  const destination = isAdmin ? '/dashboard' : '/app'
+  const isAuthenticated = status === 'authenticated'
+  const destination = isAdmin ? '/dashboard' : '/app/new-interview'
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12)
@@ -87,7 +87,7 @@ export function Navbar() {
               <div className="flex items-center gap-2">
                 <Link href={destination}>
                   <span className="inline-flex items-center justify-center rounded-full bg-gradient-primary text-foreground border-0 px-5 h-9 text-sm font-semibold cursor-pointer shadow-[0_0_24px_-6px_var(--primary)] hover:shadow-[0_0_36px_-4px_var(--primary)] hover:scale-[1.03] transition-all">
-                    {isAdmin ? 'Dashboard' : 'App'}
+                    {isAdmin ? 'View Dashboard' : 'Get Started'}
                   </span>
                 </Link>
               </div>

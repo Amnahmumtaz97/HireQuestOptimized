@@ -13,6 +13,7 @@ type Props = {
   onChange: (iso: string) => void
   minDate?: string
   maxDate?: string
+  fullWidth?: boolean
 }
 
 function parseLocal(iso: string): Date {
@@ -24,7 +25,7 @@ function startOfDayMs(d: Date): number {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
 }
 
-export function DashboardDateCalendarButton({ id, label, value, onChange, minDate, maxDate }: Props) {
+export function DashboardDateCalendarButton({ id, label, value, onChange, minDate, maxDate, fullWidth = false }: Props) {
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
   const [cursorMonth, setCursorMonth] = useState(() => (value ? parseLocal(value) : new Date()))
@@ -87,7 +88,7 @@ export function DashboardDateCalendarButton({ id, label, value, onChange, minDat
   const todayIso = localDateString(new Date())
 
   return (
-    <div ref={wrapRef} className="relative">
+    <div ref={wrapRef} className={fullWidth ? 'relative w-full' : 'relative'}>
       <span id={`${id}-label`} className="sr-only">
         {label}
       </span>
@@ -98,17 +99,20 @@ export function DashboardDateCalendarButton({ id, label, value, onChange, minDat
         aria-expanded={open}
         aria-labelledby={`${id}-label`}
         onClick={() => setOpen((o) => !o)}
-        className="hq-panel-btn hq-panel-btn--active btn-micro flex h-9 min-w-[10rem] items-center justify-center gap-2 rounded-lg px-3 text-xs font-medium text-primary-foreground outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,var(--primary)_45%,transparent)]"
+        className={[
+          'hq-panel-btn hq-panel-btn--active btn-micro flex h-9 max-w-full items-center justify-center gap-2 rounded-lg px-2.5 text-xs font-medium text-primary-foreground outline-none sm:px-3 focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,var(--primary)_45%,transparent)]',
+          fullWidth ? 'w-full min-w-0 sm:min-w-0 justify-start' : 'min-w-[8.5rem] sm:min-w-[10rem]',
+        ].join(' ')}
       >
         <Calendar className="h-3.5 w-3.5 flex-shrink-0 opacity-90" aria-hidden />
-        <span>{display}</span>
+        <span className="truncate">{display}</span>
       </button>
 
       {open ? (
         <div
           role="dialog"
           aria-label={label}
-          className="absolute right-0 z-[200] mt-1 w-[min(17.5rem,calc(100vw-2rem))] rounded-xl border border-[var(--hq-border)] bg-[var(--card)] p-3 shadow-[var(--shadow-card)]"
+          className="absolute right-0 z-[200] mt-1 w-[min(17.5rem,calc(100vw-1rem))] rounded-xl border border-[var(--hq-border)] bg-[var(--card)] p-2.5 sm:p-3 shadow-[var(--shadow-card)]"
         >
           <div className="mb-2 flex items-center justify-between gap-2">
             <button

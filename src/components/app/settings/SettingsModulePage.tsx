@@ -78,7 +78,7 @@ export function SettingsModulePage() {
               <div className="rounded-2xl border border-border bg-input/10 p-5">
                 <div className="text-sm font-semibold text-foreground">Default difficulty</div>
                 <div className="mt-1 text-xs text-muted-foreground">Applied when you create new interviews.</div>
-                <div className="mt-4 grid grid-cols-3 gap-2">
+                <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
                   {(['Easy', 'Medium', 'Hard'] as const).map((d) => (
                     <button
                       key={d}
@@ -204,7 +204,7 @@ export function SettingsModulePage() {
               <div className="rounded-2xl border border-border bg-input/10 p-5">
                 <div className="text-sm font-semibold text-foreground">Density</div>
                 <div className="mt-1 text-xs text-muted-foreground">Spacing and component compactness.</div>
-                <div className="mt-4 grid grid-cols-3 gap-2">
+                <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
                   {(['Cozy', 'Default', 'Compact'] as const).map((d) => (
                     <button
                       key={d}

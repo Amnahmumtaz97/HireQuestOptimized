@@ -20,7 +20,7 @@ export function InterviewAnswerEditor({ value, onChange, disabled }: InterviewAn
   }, [value])
 
   return (
-    <div className="w-full min-w-0 space-y-2">
+    <div className="w-full min-w-0 space-y-2 card-enhanced p-4">
       <div className="text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
         Your answer
       </div>
@@ -30,7 +30,7 @@ export function InterviewAnswerEditor({ value, onChange, disabled }: InterviewAn
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         rows={4}
-        className="min-h-[120px] w-full resize-none rounded-2xl border border-border bg-input/25 px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/50 outline-none transition-shadow focus:border-primary/40 focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
+        className="min-h-[120px] w-full resize-none rounded-2xl border border-border bg-card px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground outline-none transition-shadow focus:border-ring focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
         placeholder="Type your answer…"
       />
     </div>

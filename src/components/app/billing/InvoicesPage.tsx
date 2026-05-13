@@ -91,8 +91,8 @@ export function InvoicesPage() {
               <div className="mt-1 text-xs text-muted-foreground">Once you’re billed, your invoices will appear here.</div>
             </div>
           ) : (
-            <div className="mt-4 overflow-hidden rounded-2xl border border-border">
-              <div className="grid grid-cols-12 gap-3 bg-input/15 px-4 py-3 text-[11px] font-semibold text-muted-foreground">
+            <div className="mt-4 overflow-x-auto rounded-2xl border border-border">
+              <div className="hidden grid-cols-12 gap-3 bg-input/15 px-4 py-3 text-[11px] font-semibold text-muted-foreground md:grid">
                 <div className="col-span-5">Invoice</div>
                 <div className="col-span-3">Date</div>
                 <div className="col-span-2 text-right">Amount</div>
@@ -100,21 +100,29 @@ export function InvoicesPage() {
               </div>
               <div className="divide-y divide-border/60">
                 {invoices.map((inv) => (
-                  <div key={inv.id} className="grid grid-cols-12 items-center gap-3 px-4 py-3">
-                    <div className="col-span-5">
-                      <div className="text-sm font-semibold text-foreground">{inv.id}</div>
+                  <div key={inv.id} className="grid grid-cols-1 gap-3 px-4 py-4 md:grid-cols-12 md:items-center md:py-3">
+                    <div className="md:col-span-5">
+                      <div className="text-xs font-semibold text-muted-foreground md:hidden">Invoice</div>
+                      <div className="mt-1 text-sm font-semibold text-foreground md:mt-0">{inv.id}</div>
                       <div className="text-xs text-muted-foreground capitalize">{inv.status}</div>
                     </div>
-                    <div className="col-span-3 text-sm text-muted-foreground">
-                      {new Date(inv.date).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                    <div className="text-sm text-muted-foreground md:col-span-3">
+                      <div className="text-xs font-semibold text-muted-foreground md:hidden">Date</div>
+                      <div className="md:mt-0 mt-1">
+                        {new Date(inv.date).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                      </div>
                     </div>
-                    <div className="col-span-2 text-right text-sm font-semibold text-foreground">{inv.amount}</div>
-                    <div className="col-span-2 flex justify-end">
+                    <div className="md:col-span-2 text-right text-sm font-semibold text-foreground">
+                      <div className="text-xs font-semibold text-muted-foreground md:hidden">Amount</div>
+                      <div className="md:mt-0 mt-1">{inv.amount}</div>
+                    </div>
+                    <div className="md:col-span-2 flex justify-end">
+                      <div className="mr-2 text-xs font-semibold text-muted-foreground md:hidden">Download</div>
                       <button
                         type="button"
                         className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-input/10 px-3 text-xs font-semibold text-foreground hover:bg-input/25 btn-micro"
                       >
-                        <Download className="h-4 w-4 text-muted-foreground" /> PDF
+                        <Download className="h-4 w-4 text-muted-foreground" /> <span className="hidden sm:inline">PDF</span>
                       </button>
                     </div>
                   </div>

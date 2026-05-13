@@ -129,7 +129,7 @@ export const DashboardNavbar: FC<DashboardNavbarProps> = ({
                   <span className="relative">
                     <span
                       className="pointer-events-none absolute -inset-1 rounded-full opacity-35 blur-md"
-                      style={{ background: 'linear-gradient(90deg, rgba(79,110,247,0.9), rgba(124,58,237,0.9))' }}
+                      style={{ background: 'linear-gradient(90deg, rgba(79,110,247,0.9), rgba(37,99,235,0.9))' }}
                       aria-hidden
                     />
                     <Avatar className="h-8 w-8">

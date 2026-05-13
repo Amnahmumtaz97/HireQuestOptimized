@@ -1,0 +1,75 @@
+@startuml HireQuest_Communication_Diagram_Interview
+' UML Communication (collaboration) style: objects + numbered messages on links.
+' Matches HireQuest: Next.js App Router, NextAuth, Mongoose, Gemini/templates.
+' Voice + NLP scoring are not in the repo yet — see optional FUTURE object.
+' https://plantuml.com/object-diagram
+
+title HireQuest — communication diagram: authenticated interview flow (as implemented)
+
+skinparam shadowing false
+skinparam object {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+}
+skinparam note {
+  BackgroundColor #FFF7ED
+  BorderColor #EA580C
+}
+
+left to right direction
+
+object "«presentation»\nWeb Client\n(React / Next.js)" as UI #E0E7FF
+
+object "«authentication»\nNextAuth\n(credentials + JWT session)" as AUTH #DCFCE7
+
+object "«control»\nInterview API\n`/api/interviews` …" as API #FEF9C3
+
+object "«domain service»\nQuestion Generator\n`generateInterviewQuestions()`" as QGEN #FFEDD5
+
+object "«persistence»\nMongoDB\n(Mongoose models)" as DB #E2E8F0
+
+object "«future / optional»\nVoice + NLP pipeline\n(not in repo today)" as FUTURE #F1F5F9
+
+' --- Sign-in (dashboard / app shell) ---
+UI -down-> AUTH : 1: authenticate / signIn()
+AUTH -down-> DB : 2: load user, verify passwordHash
+AUTH -up-> UI : 3: session cookie / JWT claims
+
+' --- Create + generate + run interview ---
+UI -right-> API : 4: POST /api/interviews (create shell session)
+API -down-> DB : 5: insert InterviewSession (status created)
+
+UI -right-> API : 6: POST .../generate-questions
+API -right-> QGEN : 7: generateInterviewQuestions(config)
+QGEN -left-> API : 8: questions[], source, warnings
+API -down-> DB : 9: $set questions, questionSource
+
+UI -right-> API : 10: GET /api/interviews/{id} (load state)
+API -down-> DB : 11: findOne by id + userId
+API -left-> UI : 12: session JSON
+
+UI -right-> API : 13: PATCH answers / flags / in_progress
+API -down-> DB : 14: $set / $push embedded answers
+
+UI -right-> API : 15: PATCH status completed
+API -down-> DB : 16: $set completed + timestamps
+
+UI -right-> API : 17: GET /api/interviews/{id} (results)
+API -down-> DB : 18: findOne read-only
+API -left-> UI : 19: InterviewResultsPage (Q&A review)
+
+' --- Future extension (aligns with teaching sketch) ---
+UI ..> FUTURE : (future) 20: voice to transcribe to NLP score
+FUTURE ..> DB : (future) persist EvaluationReport
+
+note right of API
+  Each handler uses getServerSession; unauthorized
+  requests fail before DB (messages 4–19 assume a signed-in user).
+end note
+
+note bottom of QGEN
+  Code: src/lib/interview-questions/generate.ts
+  and src/lib/gemini/generate-questions.ts
+end note
+
+@enduml

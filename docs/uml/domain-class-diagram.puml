@@ -1,0 +1,146 @@
+@startuml HireQuest_Domain_Class_Diagram
+' Conceptual domain model (UML). Aligns with HireQuest interview flows;\n'
+' implementation may embed questions/answers on InterviewSession (document).\n'
+' https://plantuml.com/class-diagram
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+title HireQuest — domain class diagram
+
+package "Identity & billing" {
+  class User <<aggregate root>> {
+    - id : UserId
+    - email : Email
+    - firstName : String
+    - lastName : String
+    - passwordHash : String
+    - role : UserRole
+    - createdAt : DateTime
+    --
+    + authenticate()
+    + updateProfile()
+    + listSessions() : Session[*]
+  }
+
+  enum UserRole {
+    USER
+    ADMIN
+  }
+
+  enum SubscriptionPlan {
+    FREE
+    PRO
+    ENTERPRISE
+  }
+
+  enum SubscriptionStatus {
+    ACTIVE
+    PAST_DUE
+    CANCELLED
+    EXPIRED
+  }
+
+  class Subscription <<entity>> {
+    - id : SubscriptionId
+    - plan : SubscriptionPlan
+    - status : SubscriptionStatus
+    - billingCycle : String
+    - renewalDate : Date
+    - paymentHistory : PaymentRecord[*]
+    --
+    + activate()
+    + cancel()
+    + processPayment()
+  }
+
+  class PaymentRecord <<value object>> {
+    + amount : Money
+    + paidAt : DateTime
+    + providerReference : String
+  }
+
+  Subscription *-- "0..*" PaymentRecord : ledger >
+  User "1" -- "0..1" Subscription : current >
+  User ..> UserRole : role
+}
+
+package "Interview session" {
+  enum SessionStatus {
+    CREATED
+    IN_PROGRESS
+    COMPLETED
+    ABANDONED
+  }
+
+  class SessionConfiguration <<value object>> {
+    + industryKey : String
+    + roleCategoryKey : String
+    + interviewType : String
+    + topics : String[*]
+    + difficulty : String
+    + duration : Duration
+  }
+
+  class Session <<aggregate root>> {
+    - id : SessionId
+    - status : SessionStatus
+    - startTime : DateTime
+    - endTime : DateTime
+    --
+    + start()
+    + pause()
+    + end()
+    + loadQuestions()
+  }
+
+  class Question <<entity>> {
+    - id : QuestionId
+    - ordinal : Integer
+    - text : String
+    - domain : String
+    - level : String
+    - category : String
+    - idealAnswer : String
+  }
+
+  class Response <<entity>> {
+    - id : ResponseId
+    - transcribedText : String
+    - submittedAt : DateTime
+    --
+    + submit()
+    + getEvaluationScore() : Score
+  }
+
+  class EvaluationReport <<entity>> {
+    - id : ReportId
+    - overallScore : Decimal
+    - dimensionScores : Map<String, Decimal>
+    - recommendations : String[*]
+    - generatedAt : DateTime
+    --
+    + generate()
+    + display()
+  }
+
+  User "1" o-- "*" Session : runs >
+  Session *-- "1" SessionConfiguration : configuration >
+  Session *-- "0..*" Question : questions >
+  Session *-- "0..*" Response : responses >
+  Session *-- "0..1" EvaluationReport : report >
+  Question "1" -- "0..*" Response : for >
+}
+
+note right of Subscription
+  **Billing:** **processPayment()** is often implemented in an
+  application **BillingService**; shown here for parity with your sketch.
+end note
+
+note bottom of Question
+  **Catalog vs snapshot:** this depicts reusable **Question** rows plus
+  **Session** linkage (N:M in persistence). Your app may instead **embed**
+  question text per session (snapshot); that is an implementation trade-off.
+end note
+
+@enduml

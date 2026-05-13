@@ -21,19 +21,31 @@ export function DifficultySelector({
     <div className="grid gap-3 sm:grid-cols-3">
       {options.map((option) => {
         const selected = value === option.key
+        const selectedClasses =
+          option.key === 'Easy'
+            ? 'border-emerald-400/55 bg-emerald-500/12 shadow-[0_10px_24px_-14px_rgba(16,185,129,0.7)]'
+            : option.key === 'Medium'
+              ? 'border-amber-400/55 bg-amber-500/12 shadow-[0_10px_24px_-14px_rgba(251,191,36,0.7)]'
+              : 'border-red-400/55 bg-red-500/12 shadow-[0_10px_24px_-14px_rgba(239,68,68,0.7)]'
+
+        const titleClasses =
+          option.key === 'Easy' ? 'text-emerald-400' : option.key === 'Medium' ? 'text-amber-400' : 'text-red-400'
         return (
           <button
             key={option.key}
             type="button"
             onClick={() => onChange(option.key)}
             className={[
-              'w-full rounded-2xl border p-4 text-left transition-all',
+              'w-full min-w-0 rounded-2xl border p-3 text-left transition-all sm:p-4',
               selected
-                ? 'border-primary bg-input/50 shadow-glow-sm'
+                ? selectedClasses
                 : 'border-border bg-input/30 hover:bg-input/50',
             ].join(' ')}
           >
-            <div className="text-sm font-semibold text-foreground">{option.key}</div>
+            <div className={[
+              'truncate text-sm font-semibold sm:text-base',
+              selected ? titleClasses : 'text-foreground',
+            ].join(' ')}>{option.key}</div>
             <div className="mt-1 text-xs text-muted-foreground">{option.subtitle}</div>
           </button>
         )

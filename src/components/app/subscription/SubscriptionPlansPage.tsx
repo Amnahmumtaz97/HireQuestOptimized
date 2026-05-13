@@ -128,7 +128,7 @@ export function SubscriptionPlansPage() {
                 {p.highlight ? (
                   <div
                     className="pointer-events-none absolute -inset-1 rounded-[2rem] opacity-25 blur-xl"
-                    style={{ background: 'linear-gradient(90deg, rgba(79,110,247,0.8), rgba(124,58,237,0.8))' }}
+                    style={{ background: 'linear-gradient(90deg, rgba(79,110,247,0.85), rgba(37,99,235,0.85))' }}
                     aria-hidden
                   />
                 ) : null}
@@ -142,8 +142,8 @@ export function SubscriptionPlansPage() {
         <div className="text-sm font-semibold text-foreground">Feature comparison</div>
         <div className="mt-1 text-xs text-muted-foreground">A quick matrix for stakeholders</div>
 
-        <div className="mt-4 overflow-hidden rounded-2xl border border-border">
-          <div className="grid grid-cols-12 gap-3 bg-input/15 px-4 py-3 text-[11px] font-semibold text-muted-foreground">
+        <div className="mt-4 overflow-x-auto rounded-2xl border border-border">
+          <div className="hidden grid-cols-12 gap-3 bg-input/15 px-4 py-3 text-[11px] font-semibold text-muted-foreground md:grid">
             <div className="col-span-6">Feature</div>
             <div className="col-span-2 text-center">Free</div>
             <div className="col-span-2 text-center">Pro</div>
@@ -153,10 +153,11 @@ export function SubscriptionPlansPage() {
             {featureMatrix.map((f) => {
               const has = (planId: Plan['id']) => PLANS.find((p) => p.id === planId)?.features.includes(f)
               return (
-                <div key={f} className="grid grid-cols-12 items-center gap-3 px-4 py-3 text-sm">
-                  <div className="col-span-6 text-muted-foreground">{f}</div>
-                  {(['free', 'pro', 'enterprise'] as const).map((pid) => (
-                    <div key={pid} className="col-span-2 text-center">
+                <div key={f} className="grid grid-cols-1 gap-3 px-4 py-4 md:grid-cols-12 md:items-center md:py-3 text-sm">
+                  <div className="md:col-span-6 font-semibold text-foreground md:text-muted-foreground md:font-normal">{f}</div>
+                  {(['free', 'pro', 'enterprise'] as const).map((pid, idx) => (
+                    <div key={pid} className="md:col-span-2 md:text-center">
+                      <span className="font-semibold text-muted-foreground md:hidden">{['Free', 'Pro', 'Ent'][idx]}: </span>
                       {has(pid) ? <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-input/20 text-emerald-300"><Check className="h-4 w-4" /></span> : <span className="text-muted-foreground/50">—</span>}
                     </div>
                   ))}

@@ -59,7 +59,7 @@ export function FormModal({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
-        className="relative z-10 flex max-h-[min(90vh,720px)] w-full max-w-lg flex-col rounded-2xl border border-border bg-[var(--hq-row-elevated)] shadow-[0_24px_80px_-24px_rgba(0,0,0,0.55)]"
+        className="relative z-10 flex max-h-[min(90vh,720px)] w-full max-w-lg flex-col rounded-2xl border border-border bg-[var(--hq-row-elevated)] shadow-[var(--shadow-modal)]"
       >
         <div className="border-b border-border px-6 py-4">
           <h2 id={titleId} className="text-lg font-semibold text-foreground">

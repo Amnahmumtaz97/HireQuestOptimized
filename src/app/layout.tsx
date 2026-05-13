@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
-import { Fragment } from 'react'
+import Script from 'next/script'
 import './globals.css'
 import { SessionProvider } from '@/components/providers/SessionProvider'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
+import { MotionProvider } from '@/components/providers/MotionProvider'
 import { ToastProvider } from '@/components/ui/toast'
 import { NativeAppBridge } from '@/components/providers/NativeAppBridge'
 
@@ -25,14 +26,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* Performance: prevent flash of wrong theme (must run before hydration) */}
-        <Fragment dangerouslySetInnerHTML={{__html: '<script>(function(){try{var t=localStorage.getItem("hirequest.theme");if(t==="light"||t==="dark"){document.documentElement.dataset.theme=t;}else if(window.matchMedia("(prefers-color-scheme: light)").matches){document.documentElement.dataset.theme="light";}}catch(e){}})();</script>'}} />
+        <Script
+          id="theme-bootstrap"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html:
+              '(function(){try{var t=localStorage.getItem("hirequest.theme");if(t==="light"||t==="dark"){document.documentElement.dataset.theme=t;}else if(window.matchMedia("(prefers-color-scheme: light)").matches){document.documentElement.dataset.theme="light";}}catch(e){}})();',
+          }}
+        />
       </head>
       <body>
         <ThemeProvider>
           <ToastProvider>
             <SessionProvider>
-              <NativeAppBridge />
-              {children}
+              <MotionProvider>
+                <NativeAppBridge />
+                {children}
+              </MotionProvider>
             </SessionProvider>
           </ToastProvider>
         </ThemeProvider>

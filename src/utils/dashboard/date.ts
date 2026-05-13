@@ -44,3 +44,24 @@ export function filterSessionsByDateRange(
   })
 }
 
+export function todayRange(): { start: string; end: string } {
+  const now = new Date()
+  const iso = localDateString(now)
+  return { start: iso, end: iso }
+}
+
+export function thisWeekRange(): { start: string; end: string } {
+  const now = new Date()
+  const day = now.getDay()
+  const mondayOffset = (day + 6) % 7
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - mondayOffset)
+  const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6)
+  return { start: localDateString(start), end: localDateString(end) }
+}
+
+export function thisMonthRange(): { start: string; end: string } {
+  const now = new Date()
+  const start = new Date(now.getFullYear(), now.getMonth(), 1)
+  return { start: localDateString(start), end: localDateString(now) }
+}
+
