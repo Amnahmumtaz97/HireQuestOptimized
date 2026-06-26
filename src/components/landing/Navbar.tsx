@@ -8,9 +8,9 @@ import { useTheme } from '@/components/providers/ThemeProvider'
 
 const links = [
   { label: 'Home', href: '/' },
-  { label: 'Features', href: '/#features' },
+  { label: 'Features', href: '/features' },
   { label: 'Pricing', href: '/pricing' },
-  { label: 'Contact', href: '/#contact' },
+  { label: 'Contact', href: '/contact' },
 ]
 
 export function Navbar() {

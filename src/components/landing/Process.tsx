@@ -162,8 +162,8 @@ export function Process() {
   return (
     <section
       ref={ref}
-      id="how-it-works"
-      className="relative py-16 sm:py-24 md:py-32 overflow-hidden"
+      id="features"
+      className="relative py-16 sm:py-24 md:py-32 overflow-hidden scroll-mt-24 sm:scroll-mt-28"
     >
       {/* Background effects */}
       <div className="absolute inset-0 -z-10">

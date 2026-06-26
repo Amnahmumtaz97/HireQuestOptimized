@@ -7,6 +7,24 @@ const groups = [
   { title: 'Resources', links: ['Docs', 'Guides', 'Support', 'Community'] },
 ]
 
+const routes: Record<string, string> = {
+  Features: '/features',
+  Pricing: '/pricing',
+  Changelog: '/changelog',
+  Roadmap: '/roadmap',
+  About: '/about',
+  Blog: '/blog',
+  Careers: '/careers',
+  Contact: '/contact',
+  Docs: '/docs',
+  Guides: '/guides',
+  Support: '/support',
+  Community: '/community',
+  Privacy: '/privacy',
+  Terms: '/terms',
+  Security: '/security',
+}
+
 export function Footer() {
   return (
     <footer className="relative pt-16 pb-10">
@@ -59,23 +77,12 @@ export function Footer() {
                 <ul className="mt-4 flex flex-col gap-2.5">
                   {g.links.map((l) => (
                     <li key={l}>
-                      {l === 'Features' ? (
-                        <Link href="/#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                          {l}
-                        </Link>
-                      ) : l === 'Pricing' ? (
-                        <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                          {l}
-                        </Link>
-                      ) : l === 'Contact' ? (
-                        <Link href="/#contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                          {l}
-                        </Link>
-                      ) : (
-                        <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                          {l}
-                        </a>
-                      )}
+                      <Link
+                        href={routes[l] ?? '#'}
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {l}
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -87,9 +94,9 @@ export function Footer() {
             <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} HireQuest. All rights reserved.</p>
 
             <div className="flex items-center gap-5 text-xs text-muted-foreground">
-              <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
-              <a href="#" className="hover:text-foreground transition-colors">Terms</a>
-              <a href="#" className="hover:text-foreground transition-colors">Security</a>
+              <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+              <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+              <Link href="/security" className="hover:text-foreground transition-colors">Security</Link>
             </div>
           </div>
         </div>
