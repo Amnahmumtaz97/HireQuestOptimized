@@ -815,6 +815,167 @@
     background-size: 100% 100%;
   }
 
+  /* ---- Landing: Process orbit (light + dark) ---- */
+  .process-orbit {
+    --process-orbit-ring: rgba(100, 180, 255, 0.18);
+    --process-orbit-link: rgba(100, 180, 255, 0.14);
+  }
+
+  :root[data-theme='light'] .process-orbit {
+    --process-orbit-ring: rgba(79, 110, 247, 0.28);
+    --process-orbit-link: rgba(79, 110, 247, 0.18);
+  }
+
+  .process-step-card {
+    background: color-mix(in oklab, var(--card) 96%, transparent);
+    box-shadow: 0 10px 36px -18px rgba(0, 0, 0, 0.45);
+  }
+
+  :root[data-theme='light'] .process-step-card {
+    background: #ffffff;
+    box-shadow:
+      0 10px 32px -14px rgba(79, 110, 247, 0.16),
+      0 0 0 1px rgba(208, 212, 232, 0.85);
+  }
+
+  .process-step-shine {
+    background: radial-gradient(circle at 35% 20%, rgba(255, 255, 255, 0.09), transparent 50%);
+  }
+
+  :root[data-theme='light'] .process-step-shine {
+    background: radial-gradient(circle at 35% 20%, rgba(79, 110, 247, 0.1), transparent 55%);
+  }
+
+  .process-core-card {
+    background: color-mix(in oklab, var(--card) 96%, transparent);
+    box-shadow: 0 0 40px -4px rgba(59, 130, 246, 0.8);
+  }
+
+  :root[data-theme='light'] .process-core-card {
+    background: #ffffff;
+    border-color: rgba(59, 130, 246, 0.55) !important;
+    box-shadow:
+      0 0 36px -4px rgba(59, 130, 246, 0.28),
+      0 0 0 1px rgba(208, 212, 232, 0.9);
+  }
+
+  .process-core-shine {
+    background: radial-gradient(circle at 50% 35%, rgba(59, 130, 246, 0.2), transparent 55%);
+  }
+
+  :root[data-theme='light'] .process-core-shine {
+    background: radial-gradient(circle at 50% 35%, rgba(79, 110, 247, 0.12), transparent 55%);
+  }
+
+  .process-mobile-card {
+    background: color-mix(in oklab, var(--card) 88%, transparent);
+    border-color: var(--hairline);
+    box-shadow: 0 20px 70px -44px rgba(0, 229, 255, 0.5);
+  }
+
+  :root[data-theme='light'] .process-mobile-card {
+    background: #ffffff;
+    border-color: var(--hq-border);
+    box-shadow: 0 12px 40px -16px rgba(79, 110, 247, 0.12);
+  }
+
+  .process-accent-sky { color: #38bdf8; }
+  .process-accent-violet { color: #a78bfa; }
+  .process-accent-teal { color: #2dd4bf; }
+  .process-accent-amber { color: #fbbf24; }
+  .process-accent-fuchsia { color: #e879f9; }
+
+  :root[data-theme='light'] .process-accent-sky { color: #0369a1; }
+  :root[data-theme='light'] .process-accent-violet { color: #6d28d9; }
+  :root[data-theme='light'] .process-accent-teal { color: #0f766e; }
+  :root[data-theme='light'] .process-accent-amber { color: #b45309; }
+  :root[data-theme='light'] .process-accent-fuchsia { color: #a21caf; }
+
+  .process-ring-sky { border-color: rgb(56 189 248 / 0.8); }
+  .process-ring-violet { border-color: rgb(167 139 250 / 0.8); }
+  .process-ring-teal { border-color: rgb(45 212 191 / 0.8); }
+  .process-ring-amber { border-color: rgb(251 191 36 / 0.8); }
+  .process-ring-fuchsia { border-color: rgb(232 121 249 / 0.8); }
+
+  :root[data-theme='light'] .process-ring-sky { border-color: rgb(2 132 199 / 0.72); }
+  :root[data-theme='light'] .process-ring-violet { border-color: rgb(109 40 217 / 0.65); }
+  :root[data-theme='light'] .process-ring-teal { border-color: rgb(15 118 110 / 0.65); }
+  :root[data-theme='light'] .process-ring-amber { border-color: rgb(180 83 9 / 0.65); }
+  :root[data-theme='light'] .process-ring-fuchsia { border-color: rgb(162 28 175 / 0.65); }
+
+  .process-glow-sky { box-shadow: 0 0 28px -4px rgba(56, 189, 248, 0.75); }
+  .process-glow-violet { box-shadow: 0 0 28px -4px rgba(167, 139, 250, 0.75); }
+  .process-glow-teal { box-shadow: 0 0 28px -4px rgba(45, 212, 191, 0.75); }
+  .process-glow-amber { box-shadow: 0 0 28px -4px rgba(251, 191, 36, 0.75); }
+  .process-glow-fuchsia { box-shadow: 0 0 28px -4px rgba(232, 121, 249, 0.75); }
+
+  :root[data-theme='light'] .process-glow-sky { box-shadow: 0 0 22px -4px rgba(2, 132, 199, 0.35); }
+  :root[data-theme='light'] .process-glow-violet { box-shadow: 0 0 22px -4px rgba(109, 40, 217, 0.3); }
+  :root[data-theme='light'] .process-glow-teal { box-shadow: 0 0 22px -4px rgba(15, 118, 110, 0.3); }
+  :root[data-theme='light'] .process-glow-amber { box-shadow: 0 0 22px -4px rgba(180, 83, 9, 0.28); }
+  :root[data-theme='light'] .process-glow-fuchsia { box-shadow: 0 0 22px -4px rgba(162, 28, 175, 0.28); }
+
+  .process-core-icon {
+    color: #60a5fa;
+  }
+
+  :root[data-theme='light'] .process-core-icon {
+    color: #2563eb;
+  }
+
+  :root[data-theme='light'] .group\/step:hover .process-step-glow,
+  :root[data-theme='light'] .process-orbit:has(.hq-core:hover) .process-step-glow {
+    opacity: 0.45 !important;
+  }
+
+  /* ---- Landing: Features section (light + dark) ---- */
+  .feature-icon-wrap {
+    border-color: var(--hairline);
+  }
+
+  :root[data-theme='light'] .feature-icon-wrap {
+    border-color: var(--hq-border);
+    background: linear-gradient(135deg, rgb(79 110 247 / 0.08), rgb(255 255 255 / 0.9)) !important;
+  }
+
+  :root[data-theme='light'] .feature-icon-wrap--cyan {
+    background: linear-gradient(135deg, rgb(8 145 178 / 0.12), rgb(255 255 255 / 0.95)) !important;
+  }
+
+  :root[data-theme='light'] .feature-icon-wrap--purple {
+    background: linear-gradient(135deg, rgb(124 58 237 / 0.1), rgb(255 255 255 / 0.95)) !important;
+  }
+
+  .feature-visual-frame {
+    border-color: var(--hairline);
+  }
+
+  :root[data-theme='light'] .feature-visual-frame {
+    border-color: var(--hq-border);
+  }
+
+  .feature-visual-panel {
+    background: linear-gradient(135deg, rgb(8 145 178 / 0.14), rgb(8 145 178 / 0.04));
+  }
+
+  .feature-visual-panel--purple {
+    background: linear-gradient(135deg, rgb(124 58 237 / 0.14), rgb(124 58 237 / 0.04));
+  }
+
+  :root[data-theme='light'] .feature-visual-panel {
+    background: linear-gradient(135deg, rgb(8 145 178 / 0.1), rgb(244 245 250 / 0.9));
+  }
+
+  :root[data-theme='light'] .feature-visual-panel--purple {
+    background: linear-gradient(135deg, rgb(124 58 237 / 0.08), rgb(244 245 250 / 0.92));
+  }
+
+  .feature-accent-cyan { color: #22d3ee; }
+  .feature-accent-purple { color: #a78bfa; }
+
+  :root[data-theme='light'] .feature-accent-cyan { color: #0891b2; }
+  :root[data-theme='light'] .feature-accent-purple { color: #7c3aed; }
+
   .hq-shell-surface {
     background:
       radial-gradient(1200px 420px at 22% -6%, rgba(59, 130, 246, 0.14), transparent 64%),

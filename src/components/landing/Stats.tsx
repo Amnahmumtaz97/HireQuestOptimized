@@ -96,7 +96,7 @@ export function Stats() {
   const ref = useReveal<HTMLElement>()
 
   return (
-    <section ref={ref} className="relative py-20 sm:py-28" id="stats">
+    <section ref={ref} className="relative pt-0 sm:pt-4 pb-20 sm:pb-28" id="stats">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="reveal text-center max-w-2xl mx-auto mb-14">
           <span className="inline-flex items-center rounded-full glass px-4 py-1.5 text-sm uppercase tracking-wider text-muted-foreground">
