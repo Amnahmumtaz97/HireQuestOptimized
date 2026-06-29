@@ -1,6 +1,7 @@
 import { Navbar } from '@/components/landing/Navbar'
 import { Pricing } from '@/components/pricing/Pricing'
 import { Footer } from '@/components/landing/Footer'
+import { ConstellationBackground } from '@/components/landing/ConstellationBackground'
 
 export const metadata = {
   title: 'Pricing — HireQuest',
@@ -9,10 +10,16 @@ export const metadata = {
 
 export default function PricingPage() {
   return (
-    <main className="min-h-screen overflow-x-clip">
-      <Navbar />
-      <Pricing />
-      <Footer />
+    <main className="landing-page-shell relative min-h-screen overflow-x-clip">
+      <ConstellationBackground
+        className="absolute inset-0 z-0 min-h-full w-full pointer-events-none opacity-70"
+        intensity={0.55}
+      />
+      <div className="relative z-10">
+        <Navbar />
+        <Pricing />
+        <Footer />
+      </div>
     </main>
   )
 }
