@@ -39,7 +39,7 @@ Features are grouped by area. Status indicates what is typically implemented in-
 - **Live** — **Next / Previous** — navigation with index persisted server-side; draft text can be saved when moving (implementation detail).
 - **Live** — **Finish Interview** — shown when on the last question or when every question has a non-empty saved answer; sets `status: completed` and routes to **results**.
 - **Live** — **Session timer** for timed interviews (`durationMinutes`, `interviewStartedAt`).
-- **Partial** — **Voice / spoken answers** — mobile-friendly shell exists (Capacitor); dedicated STT capture and attachment of transcripts per answer is **planned** (see workflow below).
+- **Partial** — **Voice / spoken answers** — dedicated STT capture and attachment of transcripts per answer is **planned** (see workflow below).
 
 ### Results and progress
 
@@ -59,10 +59,6 @@ Features are grouped by area. Status indicates what is typically implemented in-
 
 - **Live / Partial** — **Pricing** and **subscription** pages and flows as implemented; exact billing provider integration depends on deployment.
 - **Live** — **Analytics** route for usage/insights UI as built.
-
-### Mobile
-
-- **Live** — **Capacitor** app in `apps/mobile` that loads the hosted Next.js site (`HQ_MOBILE_SERVER_URL`), suitable for store distribution and native capabilities (camera, biometrics, push hooks in dependencies).
 
 ### Operations and data
 
@@ -174,7 +170,6 @@ flowchart LR
 | Evaluation (planned) | Speech-to-text for voice answers; NLP/LLM rubric scoring and feedback (can reuse Gemini or a dedicated STT provider); structured scores stored on the session |
 | Forms / validation | react-hook-form, Zod |
 | PWA | [next-pwa](https://github.com/shadowwalker/next-pwa) (service worker disabled in development) |
-| Mobile shell | Capacitor 8 (`apps/mobile`) wrapping the hosted web app |
 
 ---
 
@@ -192,7 +187,6 @@ src/
   lib/                 # Shared utilities, auth/db helpers
   models/              # Mongoose schemas (User, InterviewSession, InterviewConfig)
 scripts/               # create-admin, seed-interview-config
-apps/mobile/           # Capacitor wrapper (see apps/mobile/README.md)
 ```
 
 ---
@@ -242,12 +236,6 @@ When the evaluation pipeline is implemented, document any new keys here (for exa
 
 ---
 
-## Mobile app
-
-The **`apps/mobile`** package is a **Capacitor** wrapper that loads the deployed Next.js site (configure `HQ_MOBILE_SERVER_URL`). Setup and platform commands are described in [apps/mobile/README.md](apps/mobile/README.md).
-
----
-
 ## Conventions worth knowing
 
 - **Theming** — `ThemeProvider` and `hirequest.theme` in `localStorage`; root layout sets `data-theme` early to reduce flash.
@@ -259,6 +247,5 @@ The **`apps/mobile`** package is a **Capacitor** wrapper that loads the deployed
 ## Related docs
 
 - Root: this file (`PROJECT.md`).
-- Mobile: `apps/mobile/README.md`.
 
 For dependency versions and exact tooling, see `package.json`.

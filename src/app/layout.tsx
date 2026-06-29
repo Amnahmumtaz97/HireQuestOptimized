@@ -5,8 +5,6 @@ import { SessionProvider } from '@/components/providers/SessionProvider'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { MotionProvider } from '@/components/providers/MotionProvider'
 import { ToastProvider } from '@/components/ui/toast'
-import { NativeAppBridge } from '@/components/providers/NativeAppBridge'
-
 export const metadata: Metadata = {
   title: 'HireQuest – Your Shortcut to Interview Success',
   description: 'AI-powered interview preparation made simple and effective. Practice with realistic mock interviews, get instant feedback, and land your dream role.',
@@ -40,7 +38,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ToastProvider>
             <SessionProvider>
               <MotionProvider>
-                <NativeAppBridge />
                 {children}
               </MotionProvider>
             </SessionProvider>

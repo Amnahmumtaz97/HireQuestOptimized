@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">HireQuest</string>
-    <string name="title_activity_main">HireQuest</string>
-    <string name="package_name">com.hirequest.app</string>
-    <string name="custom_url_scheme">com.hirequest.app</string>
-</resources>

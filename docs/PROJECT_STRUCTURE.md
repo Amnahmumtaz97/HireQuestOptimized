@@ -15,7 +15,6 @@ This document maps the main folders and files in **HireQuest** (Next.js 16 app):
 | `src/hooks/` | **Reusable React hooks** (sessions, interview runtime, UI helpers). |
 | `src/utils/` | **Pure helpers** (labels, dates, dashboard mappings). |
 | `src/services/` | **Domain services** (e.g. billing) used from API or UI. |
-| `apps/mobile/` | **Capacitor / Android** shell for a native wrapper (separate from the main web app). |
 | `scripts/` | **Node CLI scripts** (seed data, create admin user). |
 | `docs/` | **Documentation** (this file, UML diagrams under `docs/uml/`). |
 
@@ -135,8 +134,6 @@ These routes are typically wrapped by `src/app/app/layout.tsx` (session-aware la
 | `interview-questions/clean-question-text.ts` | **Strips** unwanted prefixes from model output. |
 | `interview-questions/parse-gemini-json.ts` | **Parses** structured JSON from Gemini responses. |
 | `interview-questions/generate.ts` | **Orchestrates** generation (calls Gemini + validation + persistence path as used by API). |
-| `native/isNativeApp.ts` | Detects if the app runs inside the **Capacitor** WebView. |
-| `native/registerNativeAppListeners.ts` | Wires **native app** events (resume, back button, etc.). |
 
 ---
 
@@ -153,7 +150,6 @@ These routes are typically wrapped by `src/app/app/layout.tsx` (session-aware la
 | `SessionProvider.tsx` | Wraps **next-auth** `SessionProvider` for client components. |
 | `ThemeProvider.tsx` | **Light/dark** (or theme) context. |
 | `MotionProvider.tsx` | **Framer Motion** reduced-motion / layout preferences if configured. |
-| `NativeAppBridge.tsx` | **Native shell** integration when running in Capacitor. |
 
 ### `components/landing/` & `components/sections/`
 
@@ -249,18 +245,6 @@ Marketing **Hero**, **Navbar**, **Footer**, **Pricing**, **Process**, **Stats**,
 |------|---------|
 | `PROJECT_STRUCTURE.md` | **This** structural overview. |
 | `uml/*.puml` | **PlantUML** diagrams (domain, DB, flows) if you maintain them. |
-
----
-
-## `apps/mobile/`
-
-| Area | Purpose |
-|------|---------|
-| `capacitor.config.ts` | **Capacitor** config (app id, web dir, plugins). |
-| `android/` | **Android Studio** project (Gradle, `MainActivity`, resources). |
-| `www/` | Static placeholder or built assets for the native shell. |
-
-The **web app** remains the Next.js project at the repo root; the mobile folder wraps it for distribution as an app.
 
 ---
 
