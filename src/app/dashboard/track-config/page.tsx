@@ -1,5 +1,5 @@
 import { DashboardNavbar } from '@/components/dashboard/DashboardNavbar'
-import { TrackConfigManager } from '@/components/dashboard/TrackConfigManager'
+import { TrackConfigManagerClient } from '@/components/dashboard/TrackConfigManagerClient'
 
 export const metadata = {
   title: 'Track Config — HireQuest',
@@ -11,7 +11,7 @@ export default function TrackConfigPage() {
       <DashboardNavbar />
       <div className="mx-auto max-w-7xl">
         <div className="overflow-hidden rounded-3xl border border-border glass-strong">
-          <TrackConfigManager />
+          <TrackConfigManagerClient />
         </div>
       </div>
     </main>

@@ -1,22 +1,28 @@
 import { NextResponse } from 'next/server'
-import { connectToDatabase } from '@/lib/mongoose'
-import { InterviewConfigModel } from '@/models/InterviewConfig'
+import { loadInterviewCatalogDepartments } from '@/lib/interview-catalog/load'
 
 export async function GET() {
   try {
-    await connectToDatabase()
-
-    const configs = await InterviewConfigModel.find({ isActive: true })
-      .sort({ industryLabel: 1 })
-      .select({
-        industryKey: 1,
-        industryLabel: 1,
-        roleCategories: 1,
-        isActive: 1,
-      })
-      .lean()
-
-    return NextResponse.json({ configs })
+    const departments = await loadInterviewCatalogDepartments()
+    return NextResponse.json({
+      departments,
+      /** @deprecated Use `departments`. Kept for older admin tooling. */
+      configs: departments.map((department) => ({
+        industryKey: department.key,
+        industryLabel: department.label,
+        roleCategories: department.specializations.map((specialization) => ({
+          key: specialization.key,
+          label: specialization.label,
+          interviewTypes: ['Technical', 'Behavioral'],
+          technicalTopics: specialization.technicalTopics,
+          behavioralTopics: specialization.behavioralTopics,
+          technicalQuestionRatio: specialization.technicalQuestionRatio,
+          durationEnabled: specialization.durationEnabled,
+          durations: specialization.durations,
+        })),
+        isActive: true,
+      })),
+    })
   } catch (error) {
     return NextResponse.json(
       {

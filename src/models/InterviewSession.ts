@@ -12,11 +12,30 @@ export interface IInterviewQuestion {
 
 export interface IInterviewSession {
   userId: string
+  /** @deprecated Use departmentKey */
   industryKey: string
+  departmentKey?: string
+  departmentKeys?: string[]
+  selectAllDepartments?: boolean
+  /** @deprecated Use departmentKeys / selectAllDepartments */
+  industryKeys?: string[]
+  selectAllIndustries?: boolean
+  /** @deprecated Use specializationKey */
   roleCategoryKey: string
+  specializationKey?: string
+  specializationRefs?: string[]
+  /** @deprecated Use specializationRefs */
+  roleRefs?: string[]
+  specializationKeys?: string[]
+  /** @deprecated Use specializationKeys */
+  roleCategoryKeys?: string[]
+  selectAllSpecializations?: boolean
+  /** @deprecated Use selectAllSpecializations */
+  selectAllRoleCategories?: boolean
+  selectAllTopics?: boolean
   interviewType: 'technical' | 'behavioral' | 'both'
   topics: string[]
-  difficulty: 'Easy' | 'Medium' | 'Hard'
+  difficulty: 'Easy' | 'Medium' | 'Hard' | 'Adaptive'
   totalQuestions: number
   technicalQuestionRatio: number
   durationMinutes?: number | null
@@ -39,7 +58,20 @@ const interviewSessionSchema = new Schema<IInterviewSession>(
   {
     userId: { type: String, required: true, index: true },
     industryKey: { type: String, required: true, trim: true },
+    departmentKey: { type: String, trim: true },
+    departmentKeys: { type: [String], default: [] },
+    selectAllDepartments: { type: Boolean, default: false },
+    industryKeys: { type: [String], default: [] },
+    selectAllIndustries: { type: Boolean, default: false },
     roleCategoryKey: { type: String, required: true, trim: true },
+    specializationKey: { type: String, trim: true },
+    specializationRefs: { type: [String], default: [] },
+    roleRefs: { type: [String], default: [] },
+    specializationKeys: { type: [String], default: [] },
+    roleCategoryKeys: { type: [String], default: [] },
+    selectAllSpecializations: { type: Boolean, default: false },
+    selectAllRoleCategories: { type: Boolean, default: false },
+    selectAllTopics: { type: Boolean, default: false },
     interviewType: {
       type: String,
       required: true,
@@ -47,7 +79,7 @@ const interviewSessionSchema = new Schema<IInterviewSession>(
       enum: ['technical', 'behavioral', 'both'],
     },
     topics: { type: [String], required: true, default: [] },
-    difficulty: { type: String, required: true, enum: ['Easy', 'Medium', 'Hard'] },
+    difficulty: { type: String, required: true, enum: ['Easy', 'Medium', 'Hard', 'Adaptive'] },
     totalQuestions: { type: Number, required: true, min: 1 },
     technicalQuestionRatio: { type: Number, required: true, min: 0, max: 100 },
     durationMinutes: { type: Number, min: 1, default: null },

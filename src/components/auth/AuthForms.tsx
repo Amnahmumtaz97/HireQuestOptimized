@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight, ArrowLeft, Phone } from 'lucide-react'
 import Link from 'next/link'
 import { getSession, signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -36,16 +35,15 @@ interface Props {
   onToggle: () => void
 }
 
-async function redirectByRole(router: ReturnType<typeof useRouter>) {
-  // Avoid an extra /api/auth/session round-trip after sign-in by reading the
-  // session once here and routing appropriately.
+async function redirectAfterAuth() {
+  // Full page load so the session cookie and server components stay in sync on Vercel.
   const session = await getSession()
   const role = session?.user?.role
-  router.push(role === 'admin' ? '/dashboard' : '/app')
+  const destination = role === 'admin' ? '/dashboard' : '/app/new-interview'
+  window.location.assign(destination)
 }
 
 export function AuthForms({ mode, onToggle }: Props) {
-  const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
@@ -113,7 +111,7 @@ export function AuthForms({ mode, onToggle }: Props) {
         })
 
         if (response?.ok) {
-          await redirectByRole(router)
+          await redirectAfterAuth()
           return
         }
 
@@ -155,7 +153,7 @@ export function AuthForms({ mode, onToggle }: Props) {
         return
       }
 
-      await redirectByRole(router)
+      await redirectAfterAuth()
     } catch {
       setErrorMessage('Something went wrong. Please try again.')
     } finally {

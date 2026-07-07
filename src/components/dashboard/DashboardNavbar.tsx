@@ -39,6 +39,7 @@ export const DashboardNavbar: FC<DashboardNavbarProps> = ({
   variant = 'fixed',
 }) => {
   const [scrolled, setScrolled] = useState(false)
+  const [themeReady, setThemeReady] = useState(false)
   const { data: session } = useSession()
   const { theme, toggleTheme } = useTheme()
 
@@ -59,6 +60,10 @@ export const DashboardNavbar: FC<DashboardNavbarProps> = ({
     window.addEventListener('scroll', onScroll, { passive: true })
 
     return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  useEffect(() => {
+    setThemeReady(true)
   }, [])
 
   const isFixed = variant === 'fixed'
@@ -99,15 +104,17 @@ export const DashboardNavbar: FC<DashboardNavbarProps> = ({
               type="button"
               aria-label="Toggle theme"
               onClick={toggleTheme}
+              suppressHydrationWarning
               className="hidden sm:inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-glass bg-input/10 text-muted-foreground hover:text-foreground hover:bg-input/22 pressable ripple"
             >
-              {theme === 'light' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              {!themeReady ? <Moon className="h-4 w-4" /> : theme === 'light' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
+                  suppressHydrationWarning
                   className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-glass bg-input/10 text-muted-foreground hover:bg-input/22 hover:text-foreground pressable ripple"
                   aria-label="Notifications"
                 >
@@ -124,6 +131,7 @@ export const DashboardNavbar: FC<DashboardNavbarProps> = ({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
+                  suppressHydrationWarning
                   className="inline-flex items-center gap-2 rounded-full border border-glass bg-input/12 pl-1 pr-3 h-10 text-sm font-semibold text-foreground hover:bg-input/18 pressable ripple"
                 >
                   <span className="relative">

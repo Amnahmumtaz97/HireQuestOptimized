@@ -1,5 +1,6 @@
 import type { Difficulty } from '@/components/app/DifficultySelector'
 import type { InterviewType } from '@/components/app/InterviewTypeSelector'
+import type { DepartmentConfig } from '@/lib/interview-catalog/types'
 
 export type RoleCategoryConfig = {
   key: string
@@ -12,6 +13,7 @@ export type RoleCategoryConfig = {
   durations: number[]
 }
 
+/** @deprecated Use DepartmentConfig from interview-catalog */
 export type InterviewConfig = {
   _id: string
   industryKey: string
@@ -29,10 +31,23 @@ export type InterviewQuestion = {
 export type InterviewSession = {
   _id: string
   industryKey: string
+  departmentKey?: string
+  departmentKeys?: string[]
+  selectAllDepartments?: boolean
+  industryKeys?: string[]
+  selectAllIndustries?: boolean
   roleCategoryKey: string
+  specializationKey?: string
+  specializationRefs?: string[]
+  roleRefs?: string[]
+  specializationKeys?: string[]
+  roleCategoryKeys?: string[]
+  selectAllSpecializations?: boolean
+  selectAllRoleCategories?: boolean
+  selectAllTopics?: boolean
   interviewType: 'technical' | 'behavioral' | 'both'
   topics: string[]
-  difficulty: 'Easy' | 'Medium' | 'Hard'
+  difficulty: Difficulty
   totalQuestions: number
   durationMinutes?: number | null
   status: 'created' | 'in_progress' | 'completed'
@@ -42,16 +57,38 @@ export type InterviewSession = {
   flaggedQuestionIndexes?: number[]
 }
 
-export type WizardStepKey = 'roleSelection' | 'topicsAndType' | 'experienceDifficulty' | 'reviewGenerate'
+export type WizardStepKey =
+  | 'interviewType'
+  | 'department'
+  | 'specialization'
+  | 'topics'
+  | 'difficulty'
+  | 'generate'
 
 export type CreateInterviewDraft = {
-  industryKey: string
-  roleCategoryKey: string
+  departmentKey: string
+  departmentKeys: string[]
+  selectAllDepartments: boolean
+  specializationKey: string
+  specializationRefs: string[]
+  specializationKeys: string[]
+  selectAllSpecializations: boolean
+  selectAllTopics: boolean
   interviewType: InterviewType | null
   topics: string[]
   difficulty: Difficulty
   totalQuestions: number
   technicalQuestionRatio: number
   durationMinutes?: number | null
+  /** Legacy aliases for local draft restore */
+  industryKey?: string
+  industryKeys?: string[]
+  selectAllIndustries?: boolean
+  roleCategoryKey?: string
+  roleRefs?: string[]
+  roleCategoryKeys?: string[]
+  selectAllRoleCategories?: boolean
 }
+
+export type { DepartmentConfig }
 

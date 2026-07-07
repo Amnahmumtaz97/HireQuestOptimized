@@ -1,20 +1,82 @@
-import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
 import { z } from 'zod'
 import { authOptions } from '@/lib/auth'
+import { getServerSession } from 'next-auth'
+import { NextResponse } from 'next/server'
+import {
+  normalizeSpecializationRefs,
+  parseSpecializationRef,
+  resolveTopicsForInterview,
+} from '@/lib/interview-catalog'
+import { loadInterviewCatalogDepartments } from '@/lib/interview-catalog/load'
 import { connectToDatabase } from '@/lib/mongoose'
 import { InterviewSessionModel } from '@/models/InterviewSession'
 
-const createInterviewSchema = z.object({
-  industryKey: z.string().trim().min(1),
-  roleCategoryKey: z.string().trim().min(1),
-  interviewType: z.enum(['technical', 'behavioral', 'both']),
-  topics: z.array(z.string().trim().min(1)).min(1),
-  difficulty: z.enum(['Easy', 'Medium', 'Hard']),
-  totalQuestions: z.number().int().positive(),
-  technicalQuestionRatio: z.number().int().min(0).max(100),
-  durationMinutes: z.number().int().positive().nullable().optional(),
-})
+const createInterviewSchema = z
+  .object({
+    departmentKey: z.string().trim().min(1).optional(),
+    departmentKeys: z.array(z.string().trim().min(1)).optional(),
+    selectAllDepartments: z.boolean().optional().default(false),
+    industryKey: z.string().trim().min(1).optional(),
+    industryKeys: z.array(z.string().trim().min(1)).optional(),
+    selectAllIndustries: z.boolean().optional().default(false),
+    specializationKey: z.string().trim().min(1).optional(),
+    specializationKeys: z.array(z.string().trim().min(1)).optional(),
+    specializationRefs: z.array(z.string().trim().min(1)).optional(),
+    selectAllSpecializations: z.boolean().optional().default(false),
+    roleCategoryKey: z.string().trim().min(1).optional(),
+    roleCategoryKeys: z.array(z.string().trim().min(1)).optional(),
+    roleRefs: z.array(z.string().trim().min(1)).optional(),
+    selectAllRoleCategories: z.boolean().optional().default(false),
+    selectAllTopics: z.boolean().optional().default(false),
+    interviewType: z.enum(['technical', 'behavioral', 'both']),
+    topics: z.array(z.string().trim().min(1)).default([]),
+    difficulty: z.enum(['Easy', 'Medium', 'Hard', 'Adaptive']),
+    totalQuestions: z.number().int().positive(),
+    technicalQuestionRatio: z.number().int().min(0).max(100),
+    durationMinutes: z.number().int().positive().nullable().optional(),
+  })
+  .superRefine((data, ctx) => {
+    const hasDepartments =
+      data.selectAllDepartments ||
+      data.selectAllIndustries ||
+      (data.departmentKeys?.length ?? 0) > 0 ||
+      (data.industryKeys?.length ?? 0) > 0 ||
+      Boolean(data.departmentKey?.trim()) ||
+      Boolean(data.industryKey?.trim())
+    if (!hasDepartments) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Select at least one department',
+        path: ['departmentKeys'],
+      })
+    }
+
+    const hasSpecializations =
+      data.selectAllSpecializations ||
+      data.selectAllRoleCategories ||
+      (data.specializationRefs?.length ?? 0) > 0 ||
+      (data.roleRefs?.length ?? 0) > 0 ||
+      (data.specializationKeys?.length ?? 0) > 0 ||
+      (data.roleCategoryKeys?.length ?? 0) > 0 ||
+      Boolean(data.specializationKey?.trim()) ||
+      Boolean(data.roleCategoryKey?.trim())
+    if (!hasSpecializations) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Select at least one specialization',
+        path: ['specializationRefs'],
+      })
+    }
+
+    const hasTopics = data.selectAllTopics || data.topics.length > 0
+    if (!hasTopics) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Select at least one topic',
+        path: ['topics'],
+      })
+    }
+  })
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -56,9 +118,87 @@ export async function POST(request: Request) {
 
     await connectToDatabase()
 
+    const departments = await loadInterviewCatalogDepartments()
+    const departmentKeysInput =
+      parsed.data.departmentKeys?.length
+        ? parsed.data.departmentKeys
+        : parsed.data.industryKeys?.length
+          ? parsed.data.industryKeys
+          : parsed.data.departmentKey
+            ? [parsed.data.departmentKey]
+            : parsed.data.industryKey
+              ? [parsed.data.industryKey]
+              : []
+
+    const specializationRefs = normalizeSpecializationRefs(departments, {
+      departmentKeys: departmentKeysInput,
+      selectAllDepartments:
+        parsed.data.selectAllDepartments || parsed.data.selectAllIndustries,
+      specializationRefs: parsed.data.specializationRefs,
+      roleRefs: parsed.data.roleRefs,
+      specializationKeys: parsed.data.specializationKeys,
+      roleCategoryKeys: parsed.data.roleCategoryKeys,
+      specializationKey: parsed.data.specializationKey,
+      roleCategoryKey: parsed.data.roleCategoryKey,
+    })
+
+    const resolved = resolveTopicsForInterview(departments, {
+      selectAllDepartments:
+        parsed.data.selectAllDepartments || parsed.data.selectAllIndustries,
+      departmentKeys: departmentKeysInput,
+      interviewType: parsed.data.interviewType,
+      selectAllSpecializations:
+        parsed.data.selectAllSpecializations || parsed.data.selectAllRoleCategories,
+      specializationRefs,
+      selectAllTopics: parsed.data.selectAllTopics,
+      topics: parsed.data.topics,
+    })
+
+    if (resolved.departmentKeys.length === 0) {
+      return NextResponse.json({ message: 'No valid departments selected' }, { status: 400 })
+    }
+
+    if (resolved.specializationRefs.length === 0) {
+      return NextResponse.json({ message: 'No valid specializations selected' }, { status: 400 })
+    }
+
+    if (resolved.topics.length === 0) {
+      return NextResponse.json(
+        { message: 'No topics available for the selected interview type and specializations' },
+        { status: 400 },
+      )
+    }
+
+    const primaryDepartmentKey = resolved.departmentKeys[0]
+    const primarySpecializationKey =
+      parseSpecializationRef(resolved.specializationRefs[0])?.specializationKey ??
+      resolved.specializationKeys[0]
+
     const created = await InterviewSessionModel.create({
       userId: session.user.id,
-      ...parsed.data,
+      industryKey: primaryDepartmentKey,
+      departmentKey: primaryDepartmentKey,
+      departmentKeys: resolved.departmentKeys,
+      industryKeys: resolved.departmentKeys,
+      selectAllDepartments: parsed.data.selectAllDepartments || parsed.data.selectAllIndustries,
+      selectAllIndustries: parsed.data.selectAllDepartments || parsed.data.selectAllIndustries,
+      roleCategoryKey: primarySpecializationKey,
+      specializationKey: primarySpecializationKey,
+      specializationRefs: resolved.specializationRefs,
+      roleRefs: resolved.specializationRefs,
+      specializationKeys: resolved.specializationKeys,
+      roleCategoryKeys: resolved.specializationKeys,
+      selectAllSpecializations:
+        parsed.data.selectAllSpecializations || parsed.data.selectAllRoleCategories,
+      selectAllRoleCategories:
+        parsed.data.selectAllSpecializations || parsed.data.selectAllRoleCategories,
+      selectAllTopics: parsed.data.selectAllTopics,
+      interviewType: parsed.data.interviewType,
+      topics: parsed.data.selectAllTopics ? [] : parsed.data.topics,
+      difficulty: parsed.data.difficulty,
+      totalQuestions: parsed.data.totalQuestions,
+      technicalQuestionRatio: parsed.data.technicalQuestionRatio,
+      durationMinutes: parsed.data.durationMinutes ?? null,
       status: 'created',
     })
 
@@ -70,4 +210,3 @@ export async function POST(request: Request) {
     )
   }
 }
-

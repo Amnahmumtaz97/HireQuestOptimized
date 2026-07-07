@@ -26,7 +26,7 @@ export function validateGeneratedQuestions(
   for (let i = 0; i < questions.length; i++) {
     const q = questions[i]
 
-    if (q.difficulty !== params.difficulty) {
+    if (params.difficulty !== 'Adaptive' && q.difficulty !== params.difficulty) {
       issues.push({
         level: 'error',
         index: i,

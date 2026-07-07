@@ -5,11 +5,11 @@ import { Plus, BookmarkCheck, Sparkles } from 'lucide-react'
 import type { InterviewType } from '@/components/app/InterviewTypeSelector'
 
 export function StartInterviewButton({
-  canStart, isCreating, isSaving, onSaveDraft, onStart, interviewType, topics,
+  canStart, isCreating, isSaving, onSaveDraft, onStart, interviewType, topicCount,
 }: {
   canStart: boolean; isCreating: boolean; isSaving: boolean
   onSaveDraft: () => void; onStart: () => void
-  interviewType: InterviewType | null; topics: string[]
+  interviewType: InterviewType | null; topicCount: number
 }) {
   return (
     <div className="pt-2 animate-fade-up">
@@ -28,7 +28,7 @@ export function StartInterviewButton({
                 {interviewType ? labelForInterviewType(interviewType) : 'Pick interview type'}
               </span>
               <span className="rounded-full border border-border bg-input/30 px-2.5 py-1 text-foreground">
-                {topics.length} topic{topics.length === 1 ? '' : 's'}
+                {topicCount} topic{topicCount === 1 ? '' : 's'}
               </span>
             </div>
           </div>

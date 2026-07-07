@@ -2,10 +2,12 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { InterviewGenerationParams } from '@/lib/interview-questions/prompt'
 import type { InterviewQuestionItem } from '@/lib/interview-questions/schema'
 import { allocateKinds } from '@/lib/interview-questions/templates'
+import { assignTopicsEvenly } from '@/lib/interview-scope'
 import { formatGeneratedQuestion } from '@/lib/interview-questions/clean-question-text'
 import { parseGeminiQuestionJsonArray } from '@/lib/interview-questions/parse-gemini-json'
 import { generateDiagramImageDataUrl, type DiagramKind } from '@/lib/gemini/generate-diagram-image'
 import { isGeminiRateLimitError, resolveTextModelChain } from '@/lib/gemini/model-fallback'
+import { difficultyForQuestionIndex, difficultyPromptLabel } from '@/lib/interview-questions/difficulty'
 import { formatIndustryDisplay, formatRoleCategoryDisplay } from '@/utils/dashboard/interview-labels'
 
 const DEFAULT_MODEL = 'gemini-2.0-flash'
@@ -50,7 +52,17 @@ function getGenerativeModel(genAI: GoogleGenerativeAI, modelId: string) {
 }
 
 function roleLabel(params: InterviewGenerationParams): string {
-  return `${formatIndustryDisplay(params.industryKey)} / ${formatRoleCategoryDisplay(params.industryKey, params.roleCategoryKey)}`
+  const industryLabels = params.industryLabels?.filter(Boolean)
+  const industryPart =
+    industryLabels && industryLabels.length > 1
+      ? industryLabels.join(', ')
+      : formatIndustryDisplay(params.industryKey)
+
+  const roleLabels = params.roleCategoryLabels?.filter(Boolean)
+  if (roleLabels && roleLabels.length > 1) {
+    return `${industryPart} / ${roleLabels.join(', ')}`
+  }
+  return `${industryPart} / ${formatRoleCategoryDisplay(params.industryKey, params.roleCategoryKey)}`
 }
 
 function buildBatchPrompt(params: InterviewGenerationParams): string {
@@ -93,8 +105,8 @@ Style rules:
 
 Context:
 - Role: ${roleLabel(params)}
-- Topics (use across questions): ${params.topics.join(', ') || 'General'}
-- Difficulty level for all questions: ${params.difficulty}
+- Topics (distribute questions evenly across these): ${params.topics.join(', ') || 'General'}
+- Difficulty level for all questions: ${difficultyPromptLabel(params.difficulty)}
 - Interview type: ${params.interviewType}
 - ${ratioHint}
 
@@ -159,12 +171,12 @@ export async function generateQuestionsWithGemini(
     diagramFlags[i] = true
     spareDiagramSlots -= 1
   }
-  const topicPool = params.topics.length > 0 ? params.topics : ['General']
+  const assignedTopics = assignTopicsEvenly(params.totalQuestions, params.topics)
 
   const questions: InterviewQuestionItem[] = parsed.map((item, i) => ({
     type: kinds[i],
-    topic: topicPool[i % topicPool.length],
-    difficulty: params.difficulty,
+    topic: assignedTopics[i] ?? 'General',
+    difficulty: difficultyForQuestionIndex(params.difficulty, i),
     question: formatGeneratedQuestion(item.question),
     illustrationRequired: Boolean(item.requiresDiagram),
   }))

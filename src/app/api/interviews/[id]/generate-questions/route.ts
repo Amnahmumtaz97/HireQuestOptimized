@@ -5,6 +5,11 @@ import { authOptions } from '@/lib/auth'
 import { connectToDatabase } from '@/lib/mongoose'
 import { InterviewSessionModel } from '@/models/InterviewSession'
 import { generateInterviewQuestions } from '@/lib/interview-questions/generate'
+import {
+  normalizeSpecializationRefs,
+  resolveTopicsForInterview,
+} from '@/lib/interview-catalog'
+import { loadInterviewCatalogDepartments } from '@/lib/interview-catalog/load'
 
 export async function POST(
   request: Request,
@@ -22,7 +27,7 @@ export async function POST(
 
   try {
     const url = new URL(request.url)
-    void url // reserved for future debug flags
+    void url
 
     await connectToDatabase()
     const doc = await InterviewSessionModel.findOne({
@@ -34,11 +39,48 @@ export async function POST(
       return NextResponse.json({ message: 'Interview not found' }, { status: 404 })
     }
 
+    const departments = await loadInterviewCatalogDepartments()
+    const departmentKeys =
+      doc.departmentKeys?.length
+        ? doc.departmentKeys
+        : doc.industryKeys?.length
+          ? doc.industryKeys
+          : doc.departmentKey
+            ? [doc.departmentKey]
+            : doc.industryKey
+              ? [doc.industryKey]
+              : []
+
+    const specializationRefs = normalizeSpecializationRefs(departments, {
+      departmentKeys,
+      selectAllDepartments: Boolean(doc.selectAllDepartments ?? doc.selectAllIndustries),
+      specializationRefs: doc.specializationRefs,
+      roleRefs: doc.roleRefs,
+      specializationKeys: doc.specializationKeys,
+      roleCategoryKeys: doc.roleCategoryKeys,
+      specializationKey: doc.specializationKey,
+      roleCategoryKey: doc.roleCategoryKey,
+    })
+
+    const resolved = resolveTopicsForInterview(departments, {
+      selectAllDepartments: Boolean(doc.selectAllDepartments ?? doc.selectAllIndustries),
+      departmentKeys,
+      interviewType: doc.interviewType,
+      selectAllSpecializations: Boolean(doc.selectAllSpecializations ?? doc.selectAllRoleCategories),
+      specializationRefs,
+      selectAllTopics: Boolean(doc.selectAllTopics),
+      topics: doc.topics ?? [],
+    })
+
     const result = await generateInterviewQuestions({
       industryKey: doc.industryKey,
+      industryKeys: resolved.departmentKeys,
+      industryLabels: resolved.departmentLabels,
       roleCategoryKey: doc.roleCategoryKey,
+      roleCategoryKeys: resolved.specializationKeys,
+      roleCategoryLabels: resolved.specializationLabels,
       interviewType: doc.interviewType,
-      topics: doc.topics,
+      topics: resolved.topics,
       difficulty: doc.difficulty,
       totalQuestions: doc.totalQuestions,
       technicalQuestionRatio: doc.technicalQuestionRatio,

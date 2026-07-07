@@ -1,9 +1,6 @@
 import type { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import bcrypt from 'bcryptjs'
 import { z } from 'zod'
-import { connectToDatabase } from '@/lib/mongoose'
-import { UserModel } from '@/models/User'
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -11,6 +8,7 @@ const credentialsSchema = z.object({
 })
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: 'jwt',
   },
@@ -29,6 +27,12 @@ export const authOptions: NextAuthOptions = {
         if (!parsed.success) {
           return null
         }
+
+        const [{ default: bcrypt }, { connectToDatabase }, { UserModel }] = await Promise.all([
+          import('bcryptjs'),
+          import('@/lib/mongoose'),
+          import('@/models/User'),
+        ])
 
         await connectToDatabase()
 

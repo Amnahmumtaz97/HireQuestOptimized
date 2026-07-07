@@ -14,6 +14,7 @@ export interface IRoleCategoryConfig {
 export interface IInterviewConfig {
   industryKey: string
   industryLabel: string
+  description?: string
   roleCategories: IRoleCategoryConfig[]
   isActive: boolean
 }
@@ -55,13 +56,14 @@ const interviewConfigSchema = new Schema<IInterviewConfig>(
       required: true,
       trim: true,
     },
+    description: {
+      type: String,
+      trim: true,
+      default: '',
+    },
     roleCategories: {
       type: [roleCategorySchema],
       default: [],
-      validate: {
-        validator: (value: IRoleCategoryConfig[]) => Array.isArray(value) && value.length > 0,
-        message: 'Each industry must have at least one role category',
-      },
     },
     isActive: {
       type: Boolean,

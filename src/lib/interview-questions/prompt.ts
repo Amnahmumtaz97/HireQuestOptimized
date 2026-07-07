@@ -1,9 +1,13 @@
 export type InterviewGenerationParams = {
   industryKey: string
+  industryKeys?: string[]
+  industryLabels?: string[]
   roleCategoryKey: string
+  roleCategoryKeys?: string[]
+  roleCategoryLabels?: string[]
   interviewType: 'technical' | 'behavioral' | 'both'
   topics: string[]
-  difficulty: 'Easy' | 'Medium' | 'Hard'
+  difficulty: 'Easy' | 'Medium' | 'Hard' | 'Adaptive'
   totalQuestions: number
   technicalQuestionRatio: number
 }

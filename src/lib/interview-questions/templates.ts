@@ -1,6 +1,8 @@
 import type { InterviewQuestionItem } from '@/lib/interview-questions/schema'
 import type { InterviewGenerationParams } from '@/lib/interview-questions/prompt'
+import { assignTopicsEvenly } from '@/lib/interview-scope'
 import { cleanQuestionText } from '@/lib/interview-questions/clean-question-text'
+import { difficultyForQuestionIndex } from '@/lib/interview-questions/difficulty'
 
 export function allocateKinds(
   interviewType: InterviewGenerationParams['interviewType'],
@@ -25,18 +27,19 @@ export function allocateKinds(
 export function buildTemplateQuestions(params: InterviewGenerationParams): InterviewQuestionItem[] {
   const { topics, difficulty, totalQuestions, interviewType, technicalQuestionRatio } = params
   const kinds = allocateKinds(interviewType, totalQuestions, technicalQuestionRatio)
-  const topicPool = topics.length > 0 ? topics : ['General']
+  const assignedTopics = assignTopicsEvenly(totalQuestions, topics)
 
   return kinds.map((kind, i) => {
-    const topic = topicPool[i % topicPool.length]
+    const topic = assignedTopics[i] ?? 'General'
+    const questionDifficulty = difficultyForQuestionIndex(difficulty, i)
     const draft =
       kind === 'technical'
-        ? `For "${topic}" at ${difficulty} difficulty: describe how you would approach a realistic scenario, key trade-offs, and how you would validate your solution.`
-        : `For "${topic}" at ${difficulty} difficulty: describe a concrete situation, your actions, stakeholders involved, and what you learned.`
+        ? `For "${topic}" at ${questionDifficulty} difficulty: describe how you would approach a realistic scenario, key trade-offs, and how you would validate your solution.`
+        : `For "${topic}" at ${questionDifficulty} difficulty: describe a concrete situation, your actions, stakeholders involved, and what you learned.`
     return {
       type: kind,
       topic,
-      difficulty,
+      difficulty: questionDifficulty,
       question: cleanQuestionText(draft),
     }
   })
