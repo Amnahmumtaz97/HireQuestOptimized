@@ -8,5 +8,6 @@ export const difficultyColor: Record<string, string> = {
   Easy: 'text-emerald-400',
   Medium: 'text-amber-400',
   Hard: 'text-red-400',
+  Adaptive: 'text-violet-400',
 }
 

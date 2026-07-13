@@ -15,7 +15,7 @@ export function FeatureGrid({ items }: FeatureGridProps) {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
             <div key={item.title} className="glass rounded-3xl p-6 sm:p-7 border border-white/10">
-              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-primary glow-ring text-foreground">
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-primary glow-ring text-primary-foreground">
                 {item.icon}
               </div>
               <h2 className="mt-5 text-xl font-semibold text-foreground">{item.title}</h2>

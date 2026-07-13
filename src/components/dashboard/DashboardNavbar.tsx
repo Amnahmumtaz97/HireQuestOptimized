@@ -33,8 +33,6 @@ export type DashboardNavbarProps = {
 }
 
 export const DashboardNavbar: FC<DashboardNavbarProps> = ({
-  sidebarCollapsed,
-  onToggleSidebarCollapse,
   onMobileNavOpen,
   variant = 'fixed',
 }) => {
@@ -69,33 +67,33 @@ export const DashboardNavbar: FC<DashboardNavbarProps> = ({
   const isFixed = variant === 'fixed'
 
   return (
-    <header className={isFixed ? ['fixed top-0 left-0 right-0 z-50 transition-all duration-300', scrolled ? 'py-2' : 'py-4'].join(' ') : undefined}>
+    <header
+      className={
+        isFixed
+          ? [
+              'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
+              scrolled ? 'py-2' : 'py-4',
+            ].join(' ')
+          : undefined
+      }
+    >
       <div className={isFixed ? 'mx-auto max-w-[92rem] px-3 sm:px-6' : ''}>
-        <nav
-          className={[
-            'flex items-center justify-between gap-3 rounded-2xl px-3 sm:px-5 py-2.5 transition-all duration-300',
-            isFixed ? (scrolled ? 'glass-strong' : 'glass') : 'glass',
-            'shadow-elegant',
-          ].join(' ')}
-        >
-          <div className="flex items-center gap-2.5">
+        <nav className="hq-dashboard-nav">
+          <div className="flex items-center gap-2.5 min-w-0">
             <button
               type="button"
               onClick={onMobileNavOpen}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-border bg-input/10 text-muted-foreground transition-colors hover:bg-input/30 hover:text-foreground md:hidden"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:bg-input/30 hover:text-foreground md:hidden"
               aria-label="Open navigation"
             >
               <Menu className="h-4.5 w-4.5" />
             </button>
 
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <span className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary glow-ring">
-                <Brain className="h-5 w-5 text-white" />
-                <span className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/20" />
+            <Link href="/" className="hq-marketing-logo group min-w-0">
+              <span className="hq-marketing-logo-mark">
+                <Brain className="h-5 w-5 text-white" strokeWidth={2} />
               </span>
-              <span className="text-base font-semibold tracking-tight text-foreground">
-                Hire<span className="text-gradient">Quest</span>
-              </span>
+              <span className="hq-marketing-logo-text truncate">HireQuest</span>
             </Link>
           </div>
 
@@ -105,9 +103,15 @@ export const DashboardNavbar: FC<DashboardNavbarProps> = ({
               aria-label="Toggle theme"
               onClick={toggleTheme}
               suppressHydrationWarning
-              className="hidden sm:inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-glass bg-input/10 text-muted-foreground hover:text-foreground hover:bg-input/22 pressable ripple"
+              className="hidden sm:inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
             >
-              {!themeReady ? <Moon className="h-4 w-4" /> : theme === 'light' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              {!themeReady ? (
+                <Moon className="h-4 w-4" />
+              ) : theme === 'light' ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
             </button>
 
             <DropdownMenu>
@@ -115,7 +119,7 @@ export const DashboardNavbar: FC<DashboardNavbarProps> = ({
                 <button
                   type="button"
                   suppressHydrationWarning
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-glass bg-input/10 text-muted-foreground hover:bg-input/22 hover:text-foreground pressable ripple"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
                   aria-label="Notifications"
                 >
                   <Bell className="h-4.5 w-4.5" />
@@ -132,18 +136,11 @@ export const DashboardNavbar: FC<DashboardNavbarProps> = ({
                 <button
                   type="button"
                   suppressHydrationWarning
-                  className="inline-flex items-center gap-2 rounded-full border border-glass bg-input/12 pl-1 pr-3 h-10 text-sm font-semibold text-foreground hover:bg-input/18 pressable ripple"
+                  className="inline-flex items-center gap-2 rounded-full border border-border bg-card pl-1 pr-3 h-10 text-sm font-semibold text-foreground transition-colors hover:bg-input/30"
                 >
-                  <span className="relative">
-                    <span
-                      className="pointer-events-none absolute -inset-1 rounded-full opacity-35 blur-md"
-                      style={{ background: 'linear-gradient(90deg, rgba(79,110,247,0.9), rgba(37,99,235,0.9))' }}
-                      aria-hidden
-                    />
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>{initials}</AvatarFallback>
-                    </Avatar>
-                  </span>
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>{initials}</AvatarFallback>
+                  </Avatar>
                   <span className="hidden sm:block truncate max-w-[14rem]">
                     Hi {isAdmin ? 'Admin ' : ''}
                     {userName}

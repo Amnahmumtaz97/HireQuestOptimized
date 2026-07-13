@@ -7,7 +7,7 @@ import { requireAdminSession } from '@/lib/admin-auth'
 import { departmentToLegacyConfig, mongoDocToDepartmentDto } from '@/lib/interview-catalog/admin'
 
 const topicMutationSchema = z.object({
-  kind: z.enum(['technical', 'behavioral']),
+  kind: z.enum(['technical', 'behavioral', 'hr']),
   topic: z.string().trim().min(1),
 })
 
@@ -52,7 +52,12 @@ export async function POST(
       return NextResponse.json({ message: 'Specialization not found' }, { status: 404 })
     }
 
-    const field = parsed.data.kind === 'technical' ? 'technicalTopics' : 'behavioralTopics'
+    const field =
+      parsed.data.kind === 'technical'
+        ? 'technicalTopics'
+        : parsed.data.kind === 'behavioral'
+          ? 'behavioralTopics'
+          : 'hrTopics'
     if (!spec[field].includes(parsed.data.topic)) {
       spec[field].push(parsed.data.topic)
     }
@@ -102,7 +107,12 @@ export async function DELETE(
       return NextResponse.json({ message: 'Specialization not found' }, { status: 404 })
     }
 
-    const field = parsed.data.kind === 'technical' ? 'technicalTopics' : 'behavioralTopics'
+    const field =
+      parsed.data.kind === 'technical'
+        ? 'technicalTopics'
+        : parsed.data.kind === 'behavioral'
+          ? 'behavioralTopics'
+          : 'hrTopics'
     spec[field] = spec[field].filter((entry) => entry !== parsed.data.topic)
 
     await doc.save()

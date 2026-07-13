@@ -1,9 +1,15 @@
 import type { DepartmentConfig, InterviewCatalog, SpecializationConfig } from '@/lib/interview-catalog/types'
 import { INTERVIEW_CATALOG_DEPARTMENTS } from '@/lib/interview-catalog/departments-data'
+import { DEFAULT_HR_TOPICS } from '@/lib/interview-catalog/hr-topics'
+import {
+  decodeInterviewTypeKinds,
+  type InterviewTypeKind,
+  type InterviewTypeStored,
+} from '@/lib/interview-types'
 
 export const SCOPE_REF_SEP = '::'
 
-export type InterviewTypeScope = 'technical' | 'behavioral' | 'both'
+export type InterviewTypeScope = InterviewTypeStored
 
 export type ScopedSpecialization = SpecializationConfig & {
   departmentKey: string
@@ -19,6 +25,7 @@ export type ResolvedInterviewScope = {
   specializationLabels: string[]
   technicalTopics: string[]
   behavioralTopics: string[]
+  hrTopics: string[]
   topics: string[]
 }
 
@@ -95,7 +102,8 @@ export function resolveSpecializationsFromRefs(
 export function mergeTopicsFromSpecializations(
   specializations: SpecializationConfig[],
   interviewType: InterviewTypeScope,
-): { technicalTopics: string[]; behavioralTopics: string[]; topics: string[] } {
+  interviewTypes?: readonly InterviewTypeKind[] | null,
+): { technicalTopics: string[]; behavioralTopics: string[]; hrTopics: string[]; topics: string[] } {
   const technicalTopics = [
     ...new Set(
       specializations.flatMap((s) => s.technicalTopics ?? []).map((t) => t.trim()).filter(Boolean),
@@ -106,13 +114,22 @@ export function mergeTopicsFromSpecializations(
       specializations.flatMap((s) => s.behavioralTopics ?? []).map((t) => t.trim()).filter(Boolean),
     ),
   ]
+  const hrTopics = [
+    ...new Set(
+      specializations
+        .flatMap((s) => (s.hrTopics?.length ? s.hrTopics : DEFAULT_HR_TOPICS))
+        .map((t) => t.trim())
+        .filter(Boolean),
+    ),
+  ]
 
-  let topics: string[] = []
-  if (interviewType === 'technical') topics = technicalTopics
-  else if (interviewType === 'behavioral') topics = behavioralTopics
-  else topics = [...new Set([...technicalTopics, ...behavioralTopics])]
+  const kinds = decodeInterviewTypeKinds(interviewType, interviewTypes)
+  const topics: string[] = []
+  if (kinds.includes('technical')) topics.push(...technicalTopics)
+  if (kinds.includes('behavioral')) topics.push(...behavioralTopics)
+  if (kinds.includes('hr')) topics.push(...hrTopics)
 
-  return { technicalTopics, behavioralTopics, topics }
+  return { technicalTopics, behavioralTopics, hrTopics, topics: [...new Set(topics)] }
 }
 
 export function normalizeSpecializationRefs(
@@ -178,6 +195,7 @@ export function resolveTopicsForInterview(
     selectAllDepartments: boolean
     departmentKeys: string[]
     interviewType: InterviewTypeScope
+    interviewTypes?: readonly InterviewTypeKind[] | null
     selectAllSpecializations: boolean
     specializationRefs: string[]
     selectAllTopics: boolean
@@ -195,7 +213,11 @@ export function resolveTopicsForInterview(
     specializationRefs: options.specializationRefs,
   })
   const specializations = resolveSpecializationsFromRefs(scopedOptions, resolvedSpecializationRefs)
-  const merged = mergeTopicsFromSpecializations(specializations, options.interviewType)
+  const merged = mergeTopicsFromSpecializations(
+    specializations,
+    options.interviewType,
+    options.interviewTypes,
+  )
 
   const explicitTopics = options.topics.map((t) => t.trim()).filter(Boolean)
   const availableSet = new Set(merged.topics)
@@ -218,6 +240,7 @@ export function resolveTopicsForInterview(
     ),
     technicalTopics: merged.technicalTopics,
     behavioralTopics: merged.behavioralTopics,
+    hrTopics: merged.hrTopics,
     topics,
   }
 }

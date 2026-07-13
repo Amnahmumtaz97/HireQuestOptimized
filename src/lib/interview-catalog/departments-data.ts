@@ -1,5 +1,6 @@
 import type { DepartmentConfig, SpecializationConfig } from '@/lib/interview-catalog/types'
 import { buildComputerScienceDepartmentFromLegacy } from '@/lib/interview-catalog/legacy-cs'
+import { DEFAULT_HR_TOPICS, DEFAULT_INTERVIEW_TYPES } from '@/lib/interview-catalog/hr-topics'
 
 const B = ['Communication', 'Teamwork', 'Leadership', 'Problem Solving', 'Stakeholder Management']
 
@@ -9,12 +10,15 @@ function spec(
   technicalTopics: string[],
   behavioralTopics: string[] = B,
   technicalQuestionRatio = 70,
+  hrTopics: string[] = [...DEFAULT_HR_TOPICS],
 ): SpecializationConfig {
   return {
     key,
     label,
+    interviewTypes: [...DEFAULT_INTERVIEW_TYPES],
     technicalTopics,
     behavioralTopics,
+    hrTopics,
     technicalQuestionRatio,
     durationEnabled: true,
     durations: [20, 30, 45, 60],

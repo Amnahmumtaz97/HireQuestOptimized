@@ -10,6 +10,11 @@ import {
 import { loadInterviewCatalogDepartments } from '@/lib/interview-catalog/load'
 import { connectToDatabase } from '@/lib/mongoose'
 import { InterviewSessionModel } from '@/models/InterviewSession'
+import {
+  decodeInterviewTypeKinds,
+  encodeInterviewType,
+  normalizeInterviewTypeKinds,
+} from '@/lib/interview-types'
 
 const createInterviewSchema = z
   .object({
@@ -28,7 +33,12 @@ const createInterviewSchema = z
     roleRefs: z.array(z.string().trim().min(1)).optional(),
     selectAllRoleCategories: z.boolean().optional().default(false),
     selectAllTopics: z.boolean().optional().default(false),
-    interviewType: z.enum(['technical', 'behavioral', 'both']),
+    interviewType: z.enum(['technical', 'behavioral', 'both', 'hr']),
+    interviewTypes: z
+      .array(z.enum(['technical', 'behavioral', 'hr']))
+      .min(1)
+      .max(3)
+      .optional(),
     topics: z.array(z.string().trim().min(1)).default([]),
     difficulty: z.enum(['Easy', 'Medium', 'Hard', 'Adaptive']),
     totalQuestions: z.number().int().positive(),
@@ -118,6 +128,13 @@ export async function POST(request: Request) {
 
     await connectToDatabase()
 
+    const interviewTypes = normalizeInterviewTypeKinds(
+      parsed.data.interviewTypes ??
+        decodeInterviewTypeKinds(parsed.data.interviewType),
+    )
+    const interviewType =
+      encodeInterviewType(interviewTypes) ?? parsed.data.interviewType
+
     const departments = await loadInterviewCatalogDepartments()
     const departmentKeysInput =
       parsed.data.departmentKeys?.length
@@ -146,7 +163,8 @@ export async function POST(request: Request) {
       selectAllDepartments:
         parsed.data.selectAllDepartments || parsed.data.selectAllIndustries,
       departmentKeys: departmentKeysInput,
-      interviewType: parsed.data.interviewType,
+      interviewType,
+      interviewTypes,
       selectAllSpecializations:
         parsed.data.selectAllSpecializations || parsed.data.selectAllRoleCategories,
       specializationRefs,
@@ -193,7 +211,8 @@ export async function POST(request: Request) {
       selectAllRoleCategories:
         parsed.data.selectAllSpecializations || parsed.data.selectAllRoleCategories,
       selectAllTopics: parsed.data.selectAllTopics,
-      interviewType: parsed.data.interviewType,
+      interviewType,
+      interviewTypes,
       topics: parsed.data.selectAllTopics ? [] : parsed.data.topics,
       difficulty: parsed.data.difficulty,
       totalQuestions: parsed.data.totalQuestions,

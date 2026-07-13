@@ -40,6 +40,7 @@ import {
   resolveRolesFromRefs,
   unionDurationOptions,
 } from '@/lib/interview-scope'
+import { resolveAvailableInterviewTypes } from '@/lib/interview-catalog/hr-topics'
 import { InterviewDeleteModal } from '@/components/app/InterviewDeleteModal'
 import { DashboardDateCalendarButton } from '@/components/app/dashboard/DashboardDateCalendarButton'
 import { useToast } from '@/components/ui/toast'
@@ -217,12 +218,13 @@ export function AppDashboardPanel() {
   const difficultyTagClass = (d: string) => {
     if (d === 'Easy') return 'hq-tag hq-tag--easy'
     if (d === 'Medium') return 'hq-tag hq-tag--medium'
-    if (d === 'Adaptive') return 'hq-tag hq-tag--medium'
+    if (d === 'Adaptive') return 'hq-tag hq-tag--purple'
     return 'hq-tag hq-tag--hard'
   }
 
   const interviewTypeTagClass = (t: string) => {
     if (t === 'behavioral') return 'hq-tag hq-tag--accent'
+    if (t === 'hr') return 'hq-tag hq-tag--purple'
     return 'hq-tag hq-tag--purple'
   }
 
@@ -411,7 +413,7 @@ export function InterviewsPanel() {
   const [isLoading, setIsLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'created' | 'in_progress' | 'completed'>('all')
   const [query, setQuery] = useState('')
-  const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'Easy' | 'Medium' | 'Hard'>('all')
+  const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'Easy' | 'Medium' | 'Hard' | 'Adaptive'>('all')
   const [difficultyOpen, setDifficultyOpen] = useState(false)
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -505,13 +507,17 @@ export function InterviewsPanel() {
 
   const statusLabel: Record<string, string> = { created: 'Created', in_progress: 'In Progress', completed: 'Completed' }
   const difficultyColor: Record<string, string> = {
-    Easy: 'text-emerald-400', Medium: 'text-amber-400', Hard: 'text-red-400',
+    Easy: 'text-emerald-400',
+    Medium: 'text-amber-400',
+    Hard: 'text-red-400',
+    Adaptive: 'text-violet-400',
   }
-  const difficultyOptions: Array<{ key: 'all' | 'Easy' | 'Medium' | 'Hard'; label: string; icon: React.ReactNode; iconClass: string }> = [
+  const difficultyOptions: Array<{ key: 'all' | 'Easy' | 'Medium' | 'Hard' | 'Adaptive'; label: string; icon: React.ReactNode; iconClass: string }> = [
     { key: 'all', label: 'All', icon: <BarChart2 className="h-3.5 w-3.5" />, iconClass: 'text-[var(--hq-display-blue)]' },
     { key: 'Easy', label: 'Easy', icon: <Leaf className="h-3.5 w-3.5" />, iconClass: 'text-emerald-400' },
     { key: 'Medium', label: 'Medium', icon: <Activity className="h-3.5 w-3.5" />, iconClass: 'text-amber-400' },
     { key: 'Hard', label: 'Hard', icon: <Mountain className="h-3.5 w-3.5" />, iconClass: 'text-rose-400' },
+    { key: 'Adaptive', label: 'Adaptive AI', icon: <Sparkles className="h-3.5 w-3.5" />, iconClass: 'text-violet-400' },
   ]
   const selectedDifficulty = difficultyOptions.find((o) => o.key === difficultyFilter) ?? difficultyOptions[0]
 
@@ -853,9 +859,10 @@ export function CreateInterviewWizard() {
         roleCategories: (department.specializations ?? []).map((specialization) => ({
           key: specialization.key,
           label: specialization.label,
-          interviewTypes: ['Technical', 'Behavioral'],
+          interviewTypes: specialization.interviewTypes ?? ['Technical', 'Behavioral'],
           technicalTopics: specialization.technicalTopics,
           behavioralTopics: specialization.behavioralTopics,
+          hrTopics: specialization.hrTopics ?? [],
           technicalQuestionRatio: specialization.technicalQuestionRatio,
           durationEnabled: specialization.durationEnabled,
           durations: specialization.durations,
@@ -913,6 +920,15 @@ export function CreateInterviewWizard() {
     [departmentSearch, departments],
   )
 
+  const availableInterviewTypes = useMemo(() => {
+    if (isLoadingConfig) return ['technical', 'behavioral', 'both'] as InterviewType[]
+    return resolveAvailableInterviewTypes(
+      departments.flatMap((department) =>
+        (department.specializations ?? []).map((specialization) => specialization.interviewTypes),
+      ),
+    ).filter((type): type is InterviewType => type === 'technical' || type === 'behavioral' || type === 'both')
+  }, [departments, isLoadingConfig])
+
   const resolvedDepartmentKeys = useMemo(
     () =>
       resolveIndustryKeys(departments, {
@@ -948,20 +964,27 @@ export function CreateInterviewWizard() {
 
   const topicScope = useMemo(() => {
     if (!interviewType || selectedSpecializations.length === 0) {
-      return { technicalTopics: [] as string[], behavioralTopics: [] as string[], topics: [] as string[] }
+      return {
+        technicalTopics: [] as string[],
+        behavioralTopics: [] as string[],
+        hrTopics: [] as string[],
+        topics: [] as string[],
+      }
     }
     return mergeTopicsFromRoles(selectedSpecializations, interviewType)
   }, [interviewType, selectedSpecializations])
 
   const technicalTopicOptions = topicScope.technicalTopics
   const behavioralTopicOptions = topicScope.behavioralTopics
+  const hrTopicOptions = topicScope.hrTopics
   const availableTopicOptions = topicScope.topics
   const durationOptions = useMemo(() => unionDurationOptions(selectedSpecializations), [selectedSpecializations])
   const isDurationEnabled = useMemo(() => anyRoleHasDuration(selectedSpecializations), [selectedSpecializations])
 
-  const topicAllowedKind = useMemo((): 'technical' | 'behavioral' | 'both' => {
+  const topicAllowedKind = useMemo((): 'technical' | 'behavioral' | 'both' | 'hr' => {
     if (interviewType === 'technical') return 'technical'
     if (interviewType === 'behavioral') return 'behavioral'
+    if (interviewType === 'hr') return 'hr'
     return 'both'
   }, [interviewType])
 
@@ -1093,7 +1116,7 @@ export function CreateInterviewWizard() {
   const technicalQuestionRatioForApi = useMemo(() => {
     if (interviewType === 'both') return technicalRatio
     if (interviewType === 'technical') return 100
-    if (interviewType === 'behavioral') return 0
+    if (interviewType === 'behavioral' || interviewType === 'hr') return 0
     return technicalRatio
   }, [interviewType, technicalRatio])
 
@@ -1426,7 +1449,11 @@ export function CreateInterviewWizard() {
                   {wizardStep === 'interviewType' ? (
                     <div className="space-y-3">
                       <div className="text-sm font-semibold text-foreground">What type of interview do you want to practice?</div>
-                      <InterviewTypeSelector value={interviewType} onChange={handleInterviewTypeChange} />
+                      <InterviewTypeSelector
+                        value={interviewType}
+                        onChange={handleInterviewTypeChange}
+                        availableTypes={availableInterviewTypes}
+                      />
                     </div>
                   ) : null}
 
@@ -1475,6 +1502,7 @@ export function CreateInterviewWizard() {
                         <TopicSelector
                           technicalTopics={technicalTopicOptions}
                           behavioralTopics={behavioralTopicOptions}
+                          hrTopics={hrTopicOptions}
                           selectedTopics={topics}
                           onChange={setTopics}
                           search={topicSearch}

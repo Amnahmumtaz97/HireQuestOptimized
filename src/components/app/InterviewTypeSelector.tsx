@@ -4,7 +4,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { BrainCircuit, Check, MessageCircle, Sparkles } from 'lucide-react'
 
-export type InterviewType = 'technical' | 'behavioral' | 'both'
+export type InterviewType = 'technical' | 'behavioral' | 'both' | 'hr'
 
 const OPTIONS = [
   {
@@ -42,13 +42,19 @@ const OPTIONS = [
 export function InterviewTypeSelector({
   value,
   onChange,
+  availableTypes,
 }: {
   value: InterviewType | null
   onChange: (nextValue: InterviewType) => void
+  availableTypes?: InterviewType[]
 }) {
+  const visibleOptions = availableTypes?.length
+    ? OPTIONS.filter((option) => availableTypes.includes(option.key))
+    : OPTIONS
+
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
-      {OPTIONS.map((option) => {
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {visibleOptions.map((option) => {
         const selected = value === option.key
         const Icon = option.icon
 
@@ -90,7 +96,7 @@ export function InterviewTypeSelector({
 
             <span
               className={[
-                'relative text-sm font-semibold transition-colors',
+                'relative text-center text-sm font-semibold transition-colors',
                 selected ? option.accent : 'text-foreground',
               ].join(' ')}
             >

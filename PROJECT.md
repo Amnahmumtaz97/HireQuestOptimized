@@ -207,7 +207,7 @@ Interview sessions store questions, `currentQuestionIndex`, answers, optional du
 
 ## Environment variables
 
-Copy `.env.example` to `.env.local` and set:
+Copy `.env.example` to `.env` and set:
 
 | Variable | Purpose |
 |----------|---------|

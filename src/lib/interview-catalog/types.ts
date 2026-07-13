@@ -1,8 +1,10 @@
 export type SpecializationConfig = {
   key: string
   label: string
+  interviewTypes?: string[]
   technicalTopics: string[]
   behavioralTopics: string[]
+  hrTopics?: string[]
   technicalQuestionRatio: number
   durationEnabled: boolean
   durations: number[]

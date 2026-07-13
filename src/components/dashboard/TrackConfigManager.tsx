@@ -19,6 +19,7 @@ import { useToast } from '@/components/ui/toast'
 import { getIndustryIcon, getRoleIcon } from '@/lib/icon-mapping'
 import type { DepartmentDto, SpecializationPayload } from '@/lib/interview-catalog/admin'
 import { countTopics } from '@/lib/interview-catalog/admin'
+import { DEFAULT_HR_TOPICS, DEFAULT_INTERVIEW_TYPES } from '@/lib/interview-catalog/hr-topics'
 
 type AdminTab = 'departments' | 'specializations' | 'topics'
 
@@ -28,7 +29,7 @@ type TopicRow = {
   departmentLabel: string
   specializationKey: string
   specializationLabel: string
-  kind: 'technical' | 'behavioral'
+  kind: 'technical' | 'behavioral' | 'hr'
   topic: string
 }
 
@@ -37,8 +38,10 @@ const PAGE_SIZE = 8
 const emptySpecialization: SpecializationPayload = {
   key: '',
   label: '',
+  interviewTypes: [...DEFAULT_INTERVIEW_TYPES],
   technicalTopics: [],
   behavioralTopics: [],
+  hrTopics: [...DEFAULT_HR_TOPICS],
   technicalQuestionRatio: 70,
   durationEnabled: true,
   durations: [20, 30, 45],
@@ -149,14 +152,14 @@ export function TrackConfigManager() {
   const [topicForm, setTopicForm] = useState<{
     departmentId: string
     specializationKey: string
-    kind: 'technical' | 'behavioral'
+    kind: 'technical' | 'behavioral' | 'hr'
     topic: string
   }>({ departmentId: '', specializationKey: '', kind: 'technical', topic: '' })
 
   const [deleteTarget, setDeleteTarget] = useState<
     | { type: 'department'; id: string; label: string }
     | { type: 'specialization'; departmentId: string; specKey: string; label: string }
-    | { type: 'topic'; departmentId: string; specKey: string; kind: 'technical' | 'behavioral'; topic: string }
+    | { type: 'topic'; departmentId: string; specKey: string; kind: 'technical' | 'behavioral' | 'hr'; topic: string }
     | null
   >(null)
 
@@ -206,7 +209,8 @@ export function TrackConfigManager() {
       department.specializations.map((spec) => ({
         department,
         spec,
-        topicCount: spec.technicalTopics.length + spec.behavioralTopics.length,
+        topicCount:
+          spec.technicalTopics.length + spec.behavioralTopics.length + (spec.hrTopics?.length ?? 0),
       })),
     )
   }, [departments])
@@ -240,6 +244,15 @@ export function TrackConfigManager() {
           specializationKey: spec.key,
           specializationLabel: spec.label,
           kind: 'behavioral' as const,
+          topic,
+        })),
+        ...(spec.hrTopics ?? []).map((topic) => ({
+          departmentId: department._id,
+          departmentKey: department.key,
+          departmentLabel: department.label,
+          specializationKey: spec.key,
+          specializationLabel: spec.label,
+          kind: 'hr' as const,
           topic,
         })),
       ]),
@@ -367,7 +380,12 @@ export function TrackConfigManager() {
     setEditingSpecialization({
       departmentId,
       specKey,
-      form: { ...spec },
+      form: {
+        ...emptySpecialization,
+        ...spec,
+        interviewTypes: spec.interviewTypes?.length ? spec.interviewTypes : [...DEFAULT_INTERVIEW_TYPES],
+        hrTopics: spec.hrTopics?.length ? spec.hrTopics : [...DEFAULT_HR_TOPICS],
+      },
     })
     setSpecializationModalOpen(true)
   }
@@ -645,7 +663,7 @@ export function TrackConfigManager() {
                                     <div className="min-w-0 flex-1">
                                       <div className="text-sm font-medium text-foreground">{spec.label}</div>
                                       <div className="text-xs text-muted-foreground">
-                                        {spec.technicalTopics.length} technical · {spec.behavioralTopics.length} behavioral
+                                        {spec.technicalTopics.length} technical · {spec.behavioralTopics.length} behavioral · {(spec.hrTopics ?? []).length} HR
                                       </div>
                                     </div>
                                     <button type="button" onClick={() => openEditSpecialization(department._id, spec.key)} className="rounded-lg border border-border p-1.5">
@@ -669,7 +687,7 @@ export function TrackConfigManager() {
                                   {specExpanded ? (
                                     <div className="border-t border-border/60 px-3 py-3">
                                       <div className="flex flex-wrap gap-2">
-                                        {[...spec.technicalTopics, ...spec.behavioralTopics].map((topic) => (
+                                        {[...spec.technicalTopics, ...spec.behavioralTopics, ...(spec.hrTopics ?? [])].map((topic) => (
                                           <SelectionChip key={topic} active>
                                             <Tag className="h-3 w-3" />
                                             {topic}
@@ -962,6 +980,54 @@ export function TrackConfigManager() {
                 }
                 placeholder="Add behavioral topic"
               />
+              <TagInput
+                label="HR Topics"
+                value={editingSpecialization.form.hrTopics}
+                onChange={(next) =>
+                  setEditingSpecialization((previous) =>
+                    previous ? { ...previous, form: { ...previous.form, hrTopics: next } } : previous,
+                  )
+                }
+                placeholder="Add HR topic"
+              />
+              <div className="space-y-2">
+                <span className="text-[11px] text-muted-foreground">Enabled interview types</span>
+                <div className="flex flex-wrap gap-2">
+                  {DEFAULT_INTERVIEW_TYPES.map((type) => {
+                    const enabled = editingSpecialization.form.interviewTypes.includes(type)
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() =>
+                          setEditingSpecialization((previous) => {
+                            if (!previous) return previous
+                            const current = previous.form.interviewTypes
+                            const next = enabled
+                              ? current.filter((entry) => entry !== type)
+                              : [...current, type]
+                            return {
+                              ...previous,
+                              form: {
+                                ...previous.form,
+                                interviewTypes: next.length > 0 ? next : current,
+                              },
+                            }
+                          })
+                        }
+                        className={[
+                          'rounded-full border px-3 py-1 text-xs font-semibold transition-colors',
+                          enabled
+                            ? 'border-primary/50 bg-primary/10 text-foreground'
+                            : 'border-border bg-input/20 text-muted-foreground',
+                        ].join(' ')}
+                      >
+                        {type}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
             </div>
             <div className="mt-5 flex justify-end gap-2">
               <button type="button" onClick={() => setSpecializationModalOpen(false)} className="rounded-xl border border-border px-4 py-2 text-sm">
@@ -1012,11 +1078,12 @@ export function TrackConfigManager() {
                 <span className="text-xs text-muted-foreground">Kind</span>
                 <select
                   value={topicForm.kind}
-                  onChange={(e) => setTopicForm((p) => ({ ...p, kind: e.target.value as 'technical' | 'behavioral' }))}
+                  onChange={(e) => setTopicForm((p) => ({ ...p, kind: e.target.value as 'technical' | 'behavioral' | 'hr' }))}
                   className="w-full rounded-xl border border-border bg-input/20 px-3 py-2 text-sm"
                 >
                   <option value="technical">Technical</option>
                   <option value="behavioral">Behavioral</option>
+                  <option value="hr">HR</option>
                 </select>
               </label>
               <label className="block space-y-1.5">

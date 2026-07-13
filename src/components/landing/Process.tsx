@@ -111,7 +111,7 @@ function StepCard({ step }: { step: Step }) {
           />
 
           <div
-            className={`process-step-card reveal relative aspect-square w-[var(--step-size)] cursor-default overflow-hidden rounded-full border-2 backdrop-blur-sm transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/step:z-20 group-hover/step:scale-[1.14] group-hover/step:border-[3px] group-has-[.hq-core:hover]/orbit:z-20 group-has-[.hq-core:hover]/orbit:scale-[1.14] group-has-[.hq-core:hover]/orbit:border-[3px] ${step.ringColor} ${step.glowShadow}`}
+            className={`process-step-card reveal relative aspect-square w-[var(--step-size)] cursor-default overflow-hidden rounded-full border-2 backdrop-blur-sm transition-all duration-500 ease-&lsqb;cubic-bezier(0.22,1,0.36,1)&rsqb; group-hover/step:z-20 group-hover/step:scale-[1.14] group-hover/step:border-[3px] group-has-[.hq-core:hover]/orbit:z-20 group-has-[.hq-core:hover]/orbit:scale-[1.14] group-has-[.hq-core:hover]/orbit:border-[3px] ${step.ringColor} ${step.glowShadow}`}
             style={{ transitionDelay: '80ms' }}
           >
             <div className="process-step-shine absolute inset-[3px] rounded-full" />
@@ -121,7 +121,7 @@ function StepCard({ step }: { step: Step }) {
 
             {/* Front — number + title */}
             <div
-              className={`absolute inset-0 flex flex-col items-center justify-center gap-1 px-2.5 text-center transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${inactive}`}
+              className={`absolute inset-0 flex flex-col items-center justify-center gap-1 px-2.5 text-center transition-all duration-500 ease-&lsqb;cubic-bezier(0.22,1,0.36,1)&rsqb; ${inactive}`}
             >
               <span className={`text-[clamp(1.05rem,2.2vw,1.4rem)] font-black leading-none ${step.accent}`}>
                 {String(step.number).padStart(2, '0')}
@@ -133,7 +133,7 @@ function StepCard({ step }: { step: Step }) {
 
             {/* Back — icon + description */}
             <div
-              className={`absolute inset-0 flex flex-col items-center justify-center gap-1.5 px-3 py-2 text-center opacity-0 scale-95 translate-y-1 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${active}`}
+              className={`absolute inset-0 flex flex-col items-center justify-center gap-1.5 px-3 py-2 text-center opacity-0 scale-95 translate-y-1 transition-all duration-500 ease-&lsqb;cubic-bezier(0.22,1,0.36,1)&rsqb; ${active}`}
             >
               <div className={`grid h-8 w-8 place-items-center rounded-full border bg-current/10 ${step.accent} border-current/40`}>
                 <Icon className="h-4 w-4" strokeWidth={2.2} />
@@ -186,7 +186,7 @@ export function Process() {
     <section
       ref={ref}
       id="features"
-      className="relative min-h-[100svh] overflow-x-hidden scroll-mt-24 sm:scroll-mt-28"
+      className="relative min-h-[100svh] overflow-x-clip scroll-mt-24 sm:scroll-mt-28"
     >
       <div className="absolute inset-0 -z-10">
         <div className="absolute top-0 left-1/4 h-72 w-96 bg-gradient-radial from-primary/20 to-transparent blur-3xl rounded-full opacity-20" />
@@ -320,7 +320,7 @@ export function Process() {
 
         <div className="reveal z-30 shrink-0 pb-8 text-center sm:pb-10" style={{ transitionDelay: '400ms' }}>
           <div className="inline-flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-3">
-            <button className="rounded-full h-11 sm:h-12 px-6 sm:px-8 bg-gradient-primary text-foreground font-semibold text-sm shadow-[0_0_30px_-6px_var(--primary)] hover:shadow-[0_0_44px_-4px_var(--primary)] hover:scale-[1.03] transition-all">
+            <button className="rounded-full h-11 sm:h-12 px-6 sm:px-8 bg-gradient-primary text-primary-foreground font-semibold text-sm shadow-[0_0_30px_-6px_var(--primary)] hover:shadow-[0_0_44px_-4px_var(--primary)] hover:scale-[1.03] transition-all">
               Start Free Trial
             </button>
             <button className="rounded-full h-11 sm:h-12 px-6 sm:px-8 glass border-border hover:bg-input/30 text-foreground font-semibold text-sm transition-all">

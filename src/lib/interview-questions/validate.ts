@@ -1,5 +1,6 @@
 import type { InterviewQuestionItem } from '@/lib/interview-questions/schema'
 import type { InterviewGenerationParams } from '@/lib/interview-questions/prompt'
+import { decodeInterviewTypeKinds } from '@/lib/interview-types'
 
 export type QuestionValidationIssue = {
   level: 'error' | 'warning'
@@ -22,6 +23,9 @@ export function validateGeneratedQuestions(
   const issues: QuestionValidationIssue[] = []
   const topicSet = new Set(params.topics.map((t) => t.trim()).filter(Boolean))
   const seen = new Set<string>()
+  const allowedKinds = new Set(decodeInterviewTypeKinds(params.interviewType, params.interviewTypes))
+  const hrOnly = allowedKinds.size === 1 && allowedKinds.has('hr')
+  const allowsHr = allowedKinds.has('hr')
 
   for (let i = 0; i < questions.length; i++) {
     const q = questions[i]
@@ -34,8 +38,24 @@ export function validateGeneratedQuestions(
       })
     }
 
-    if (q.type !== 'technical' && q.type !== 'behavioral') {
-      issues.push({ level: 'error', index: i, message: 'Question type must be technical or behavioral.' })
+    if (q.type !== 'technical' && q.type !== 'behavioral' && q.type !== 'hr') {
+      issues.push({ level: 'error', index: i, message: 'Question type must be technical, behavioral, or hr.' })
+    }
+
+    if (hrOnly && q.type !== 'hr') {
+      issues.push({ level: 'error', index: i, message: 'HR interview questions must use type "hr".' })
+    }
+
+    if (!allowsHr && q.type === 'hr') {
+      issues.push({ level: 'error', index: i, message: 'Question type "hr" is only valid when HR Interview is selected.' })
+    }
+
+    if (allowedKinds.size > 0 && !allowedKinds.has(q.type)) {
+      issues.push({
+        level: 'error',
+        index: i,
+        message: `Question type "${q.type}" is not in the selected interview types.`,
+      })
     }
 
     const normalized = q.question.trim().toLowerCase().replace(/\s+/g, ' ')
@@ -51,7 +71,7 @@ export function validateGeneratedQuestions(
       issues.push({ level: 'warning', index: i, message: 'Question is very short and may be low-signal.' })
     }
 
-    if (GENERIC_PATTERNS.some((re) => re.test(q.question))) {
+    if (!allowsHr && GENERIC_PATTERNS.some((re) => re.test(q.question))) {
       issues.push({ level: 'warning', index: i, message: 'Question looks generic; consider regenerating.' })
     }
 
@@ -66,4 +86,3 @@ export function validateGeneratedQuestions(
 
   return issues
 }
-

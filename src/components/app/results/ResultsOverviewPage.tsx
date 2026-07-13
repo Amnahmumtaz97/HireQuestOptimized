@@ -55,7 +55,7 @@ export function ResultsOverviewPage() {
         border: '1px solid rgba(15, 17, 23, 0.1)',
         borderRadius: 14,
         backdropFilter: 'blur(10px)',
-        color: '#0f1117',
+        color: '#1a1a1a',
       }
     : {
         background: 'rgba(17, 24, 39, 0.85)',
@@ -180,8 +180,8 @@ export function ResultsOverviewPage() {
               <AreaChart data={scoreTimeline}>
                 <defs>
                   <linearGradient id="hqScore" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#4f6ef7" stopOpacity={0.45} />
-                    <stop offset="100%" stopColor="#4f6ef7" stopOpacity={0.05} />
+                    <stop offset="0%" stopColor="#0031b0" stopOpacity={0.45} />
+                    <stop offset="100%" stopColor="#1e5af3" stopOpacity={0.05} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid stroke={chartGrid} vertical={false} />
@@ -189,8 +189,8 @@ export function ResultsOverviewPage() {
                 <YAxis domain={[40, 100]} tick={{ fill: chartTick, fontSize: 11 }} axisLine={false} tickLine={false} />
                 <RechartsTooltip contentStyle={tooltipStyle} />
                 <Legend />
-                <Area type="monotone" dataKey="score" name="Score" stroke="#4f6ef7" fill="url(#hqScore)" strokeWidth={2} />
-                <Area type="monotone" dataKey="completion" name="Completion %" stroke="#7c3aed" fill="transparent" strokeWidth={2} />
+                <Area type="monotone" dataKey="score" name="Score" stroke="#0031b0" fill="url(#hqScore)" strokeWidth={2} />
+                <Area type="monotone" dataKey="completion" name="Completion %" stroke="#1e5af3" fill="transparent" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           </div>

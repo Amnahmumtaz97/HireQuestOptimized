@@ -1,3 +1,5 @@
+import type { InterviewTypeKind, InterviewTypeStored } from '@/lib/interview-types'
+
 export type InterviewGenerationParams = {
   industryKey: string
   industryKeys?: string[]
@@ -5,7 +7,9 @@ export type InterviewGenerationParams = {
   roleCategoryKey: string
   roleCategoryKeys?: string[]
   roleCategoryLabels?: string[]
-  interviewType: 'technical' | 'behavioral' | 'both'
+  interviewType: InterviewTypeStored
+  /** Concrete kinds when interviewType is `both` (multi-select). */
+  interviewTypes?: InterviewTypeKind[]
   topics: string[]
   difficulty: 'Easy' | 'Medium' | 'Hard' | 'Adaptive'
   totalQuestions: number

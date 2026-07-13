@@ -6,6 +6,7 @@ export interface IRoleCategoryConfig {
   interviewTypes: string[]
   technicalTopics: string[]
   behavioralTopics: string[]
+  hrTopics: string[]
   technicalQuestionRatio: number
   durationEnabled: boolean
   durations: number[]
@@ -26,6 +27,7 @@ const roleCategorySchema = new Schema<IRoleCategoryConfig>(
     interviewTypes: [{ type: String, required: true, trim: true }],
     technicalTopics: [{ type: String, required: true, trim: true }],
     behavioralTopics: [{ type: String, required: true, trim: true }],
+    hrTopics: [{ type: String, trim: true, default: [] }],
     technicalQuestionRatio: {
       type: Number,
       required: true,

@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { InterviewGenerationParams } from '@/lib/interview-questions/prompt'
 import type { InterviewQuestionItem } from '@/lib/interview-questions/schema'
 import { allocateKinds } from '@/lib/interview-questions/templates'
+import { decodeInterviewTypeKinds, formatInterviewTypeKindsLabel } from '@/lib/interview-types'
 import { assignTopicsEvenly } from '@/lib/interview-scope'
 import { formatGeneratedQuestion } from '@/lib/interview-questions/clean-question-text'
 import { parseGeminiQuestionJsonArray } from '@/lib/interview-questions/parse-gemini-json'
@@ -67,10 +68,16 @@ function roleLabel(params: InterviewGenerationParams): string {
 
 function buildBatchPrompt(params: InterviewGenerationParams): string {
   const n = params.totalQuestions
+  const kinds = decodeInterviewTypeKinds(params.interviewType, params.interviewTypes)
+  const typeLabel = formatInterviewTypeKindsLabel(kinds)
   const ratioHint =
-    params.interviewType === 'both'
-      ? `Mix: about ${params.technicalQuestionRatio}% technical and ${100 - params.technicalQuestionRatio}% behavioral (approximate).`
-      : `Focus: ${params.interviewType} questions only.`
+    kinds.length > 1 && kinds.includes('technical')
+      ? `Mix across: ${typeLabel}. About ${params.technicalQuestionRatio}% technical; split the rest across the other selected types.`
+      : kinds.length > 1
+        ? `Mix evenly across: ${typeLabel}.`
+        : kinds[0] === 'hr'
+          ? 'Focus: HR interview questions only (screening, culture fit, motivation, logistics, and common HR scenarios).'
+          : `Focus: ${kinds[0] ?? params.interviewType} questions only.`
 
   const diagramBudget = Math.min(MAX_DIAGRAM_QUESTIONS, n)
 
@@ -99,6 +106,7 @@ No other keys. Markdown is allowed ONLY inside each "question" string.
 
 Style rules:
 - Behavioral: one or two short sentences ending with "?".
+- HR: professional screening questions about motivation, teamwork, communication, goals, ethics, logistics, or role fit. Tailor wording to the department, specialization, and experience level implied by difficulty. One or two sentences ending with "?".
 - Technical: specific; if you include a table, ask the actual task after the table.
 - Do NOT start with labels like "Technical:", "Behavioral:", "Easy:", or bracketed tags.
 - Professional tone. Tie questions to the role and topics.
@@ -107,7 +115,7 @@ Context:
 - Role: ${roleLabel(params)}
 - Topics (distribute questions evenly across these): ${params.topics.join(', ') || 'General'}
 - Difficulty level for all questions: ${difficultyPromptLabel(params.difficulty)}
-- Interview type: ${params.interviewType}
+- Interview type: ${typeLabel}
 - ${ratioHint}
 
 Return exactly ${n} questions as JSON array.`
@@ -160,7 +168,12 @@ export async function generateQuestionsWithGemini(
     return true
   })
 
-  const kinds = allocateKinds(params.interviewType, params.totalQuestions, params.technicalQuestionRatio)
+  const kinds = allocateKinds(
+    params.interviewType,
+    params.totalQuestions,
+    params.technicalQuestionRatio,
+    params.interviewTypes,
+  )
 
   let spareDiagramSlots = diagramFlags.reduce((n, f) => n + (f ? 1 : 0), 0)
   spareDiagramSlots = diagramBudget - spareDiagramSlots

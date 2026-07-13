@@ -19,6 +19,11 @@ export function InterviewAnswerEditor({ value, onChange, disabled }: InterviewAn
     el.style.height = `${Math.min(el.scrollHeight, max)}px`
   }, [value])
 
+  useEffect(() => {
+    if (!disabled) return
+    ref.current?.blur()
+  }, [disabled])
+
   return (
     <div className="w-full min-w-0 space-y-2 card-enhanced p-4">
       <div className="text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
@@ -27,10 +32,16 @@ export function InterviewAnswerEditor({ value, onChange, disabled }: InterviewAn
       <textarea
         ref={ref}
         value={value}
-        disabled={disabled}
+        readOnly={disabled}
+        aria-disabled={disabled}
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
+        data-lpignore="true"
+        data-form-type="other"
         onChange={(e) => onChange(e.target.value)}
         rows={4}
-        className="min-h-[120px] w-full resize-none rounded-2xl border border-border bg-card px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground outline-none transition-shadow focus:border-ring focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
+        className="interview-answer-textarea min-h-[120px] w-full resize-none rounded-2xl border border-border bg-card px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground outline-none transition-[border-color,box-shadow] focus:border-ring focus:ring-2 focus:ring-primary/20 read-only:cursor-default read-only:pointer-events-none autofill:bg-card autofill:text-foreground"
         placeholder="Type your answer…"
       />
     </div>

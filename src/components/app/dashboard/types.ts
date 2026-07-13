@@ -8,6 +8,7 @@ export type RoleCategoryConfig = {
   interviewTypes: string[]
   technicalTopics: string[]
   behavioralTopics: string[]
+  hrTopics?: string[]
   technicalQuestionRatio: number
   durationEnabled: boolean
   durations: number[]
@@ -22,7 +23,7 @@ export type InterviewConfig = {
 }
 
 export type InterviewQuestion = {
-  type: 'technical' | 'behavioral'
+  type: 'technical' | 'behavioral' | 'hr'
   topic: string
   question: string
   difficulty: 'Easy' | 'Medium' | 'Hard'
@@ -45,7 +46,8 @@ export type InterviewSession = {
   selectAllSpecializations?: boolean
   selectAllRoleCategories?: boolean
   selectAllTopics?: boolean
-  interviewType: 'technical' | 'behavioral' | 'both'
+  interviewType: 'technical' | 'behavioral' | 'both' | 'hr'
+  interviewTypes?: Array<'technical' | 'behavioral' | 'hr'>
   topics: string[]
   difficulty: Difficulty
   totalQuestions: number

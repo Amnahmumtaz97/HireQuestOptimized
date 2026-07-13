@@ -4,11 +4,12 @@ import React, { useMemo } from 'react'
 import { Check } from 'lucide-react'
 import { SelectionChip } from '@/components/ui/selection-chip'
 
-export type TopicMode = 'all' | 'technical' | 'behavioral'
+export type TopicMode = 'all' | 'technical' | 'behavioral' | 'hr'
 
 export function TopicSelector({
   technicalTopics,
   behavioralTopics,
+  hrTopics,
   selectedTopics,
   onChange,
   search,
@@ -21,13 +22,14 @@ export function TopicSelector({
 }: {
   technicalTopics: string[]
   behavioralTopics: string[]
+  hrTopics: string[]
   selectedTopics: string[]
   onChange: (nextTopics: string[]) => void
   search: string
   onSearchChange: (nextSearch: string) => void
   mode: TopicMode
   onModeChange: (nextMode: TopicMode) => void
-  allowedKind: 'technical' | 'behavioral' | 'both'
+  allowedKind: 'technical' | 'behavioral' | 'both' | 'hr'
   selectAll: boolean
   onSelectAllChange: (next: boolean) => void
 }) {
@@ -43,12 +45,18 @@ export function TopicSelector({
     return behavioralTopics.filter((topic) => topic.toLowerCase().includes(normalizedSearch))
   }, [normalizedSearch, behavioralTopics])
 
+  const filteredHr = useMemo(() => {
+    if (!normalizedSearch) return hrTopics
+    return hrTopics.filter((topic) => topic.toLowerCase().includes(normalizedSearch))
+  }, [hrTopics, normalizedSearch])
+
   const availableTopics = useMemo(() => {
     const list: string[] = []
     if (allowedKind === 'both' || allowedKind === 'technical') list.push(...technicalTopics)
     if (allowedKind === 'both' || allowedKind === 'behavioral') list.push(...behavioralTopics)
+    if (allowedKind === 'hr') list.push(...hrTopics)
     return [...new Set(list)]
-  }, [allowedKind, behavioralTopics, technicalTopics])
+  }, [allowedKind, behavioralTopics, hrTopics, technicalTopics])
 
   const selectedSet = useMemo(() => new Set(selectedTopics), [selectedTopics])
   const totalCount = availableTopics.length
@@ -79,8 +87,16 @@ export function TopicSelector({
 
   const canShowTechnical = allowedKind === 'both' || allowedKind === 'technical'
   const canShowBehavioral = allowedKind === 'both' || allowedKind === 'behavioral'
+  const canShowHr = allowedKind === 'hr'
 
   const displaySelected = selectAll ? availableTopics : selectedTopics
+
+  const modeLabel =
+    allowedKind === 'technical'
+      ? 'Recommended technical topics'
+      : allowedKind === 'behavioral'
+        ? 'Recommended behavioral topics'
+        : 'Recommended HR topics'
 
   return (
     <div className="space-y-3">
@@ -117,9 +133,7 @@ export function TopicSelector({
             />
           </>
         ) : (
-          <span className="text-xs text-muted-foreground">
-            {allowedKind === 'technical' ? 'Recommended technical topics' : 'Recommended behavioral topics'}
-          </span>
+          <span className="text-xs text-muted-foreground">{modeLabel}</span>
         )}
       </div>
 
@@ -138,6 +152,16 @@ export function TopicSelector({
           <TopicGroup
             title="Behavioral"
             topics={filteredBehavioral}
+            selectedSet={selectedSet}
+            selectAll={selectAll}
+            onToggle={toggleTopic}
+          />
+        ) : null}
+
+        {canShowHr ? (
+          <TopicGroup
+            title="HR"
+            topics={filteredHr}
             selectedSet={selectedSet}
             selectAll={selectAll}
             onToggle={toggleTopic}

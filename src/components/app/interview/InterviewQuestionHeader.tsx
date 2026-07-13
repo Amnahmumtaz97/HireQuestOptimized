@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { formatQuestionTypeLabel } from '@/utils/dashboard/interview-labels'
 
 type InterviewQuestionHeaderProps = {
   questionNumber: number
@@ -31,7 +32,7 @@ export function InterviewQuestionHeader({
           <div className="text-sm font-semibold text-foreground md:text-base">
             <span className="text-muted-foreground">{topic}</span>
             <span className="mx-2 text-border">·</span>
-            <span className="capitalize">{type}</span>
+            <span>{formatQuestionTypeLabel(type)}</span>
             <span className="mx-2 text-border">·</span>
             {difficulty}
           </div>

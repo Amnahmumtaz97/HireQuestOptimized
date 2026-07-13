@@ -72,7 +72,7 @@ export function Sidebar() {
             whileTap={{ scale: 0.98 }}
             className="group relative flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2 text-white shadow-[0_10px_30px_-12px_rgba(79,110,247,0.6)]"
           >
-            <span className="absolute -inset-1 rounded-2xl opacity-30 blur-lg" style={{ background: 'linear-gradient(90deg,#4f6ef7,#2563eb)' }} />
+            <span className="absolute -inset-1 rounded-2xl opacity-30 blur-lg" style={{ background: 'linear-gradient(90deg,#0031b0,#1e5af3)' }} />
             <PlusCircle className="z-10 h-5 w-5" />
             <span className="z-10 font-semibold">New Interview</span>
           </motion.button>

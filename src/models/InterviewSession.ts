@@ -1,7 +1,7 @@
 import { Schema, model, models, type Model } from 'mongoose'
 
 export interface IInterviewQuestion {
-  type: 'technical' | 'behavioral'
+  type: 'technical' | 'behavioral' | 'hr'
   topic: string
   question: string
   difficulty: 'Easy' | 'Medium' | 'Hard'
@@ -33,7 +33,9 @@ export interface IInterviewSession {
   /** @deprecated Use selectAllSpecializations */
   selectAllRoleCategories?: boolean
   selectAllTopics?: boolean
-  interviewType: 'technical' | 'behavioral' | 'both'
+  interviewType: 'technical' | 'behavioral' | 'both' | 'hr'
+  /** Concrete kinds when multiple types were selected (interviewType is `both`). */
+  interviewTypes?: Array<'technical' | 'behavioral' | 'hr'>
   topics: string[]
   difficulty: 'Easy' | 'Medium' | 'Hard' | 'Adaptive'
   totalQuestions: number
@@ -76,7 +78,11 @@ const interviewSessionSchema = new Schema<IInterviewSession>(
       type: String,
       required: true,
       trim: true,
-      enum: ['technical', 'behavioral', 'both'],
+      enum: ['technical', 'behavioral', 'both', 'hr'],
+    },
+    interviewTypes: {
+      type: [{ type: String, enum: ['technical', 'behavioral', 'hr'] }],
+      default: undefined,
     },
     topics: { type: [String], required: true, default: [] },
     difficulty: { type: String, required: true, enum: ['Easy', 'Medium', 'Hard', 'Adaptive'] },
@@ -93,7 +99,7 @@ const interviewSessionSchema = new Schema<IInterviewSession>(
     questions: {
       type: [
         {
-          type: { type: String, required: true, enum: ['technical', 'behavioral'] },
+          type: { type: String, required: true, enum: ['technical', 'behavioral', 'hr'] },
           topic: { type: String, required: true, trim: true },
           question: { type: String, required: true, trim: true },
           difficulty: { type: String, required: true, enum: ['Easy', 'Medium', 'Hard'] },

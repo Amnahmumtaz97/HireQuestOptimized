@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import {
   ArrowRight,
@@ -78,13 +78,26 @@ export function Hero() {
     <section
       id="home"
       ref={ref}
-      className="relative overflow-hidden pt-28 pb-20 sm:pt-32 sm:pb-24 lg:pt-36 lg:pb-28"
+      className="relative isolate overflow-hidden pt-28 pb-20 sm:pt-32 sm:pb-24 lg:pt-36 lg:pb-28"
     >
-      {/* Background layers (mesh/grid kept; large radial wash removed) */}
-      <div className="absolute inset-0 bg-mesh pointer-events-none" aria-hidden />
-      <div className="absolute inset-0 grid-bg pointer-events-none" aria-hidden />
+      {/* Full-bleed brain hero background */}
+      <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden>
+        <div className="absolute left-1/2 top-1/2 h-[90%] w-[90%] -translate-x-1/2 -translate-y-1/2">
+          <Image
+            src="/hero-ai-brain.jpg"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-center"
+          />
+        </div>
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,color-mix(in_oklab,var(--background)_88%,transparent)_0%,color-mix(in_oklab,var(--background)_55%,transparent)_48%,color-mix(in_oklab,var(--background)_72%,transparent)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,color-mix(in_oklab,var(--background)_35%,transparent)_0%,transparent_28%,color-mix(in_oklab,var(--background)_78%,transparent)_100%)]" />
+        <div className="absolute inset-0 bg-mesh opacity-40" />
+      </div>
 
-      <div className="relative mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1.02fr_0.98fr] lg:items-center">
+      <div className="relative mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
         <div className="max-w-2xl text-left">
           <div className="reveal inline-flex items-center gap-2 rounded-full glass px-4 py-1.5 text-xs font-medium text-muted-foreground">
             <Sparkles className="h-3.5 w-3.5 text-primary-glow" />
@@ -125,7 +138,7 @@ export function Hero() {
           >
             <Link
               href="/app/new-interview"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-primary px-7 text-sm font-semibold text-foreground shadow-[0_0_30px_-6px_var(--primary)] transition-all hover:scale-[1.03] hover:shadow-[0_0_44px_-4px_var(--primary)]"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-primary px-7 text-sm font-semibold text-primary-foreground shadow-[0_0_30px_-6px_var(--primary)] transition-all hover:scale-[1.03] hover:shadow-[0_0_44px_-4px_var(--primary)]"
             >
               Try Prep AI Now
               <ArrowRight className="h-4 w-4" />
@@ -173,31 +186,19 @@ export function Hero() {
         </div>
 
         <div className="reveal relative" style={{ transitionDelay: '240ms' }}>
-          <div className="relative overflow-hidden rounded-[2rem] glass-strong shimmer-border p-4 sm:p-5 glow-ring-strong animate-brain-glow">
-            {/* Decorative inner radial overlays removed for cleaner appearance */}
-            <div className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[oklch(0.08_0.03_265)] min-h-[520px] sm:min-h-[600px]">
-              <Image
-                src="/hero-ai-brain.jpg"
-                alt="AI neural network powering HireQuest interview preparation"
-                fill
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-cover opacity-20 blur-[1px] scale-110"
-                priority
-              />
-
-              <div className="absolute inset-0 bg-[linear-gradient(to_bottom,oklch(0.07_0.03_265_/0.05),oklch(0.12_0.03_265_/0.82))]" />
-
-              <div className="absolute inset-x-4 top-4 flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-xs text-muted-foreground backdrop-blur-md sm:inset-x-5">
+          <div className="relative overflow-hidden rounded-[2rem] glass-strong shimmer-border border border-border/40 p-4 sm:p-5 glow-ring-strong">
+            <div className="relative overflow-hidden rounded-[1.75rem] border border-border/30 bg-card/40 min-h-[420px] sm:min-h-[520px] backdrop-blur-md">
+              <div className="absolute inset-x-4 top-4 flex items-center justify-between rounded-2xl border border-border/40 bg-card/50 px-4 py-3 text-xs text-muted-foreground backdrop-blur-md sm:inset-x-5">
                 <span>Live interview assistant</span>
-                <span className="inline-flex items-center gap-2 text-emerald-300">
+                <span className="inline-flex items-center gap-2 text-emerald-500 dark:text-emerald-300">
                   <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
                   responding
                 </span>
               </div>
 
               <div className="absolute left-1/2 top-1/2 w-[min(82vw,390px)] -translate-x-1/2 -translate-y-[44%] sm:-translate-y-1/2">
-                <div className="relative rounded-[1.75rem] border border-white/10 bg-white/5 p-4 shadow-[0_0_60px_-12px_color-mix(in_oklab,var(--primary)_55%,transparent)] backdrop-blur-xl">
-                  <div className="relative aspect-[1.05/1] overflow-hidden rounded-[1.5rem] bg-[oklch(0.08_0.03_265)]">
+                <div className="relative rounded-[1.75rem] border border-border/40 bg-card/30 p-4 shadow-[0_0_60px_-12px_color-mix(in_oklab,var(--primary)_55%,transparent)] backdrop-blur-xl">
+                  <div className="relative aspect-[1.05/1] overflow-hidden rounded-[1.5rem] bg-background/40">
                     <DotLottieReact
                       src="/Live%20chatbot.lottie"
                       loop
@@ -221,8 +222,6 @@ export function Hero() {
                         hint="better structure"
                       />
                     </div>
-
-                    {/* inner subtle overlay removed */}
                   </div>
                 </div>
               </div>
@@ -240,8 +239,6 @@ export function Hero() {
               </div>
             </div>
           </div>
-
-          {/* bottom decorative radial blur removed */}
         </div>
       </div>
     </section>

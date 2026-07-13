@@ -100,7 +100,7 @@ function PricingCard({ plan, yearly, delay }: { plan: Plan; yearly: boolean; del
       <div className="relative flex items-start justify-between mb-2 gap-2">
         <div className="flex items-center gap-2.5">
           {Icon && (
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-primary glow-ring text-foreground">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-primary glow-ring text-primary-foreground">
               <Icon className="h-5 w-5" />
             </span>
           )}
@@ -143,7 +143,7 @@ function PricingCard({ plan, yearly, delay }: { plan: Plan; yearly: boolean; del
           className={[
             'relative mt-6 w-full rounded-2xl h-11 text-sm font-semibold transition-all duration-200 btn-micro',
             popular
-              ? 'bg-gradient-primary text-foreground shadow-glow hover:scale-[1.02]'
+              ? 'bg-gradient-primary text-primary-foreground shadow-glow hover:scale-[1.02]'
               : 'glass border border-white/10 text-foreground hover:bg-white/5',
           ].join(' ')}
         >
@@ -177,7 +177,7 @@ export function Pricing() {
               onClick={() => setYearly(false)}
               className={[
                 'rounded-lg px-5 py-2 text-sm font-medium transition-all duration-200 btn-micro',
-                !yearly ? 'bg-gradient-primary text-foreground shadow-glow-sm' : 'text-muted-foreground hover:text-foreground',
+                !yearly ? 'bg-gradient-primary text-primary-foreground shadow-glow-sm' : 'text-muted-foreground hover:text-foreground',
               ].join(' ')}
             >
               Monthly
@@ -186,7 +186,7 @@ export function Pricing() {
               onClick={() => setYearly(true)}
               className={[
                 'rounded-lg px-5 py-2 text-sm font-medium transition-all duration-200 btn-micro flex items-center gap-2',
-                yearly ? 'bg-gradient-primary text-foreground shadow-glow-sm' : 'text-muted-foreground hover:text-foreground',
+                yearly ? 'bg-gradient-primary text-primary-foreground shadow-glow-sm' : 'text-muted-foreground hover:text-foreground',
               ].join(' ')}
             >
               Yearly

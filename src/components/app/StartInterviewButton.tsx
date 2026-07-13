@@ -63,6 +63,7 @@ function labelForInterviewType(type: InterviewType): string {
   switch (type) {
     case 'technical': return 'Technical'
     case 'behavioral': return 'Behavioral'
-    case 'both': return 'Mixed Interview'
+    case 'hr': return 'HR Interview'
+    case 'both': return 'Both'
   }
 }

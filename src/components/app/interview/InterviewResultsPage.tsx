@@ -8,7 +8,7 @@ import type { InterviewConfig } from '@/components/app/dashboard/types'
 import { DashboardPageHeader } from '@/components/app/dashboard/DashboardPageHeader'
 import { InterviewQuestionMarkdown } from '@/components/app/interview/InterviewQuestionMarkdown'
 import { formatGeneratedQuestion } from '@/lib/interview-questions/clean-question-text'
-import { formatDifficultyLabel, formatInterviewTypeLabel, formatIndustryDisplay, formatRoleCategoryDisplay } from '@/utils/dashboard/interview-labels'
+import { formatDifficultyLabel, formatInterviewTypeLabel, formatIndustryDisplay, formatRoleCategoryDisplay, formatQuestionTypeLabel } from '@/utils/dashboard/interview-labels'
 
 type ResultsSession = {
   _id: string
@@ -16,6 +16,7 @@ type ResultsSession = {
   industryKey: string
   roleCategoryKey: string
   interviewType: string
+  interviewTypes?: Array<'technical' | 'behavioral' | 'hr'>
   difficulty: string
   totalQuestions: number
   questions?: Array<{
@@ -226,7 +227,7 @@ export function InterviewResultsPage() {
                   >
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div className="text-xs font-semibold text-muted-foreground">
-                        Q{i + 1} · {q.topic} · {q.type} · {q.difficulty}
+                        Q{i + 1} · {q.topic} · {formatQuestionTypeLabel(q.type)} · {q.difficulty}
                       </div>
                       {flagged.has(i) ? (
                         <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/35 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-200">

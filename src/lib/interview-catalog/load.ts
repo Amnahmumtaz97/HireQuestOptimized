@@ -2,6 +2,11 @@ import { connectToDatabase } from '@/lib/mongoose'
 import { InterviewConfigModel } from '@/models/InterviewConfig'
 import type { IRoleCategoryConfig } from '@/models/InterviewConfig'
 import { INTERVIEW_CATALOG_DEPARTMENTS } from '@/lib/interview-catalog/departments-data'
+import {
+  DEFAULT_HR_TOPICS,
+  DEFAULT_INTERVIEW_TYPES,
+  withLegacyHrInterviewType,
+} from '@/lib/interview-catalog/hr-topics'
 import { mongoDocToDepartmentDto } from '@/lib/interview-catalog/admin'
 import type { DepartmentConfig, SpecializationConfig } from '@/lib/interview-catalog/types'
 
@@ -25,9 +30,10 @@ function staticSpecToRoleCategory(spec: SpecializationConfig): IRoleCategoryConf
   return {
     key: spec.key,
     label: spec.label,
-    interviewTypes: ['Technical', 'Behavioral'],
+    interviewTypes: spec.interviewTypes?.length ? [...spec.interviewTypes] : [...DEFAULT_INTERVIEW_TYPES],
     technicalTopics: [...spec.technicalTopics],
     behavioralTopics: [...spec.behavioralTopics],
+    hrTopics: [...(spec.hrTopics?.length ? spec.hrTopics : DEFAULT_HR_TOPICS)],
     technicalQuestionRatio: spec.technicalQuestionRatio,
     durationEnabled: spec.durationEnabled,
     durations: [...spec.durations],
@@ -47,6 +53,19 @@ function mergeRoleCategory(
     behavioralTopics: [
       ...new Set([...existing.behavioralTopics, ...staticSpec.behavioralTopics]),
     ],
+    hrTopics: [
+      ...new Set([
+        ...(existing.hrTopics?.length ? existing.hrTopics : []),
+        ...(staticSpec.hrTopics?.length ? staticSpec.hrTopics : DEFAULT_HR_TOPICS),
+      ]),
+    ],
+    interviewTypes: withLegacyHrInterviewType(
+      existing.interviewTypes?.length
+        ? existing.interviewTypes
+        : staticSpec.interviewTypes?.length
+          ? staticSpec.interviewTypes
+          : [...DEFAULT_INTERVIEW_TYPES],
+    ),
     technicalQuestionRatio: existing.technicalQuestionRatio ?? staticSpec.technicalQuestionRatio,
     durationEnabled: existing.durationEnabled ?? staticSpec.durationEnabled,
     durations:

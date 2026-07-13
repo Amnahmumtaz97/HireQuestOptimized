@@ -9,7 +9,7 @@ export type InterviewSessionState = {
   interviewStartedAt?: string | null
   questions?: Array<{
     question: string
-    type: 'technical' | 'behavioral'
+    type: 'technical' | 'behavioral' | 'hr'
     topic: string
     difficulty: 'Easy' | 'Medium' | 'Hard'
     illustrationDataUrl?: string | null

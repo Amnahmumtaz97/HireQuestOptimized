@@ -1,4 +1,9 @@
 import { z } from 'zod'
+import {
+  DEFAULT_HR_TOPICS,
+  DEFAULT_INTERVIEW_TYPES,
+  withLegacyHrInterviewType,
+} from '@/lib/interview-catalog/hr-topics'
 import type { DepartmentConfig, SpecializationConfig } from '@/lib/interview-catalog/types'
 import type { IInterviewConfig, IRoleCategoryConfig } from '@/models/InterviewConfig'
 
@@ -13,8 +18,10 @@ function slugify(value: string): string {
 export const specializationPayloadSchema = z.object({
   key: z.string().trim().optional().default(''),
   label: z.string().trim().min(1),
+  interviewTypes: z.array(z.string().trim().min(1)).default([...DEFAULT_INTERVIEW_TYPES]),
   technicalTopics: z.array(z.string().trim().min(1)).default([]),
   behavioralTopics: z.array(z.string().trim().min(1)).default([]),
+  hrTopics: z.array(z.string().trim().min(1)).default([...DEFAULT_HR_TOPICS]),
   technicalQuestionRatio: z.number().int().min(0).max(100).default(70),
   durationEnabled: z.boolean().default(true),
   durations: z.array(z.number().int().positive()).default([20, 30, 45]),
@@ -30,7 +37,7 @@ export const departmentPayloadSchema = z.object({
 
 export const topicPayloadSchema = z.object({
   specializationKey: z.string().trim().min(1),
-  kind: z.enum(['technical', 'behavioral']),
+  kind: z.enum(['technical', 'behavioral', 'hr']),
   topic: z.string().trim().min(1),
 })
 
@@ -49,8 +56,10 @@ export function roleCategoryToSpecialization(role: IRoleCategoryConfig): Special
   return {
     key: role.key,
     label: role.label,
+    interviewTypes: withLegacyHrInterviewType(role.interviewTypes),
     technicalTopics: role.technicalTopics ?? [],
     behavioralTopics: role.behavioralTopics ?? [],
+    hrTopics: role.hrTopics?.length ? role.hrTopics : [...DEFAULT_HR_TOPICS],
     technicalQuestionRatio: role.technicalQuestionRatio ?? 70,
     durationEnabled: role.durationEnabled ?? true,
     durations: role.durations ?? [],
@@ -62,9 +71,10 @@ export function specializationToRoleCategory(spec: SpecializationPayload): IRole
   return {
     key,
     label: spec.label.trim(),
-    interviewTypes: ['Technical', 'Behavioral'],
+    interviewTypes: spec.interviewTypes?.length ? spec.interviewTypes : [...DEFAULT_INTERVIEW_TYPES],
     technicalTopics: spec.technicalTopics.map((t) => t.trim()).filter(Boolean),
     behavioralTopics: spec.behavioralTopics.map((t) => t.trim()).filter(Boolean),
+    hrTopics: spec.hrTopics.map((t) => t.trim()).filter(Boolean),
     technicalQuestionRatio: spec.technicalQuestionRatio,
     durationEnabled: spec.durationEnabled,
     durations: spec.durationEnabled ? spec.durations : [],
@@ -107,6 +117,7 @@ export function normalizeDepartmentPayload(payload: DepartmentPayload): Departme
       label: spec.label.trim(),
       technicalTopics: spec.technicalTopics.map((t) => t.trim()).filter(Boolean),
       behavioralTopics: spec.behavioralTopics.map((t) => t.trim()).filter(Boolean),
+      hrTopics: spec.hrTopics.map((t) => t.trim()).filter(Boolean),
       durations: spec.durationEnabled ? spec.durations : [],
     })),
   }
@@ -136,9 +147,10 @@ export function departmentToLegacyConfig(dto: DepartmentDto) {
     roleCategories: dto.specializations.map((spec) => ({
       key: spec.key,
       label: spec.label,
-      interviewTypes: ['Technical', 'Behavioral'],
+      interviewTypes: spec.interviewTypes?.length ? spec.interviewTypes : [...DEFAULT_INTERVIEW_TYPES],
       technicalTopics: spec.technicalTopics,
       behavioralTopics: spec.behavioralTopics,
+      hrTopics: spec.hrTopics ?? [],
       technicalQuestionRatio: spec.technicalQuestionRatio,
       durationEnabled: spec.durationEnabled,
       durations: spec.durations,
@@ -148,7 +160,8 @@ export function departmentToLegacyConfig(dto: DepartmentDto) {
 
 export function countTopics(department: Pick<DepartmentDto, 'specializations'>): number {
   return department.specializations.reduce(
-    (sum, spec) => sum + spec.technicalTopics.length + spec.behavioralTopics.length,
+    (sum, spec) =>
+      sum + spec.technicalTopics.length + spec.behavioralTopics.length + (spec.hrTopics?.length ?? 0),
     0,
   )
 }

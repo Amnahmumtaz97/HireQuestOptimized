@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 export const interviewQuestionSchema = z.object({
   question: z.string().trim().min(1).max(4000),
-  type: z.enum(['technical', 'behavioral']),
+  type: z.enum(['technical', 'behavioral', 'hr']),
   topic: z.string().trim().min(1).max(200),
   difficulty: z.enum(['Easy', 'Medium', 'Hard']),
   /** data:image/...;base64,... from Gemini image model when the question needs a figure */

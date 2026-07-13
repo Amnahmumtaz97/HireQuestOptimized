@@ -8,6 +8,7 @@ const TYPE_LABELS: Record<string, string> = {
   technical: 'Technical',
   behavioral: 'Behavioral',
   both: 'Both',
+  hr: 'HR Interview',
 }
 
 const DIFF_LABELS: Record<string, string> = {
@@ -21,6 +22,19 @@ export function formatInterviewTypeLabel(value: string | null | undefined): stri
   if (value == null || value === '') return '—'
   const k = value.trim().toLowerCase()
   if (TYPE_LABELS[k]) return TYPE_LABELS[k]
+  return value.replace(/^\w/, (c) => c.toUpperCase())
+}
+
+const QUESTION_TYPE_LABELS: Record<string, string> = {
+  technical: 'Technical',
+  behavioral: 'Behavioral',
+  hr: 'HR',
+}
+
+export function formatQuestionTypeLabel(value: string | null | undefined): string {
+  if (value == null || value === '') return '—'
+  const k = value.trim().toLowerCase()
+  if (QUESTION_TYPE_LABELS[k]) return QUESTION_TYPE_LABELS[k]
   return value.replace(/^\w/, (c) => c.toUpperCase())
 }
 

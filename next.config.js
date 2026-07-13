@@ -58,7 +58,8 @@ const nextConfig = {
   },
   // Performance: bundle optimization
   experimental: {
-    optimizePackageImports: ['lucide-react', 'next-auth'],
+    // Do not optimize `next-auth` — Turbopack can drop the [...nextauth] API route.
+    optimizePackageImports: ['lucide-react'],
   },
   // Performance: compression
   compress: true,

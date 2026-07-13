@@ -41,7 +41,7 @@ export function CTA() {
             </p>
 
             <div className="mt-10 flex justify-center">
-              <button className="inline-flex items-center gap-2 rounded-full h-14 px-10 text-base bg-gradient-primary text-foreground font-semibold animate-glow-pulse hover:scale-[1.04] transition-transform shadow-glow">
+              <button className="inline-flex items-center gap-2 rounded-full h-14 px-10 text-base bg-gradient-primary text-primary-foreground font-semibold animate-glow-pulse hover:scale-[1.04] transition-transform shadow-glow">
                 Start Your First Interview
                 <ArrowRight className="h-5 w-5" />
               </button>
