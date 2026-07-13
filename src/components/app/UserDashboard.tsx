@@ -78,7 +78,7 @@ function WizardStepper({
   onSelect: (key: WizardStepKey) => void
 }) {
   return (
-    <div className="w-full rounded-2xl border border-border bg-[#0f1524]/90 px-3 py-4 sm:px-5 sm:py-5">
+    <div className="hq-wiz-stepper w-full rounded-2xl border border-border px-3 py-4 sm:px-5 sm:py-5">
       <div className="grid grid-cols-3 gap-x-2 gap-y-4 sm:grid-cols-6 sm:gap-x-3">
         {steps.map((s, idx) => {
           const isActive = s.key === active
@@ -98,10 +98,10 @@ function WizardStepper({
                 className={[
                   'flex h-9 w-9 items-center justify-center rounded-full border text-xs font-semibold transition-all sm:h-8 sm:w-8',
                   isActive
-                    ? 'border-[#cdd8ff] bg-[#d9e2ff] text-[#1a2340] shadow-[0_0_18px_rgba(217,226,255,0.4)]'
+                    ? 'hq-wiz-step-num--active'
                     : isComplete
-                      ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
-                      : 'border-border/80 bg-transparent text-slate-300 group-hover:border-slate-500 group-hover:text-white',
+                      ? 'hq-wiz-step-num--done'
+                      : 'hq-wiz-step-num--todo',
                 ].join(' ')}
                 aria-hidden
               >
@@ -110,7 +110,11 @@ function WizardStepper({
               <span
                 className={[
                   'block max-w-full text-[10px] font-semibold uppercase tracking-[0.14em] sm:text-[11px]',
-                  isActive ? 'text-[#dbe4ff]' : isComplete ? 'text-emerald-200' : 'text-slate-400',
+                  isActive
+                    ? 'hq-wiz-step-label--active'
+                    : isComplete
+                      ? 'hq-wiz-step-label--done'
+                      : 'hq-wiz-step-label--todo',
                 ].join(' ')}
               >
                 {s.label}
@@ -1421,9 +1425,9 @@ export function CreateInterviewWizard() {
                 <RotateCcw className="h-3.5 w-3.5" /> Reset
               </button>
             </div>
-            {actionError ? <p className="text-sm text-red-400">{actionError}</p> : null}
-            {actionMessage ? <p className="text-sm text-emerald-400">{actionMessage}</p> : null}
-            {wizardError ? <p className="text-sm text-amber-300">{wizardError}</p> : null}
+            {actionError ? <p className="text-sm text-destructive">{actionError}</p> : null}
+            {actionMessage ? <p className="text-sm text-[var(--hq-green)]">{actionMessage}</p> : null}
+            {wizardError ? <p className="text-sm text-[var(--hq-amber)]">{wizardError}</p> : null}
 
             <WizardStepper
               steps={wizardSteps}
@@ -1436,7 +1440,7 @@ export function CreateInterviewWizard() {
               }}
             />
 
-            <div className="rounded-2xl border border-border bg-input/10 p-4 sm:p-5 overflow-hidden">
+            <div className="rounded-2xl border border-border bg-card/60 p-4 sm:p-5 overflow-hidden">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={wizardStep}

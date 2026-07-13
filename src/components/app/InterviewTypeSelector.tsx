@@ -11,31 +11,31 @@ const OPTIONS = [
     key: 'technical' as const,
     title: 'Technical',
     icon: BrainCircuit,
-    accent: 'text-cyan-300',
-    glow: 'shadow-[0_10px_28px_-12px_rgba(6,182,212,0.5)]',
-    ring: 'ring-cyan-400/40',
-    iconBg: 'bg-cyan-500/15 border-cyan-400/30',
-    blob: 'bg-cyan-500/20',
+    accent: 'interview-type-accent--tech',
+    glow: 'interview-type-glow--tech',
+    ring: 'interview-type-ring--tech',
+    iconBg: 'interview-type-icon--tech',
+    blob: 'interview-type-blob--tech',
   },
   {
     key: 'behavioral' as const,
     title: 'Behavioral',
     icon: MessageCircle,
-    accent: 'text-violet-300',
-    glow: 'shadow-[0_10px_28px_-12px_rgba(139,92,246,0.5)]',
-    ring: 'ring-violet-400/40',
-    iconBg: 'bg-violet-500/15 border-violet-400/30',
-    blob: 'bg-violet-500/20',
+    accent: 'interview-type-accent--beh',
+    glow: 'interview-type-glow--beh',
+    ring: 'interview-type-ring--beh',
+    iconBg: 'interview-type-icon--beh',
+    blob: 'interview-type-blob--beh',
   },
   {
     key: 'both' as const,
     title: 'Both',
     icon: Sparkles,
-    accent: 'text-amber-200',
-    glow: 'shadow-[0_10px_28px_-12px_rgba(251,191,36,0.4)]',
-    ring: 'ring-amber-300/35',
-    iconBg: 'bg-amber-500/15 border-amber-300/30',
-    blob: 'bg-amber-400/20',
+    accent: 'interview-type-accent--both',
+    glow: 'interview-type-glow--both',
+    ring: 'interview-type-ring--both',
+    iconBg: 'interview-type-icon--both',
+    blob: 'interview-type-blob--both',
   },
 ]
 
@@ -71,8 +71,8 @@ export function InterviewTypeSelector({
               'group relative flex min-h-[88px] flex-col items-center justify-center gap-2.5 overflow-hidden rounded-2xl border px-3 py-4 outline-none transition-colors duration-200',
               'focus-visible:ring-2 focus-visible:ring-primary/40',
               selected
-                ? `border-primary/45 bg-input/50 ring-2 ring-inset ${option.ring} ${option.glow}`
-                : 'border-border bg-input/20 hover:border-primary/25 hover:bg-input/35',
+                ? `border-primary/45 bg-card ring-2 ring-inset ${option.ring} ${option.glow}`
+                : 'border-border bg-card/70 hover:border-primary/25 hover:bg-card',
             ].join(' ')}
           >
             <div

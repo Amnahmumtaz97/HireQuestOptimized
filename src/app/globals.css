@@ -1557,10 +1557,150 @@
     outline: 2px solid transparent;
     outline-offset: 2px;
   }
-  .hq-wiz-step-num--active {
-    border-color: color-mix(in srgb, var(--hq-display-blue) 40%, transparent);
-    background: color-mix(in srgb, var(--hq-display-blue) 15%, transparent);
+
+  .hq-wiz-stepper {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--hq-display-blue) 18%, #0b1224) 0%,
+      color-mix(in srgb, var(--hq-display-blue) 10%, #0a1020) 100%
+    );
+    border-color: color-mix(in srgb, var(--hq-display-blue) 35%, transparent);
+    box-shadow:
+      0 14px 40px -24px color-mix(in srgb, var(--hq-display-blue) 55%, transparent),
+      inset 0 1px 0 rgb(255 255 255 / 0.06);
   }
+
+  .hq-wiz-step-num--active {
+    border-color: color-mix(in srgb, #cdd8ff 70%, transparent);
+    background: #d9e2ff;
+    color: #1a2340;
+    box-shadow: 0 0 18px rgba(217, 226, 255, 0.4);
+  }
+
+  .hq-wiz-step-num--done {
+    border-color: color-mix(in srgb, var(--hq-display-blue) 45%, transparent);
+    background: color-mix(in srgb, var(--hq-display-blue) 22%, transparent);
+    color: #93c5fd;
+  }
+
+  .hq-wiz-step-num--todo {
+    border-color: rgb(255 255 255 / 0.16);
+    background: transparent;
+    color: rgb(203 213 225 / 0.85);
+  }
+
+  .group:hover .hq-wiz-step-num--todo {
+    border-color: color-mix(in srgb, #93c5fd 50%, transparent);
+    color: #ffffff;
+  }
+
+  .hq-wiz-step-label--active {
+    color: #dbe4ff;
+  }
+
+  .hq-wiz-step-label--done {
+    color: #93c5fd;
+  }
+
+  .hq-wiz-step-label--todo {
+    color: rgb(148 163 184 / 0.95);
+  }
+
+  :root[data-theme='light'] .hq-wiz-stepper {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--hq-display-blue) 14%, #ffffff) 0%,
+      color-mix(in srgb, var(--hq-display-blue) 8%, #f1f5ff) 100%
+    );
+    border-color: color-mix(in srgb, var(--hq-display-blue) 28%, var(--hq-border));
+    box-shadow: 0 12px 36px -22px color-mix(in srgb, var(--hq-display-blue) 35%, transparent);
+  }
+
+  :root[data-theme='light'] .hq-wiz-step-num--active {
+    border-color: color-mix(in srgb, var(--hq-display-blue) 45%, transparent);
+    background: #ffffff;
+    color: #0031b0;
+    box-shadow: 0 0 16px color-mix(in srgb, var(--hq-display-blue) 22%, transparent);
+  }
+
+  :root[data-theme='light'] .hq-wiz-step-num--done {
+    border-color: color-mix(in srgb, var(--hq-display-blue) 35%, transparent);
+    background: color-mix(in srgb, var(--hq-display-blue) 14%, #ffffff);
+    color: #1e5af3;
+  }
+
+  :root[data-theme='light'] .hq-wiz-step-num--todo {
+    border-color: color-mix(in srgb, var(--hq-display-blue) 22%, var(--hq-border));
+    color: #64748b;
+  }
+
+  :root[data-theme='light'] .group:hover .hq-wiz-step-num--todo {
+    border-color: color-mix(in srgb, var(--hq-display-blue) 40%, transparent);
+    color: #0031b0;
+  }
+
+  :root[data-theme='light'] .hq-wiz-step-label--active {
+    color: #0031b0;
+  }
+
+  :root[data-theme='light'] .hq-wiz-step-label--done {
+    color: #1e5af3;
+  }
+
+  :root[data-theme='light'] .hq-wiz-step-label--todo {
+    color: #64748b;
+  }
+
+  /* Interview type cards — theme-aware blue accents (no violet) */
+  .interview-type-accent--tech { color: #67e8f9; }
+  .interview-type-accent--beh { color: #93c5fd; }
+  .interview-type-accent--both { color: #fbbf24; }
+
+  .interview-type-icon--tech {
+    background: rgb(6 182 212 / 0.15);
+    border-color: rgb(34 211 238 / 0.3);
+  }
+  .interview-type-icon--beh {
+    background: rgb(59 130 246 / 0.15);
+    border-color: rgb(96 165 250 / 0.3);
+  }
+  .interview-type-icon--both {
+    background: rgb(245 158 11 / 0.15);
+    border-color: rgb(251 191 36 / 0.3);
+  }
+
+  .interview-type-blob--tech { background: rgb(6 182 212 / 0.2); }
+  .interview-type-blob--beh { background: rgb(59 130 246 / 0.2); }
+  .interview-type-blob--both { background: rgb(251 191 36 / 0.2); }
+
+  .interview-type-ring--tech { --tw-ring-color: rgb(34 211 238 / 0.4); }
+  .interview-type-ring--beh { --tw-ring-color: rgb(96 165 250 / 0.4); }
+  .interview-type-ring--both { --tw-ring-color: rgb(251 191 36 / 0.35); }
+
+  .interview-type-glow--tech { box-shadow: 0 10px 28px -12px rgba(6, 182, 212, 0.45); }
+  .interview-type-glow--beh { box-shadow: 0 10px 28px -12px rgba(59, 130, 246, 0.45); }
+  .interview-type-glow--both { box-shadow: 0 10px 28px -12px rgba(245, 158, 11, 0.4); }
+
+  :root[data-theme='light'] .interview-type-accent--tech { color: #0e7490; }
+  :root[data-theme='light'] .interview-type-accent--beh { color: #1d4ed8; }
+  :root[data-theme='light'] .interview-type-accent--both { color: #b45309; }
+
+  :root[data-theme='light'] .interview-type-icon--tech {
+    background: rgb(8 145 178 / 0.1);
+    border-color: rgb(8 145 178 / 0.28);
+  }
+  :root[data-theme='light'] .interview-type-icon--beh {
+    background: rgb(29 78 216 / 0.1);
+    border-color: rgb(29 78 216 / 0.28);
+  }
+  :root[data-theme='light'] .interview-type-icon--both {
+    background: rgb(180 83 9 / 0.1);
+    border-color: rgb(180 83 9 / 0.28);
+  }
+
+  :root[data-theme='light'] .interview-type-glow--tech { box-shadow: 0 10px 28px -14px rgba(8, 145, 178, 0.28); }
+  :root[data-theme='light'] .interview-type-glow--beh { box-shadow: 0 10px 28px -14px rgba(29, 78, 216, 0.28); }
+  :root[data-theme='light'] .interview-type-glow--both { box-shadow: 0 10px 28px -14px rgba(180, 83, 9, 0.24); }
 
   /* ---- Text gradient for light mode ---- */
   .text-gradient-blue {
