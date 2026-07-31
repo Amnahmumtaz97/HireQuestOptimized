@@ -187,7 +187,7 @@ export function Hero() {
 
         <div className="reveal relative" style={{ transitionDelay: '240ms' }}>
           <div
-            className="hq-hero-code-panel relative overflow-visible rounded-[24px] border border-border"
+            className="hq-hero-code-panel relative overflow-visible rounded-[24px]"
             style={{ boxShadow: '0 30px 80px -30px color-mix(in oklab, var(--primary) 35%, transparent)' }}
           >
             <div className="hq-hero-code-bg" aria-hidden>
@@ -213,7 +213,7 @@ async function interview() {
             </div>
 
             {/* Header strip */}
-            <div className="relative z-[1] flex items-center justify-between border-b border-border/70 bg-card/80 px-4 py-3.5 backdrop-blur-md sm:px-5">
+            <div className="hq-hero-code-header relative z-[1] flex items-center justify-between px-4 py-3.5 sm:px-5">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-primary text-white shadow-[0_6px_18px_-6px_color-mix(in_oklab,var(--primary)_60%,transparent)]">
                   <AudioLines className="h-4 w-4" strokeWidth={2} />

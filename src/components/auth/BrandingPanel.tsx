@@ -20,18 +20,11 @@ export function BrandingPanel({ mode }: Props) {
         }}
       />
 
-      {/* Doodles: diagonal wedges, arcs, hexagons */}
+      {/* Doodles: arcs + hexagons (no blur diagonal rectangle) */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 overflow-hidden"
       >
-        <div
-          className="absolute -left-6 top-[12%] h-[200px] w-[70%] opacity-[0.14]"
-          style={{
-            background: 'linear-gradient(165deg, #1e40af 0%, #2563eb 50%, transparent 100%)',
-            clipPath: 'polygon(0 24%, 100% 0, 100% 76%, 0 100%)',
-          }}
-        />
         <div className="absolute -right-14 top-[28%] h-52 w-52 rounded-full border border-white/15" />
         <div className="absolute -right-4 top-[34%] h-32 w-32 rounded-full border border-white/10" />
         <div className="absolute -left-10 bottom-[18%] h-44 w-44 rounded-full border border-white/10" />
@@ -67,9 +60,7 @@ export function BrandingPanel({ mode }: Props) {
       {/* Logo */}
       <div className="relative flex w-full items-center justify-center">
         <div className="flex items-center gap-2">
-          <div className="hq-marketing-logo-mark">
-            HQ
-          </div>
+          <div className="hq-marketing-logo-mark">HQ</div>
           <span className="text-xl font-extrabold tracking-[-0.02em] text-white">HireQuest</span>
         </div>
       </div>

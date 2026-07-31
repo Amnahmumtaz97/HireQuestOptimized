@@ -59,7 +59,7 @@ export const SidebarNav: FC<SidebarNavProps> = ({
   const pathname = usePathname() ?? ''
 
   return (
-    <aside className="relative flex h-full min-h-full w-full flex-col border-r border-border bg-card">
+    <aside className="hq-app-sidebar relative flex h-full min-h-full w-full flex-col">
       <TooltipProvider delayDuration={160}>
         <div className={['flex h-full flex-col p-3.5', collapsed ? 'items-center' : ''].join(' ')}>
           <div
@@ -69,15 +69,15 @@ export const SidebarNav: FC<SidebarNavProps> = ({
             ].join(' ')}
           >
             {!collapsed ? (
-              <Link href="/" className="flex min-w-0 items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                <span className="inline-flex h-10 min-w-[2.5rem] items-center justify-center rounded-[10px] bg-gradient-primary px-1.5 text-[11px] font-extrabold tracking-[-0.04em] text-white shadow-[var(--shadow-glow-sm)]">
+              <Link href="/" className="flex min-w-0 items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+                <span className="hq-app-sidebar-mark inline-flex h-10 min-w-[2.5rem] items-center justify-center rounded-[10px] px-1.5 text-[11px] font-extrabold tracking-[-0.04em]">
                   HQ
                 </span>
                 <div className="min-w-0 leading-tight">
-                  <div className="truncate text-sm font-semibold text-foreground transition-colors hover:text-[var(--primary)]">
+                  <div className="hq-app-sidebar-brand truncate text-sm font-semibold transition-opacity hover:opacity-90">
                     HireQuest
                   </div>
-                  <div className="truncate text-[11px] text-muted-foreground">AI Interview Studio</div>
+                  <div className="hq-app-sidebar-sub truncate text-[11px]">AI Interview Studio</div>
                 </div>
               </Link>
             ) : null}
@@ -89,7 +89,7 @@ export const SidebarNav: FC<SidebarNavProps> = ({
                     type="button"
                     onClick={onToggleCollapsed}
                     className={[
-                      'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-secondary text-muted-foreground hover:bg-secondary/80 hover:text-foreground',
+                      'hq-app-sidebar-icon-btn inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg',
                       collapsed ? 'mt-0.5' : '',
                     ].join(' ')}
                     aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -111,7 +111,7 @@ export const SidebarNav: FC<SidebarNavProps> = ({
               const Icon = item.icon
               const baseClasses = [
                 'group relative flex w-full min-w-0 items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/35',
                 collapsed ? 'justify-center px-1.5' : '',
               ].join(' ')
 
@@ -125,21 +125,18 @@ export const SidebarNav: FC<SidebarNavProps> = ({
                     className={[
                       baseClasses,
                       item.primary
-                        ? 'mb-1.5 text-[var(--primary)] hover:bg-[color-mix(in_oklab,var(--primary)_10%,transparent)] active:bg-[color-mix(in_oklab,var(--primary)_16%,transparent)]'
+                        ? 'hq-app-sidebar-link hq-app-sidebar-link--primary mb-1.5'
                         : selected
-                          ? 'bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] active:bg-[var(--primary-active)]'
-                          : 'text-muted-foreground hover:bg-secondary hover:text-foreground active:bg-muted',
+                          ? 'hq-app-sidebar-link hq-app-sidebar-link--active'
+                          : 'hq-app-sidebar-link',
                     ].join(' ')}
                   >
                     <span
                       className={[
-                        'relative inline-flex h-10 w-10 items-center justify-center rounded-xl transition-colors',
-                        item.primary
-                          ? 'bg-[color-mix(in_oklab,var(--primary)_12%,transparent)] text-[var(--primary)]'
-                          : selected
-                            ? 'bg-white/15 text-white'
-                            : 'bg-secondary text-muted-foreground group-hover:text-foreground',
-                      ].join(' ')}
+                        'hq-app-sidebar-link-icon relative inline-flex h-10 w-10 items-center justify-center rounded-xl transition-colors',
+                        item.primary ? 'is-primary' : '',
+                        selected ? 'is-active' : '',
+                      ].filter(Boolean).join(' ')}
                       aria-hidden
                     >
                       <Icon className="h-5 w-5" />
@@ -162,14 +159,14 @@ export const SidebarNav: FC<SidebarNavProps> = ({
 
           {variant === 'desktop' && !collapsed ? (
             <div className="mt-auto w-full pt-6">
-              <div className="rounded-xl border border-border bg-secondary p-3">
-                <div className="text-xs font-semibold text-foreground">Pro Tip</div>
-                <div className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+              <div className="hq-app-sidebar-tip rounded-xl p-3">
+                <div className="hq-app-sidebar-tip-title text-xs font-semibold">Pro Tip</div>
+                <div className="hq-app-sidebar-tip-body mt-1 text-[11px] leading-relaxed">
                   Be specific with your role and topics to get the most relevant questions.
                 </div>
                 <Link
                   href="/app/new-interview"
-                  className="mt-3 inline-flex w-full items-center justify-center rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-secondary"
+                  className="hq-app-sidebar-tip-btn mt-3 inline-flex w-full items-center justify-center rounded-xl px-3 py-2 text-xs font-semibold"
                 >
                   View Best Practices
                 </Link>

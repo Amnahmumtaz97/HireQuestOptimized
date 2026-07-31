@@ -1,13 +1,16 @@
 import { Schema, model, models, type Model } from 'mongoose'
 
 export type UserRole = 'user' | 'admin'
+export type AuthProvider = 'credentials' | 'google' | 'github'
 
 export interface IUser {
   firstName: string
   lastName: string
   email: string
   phoneNumber?: string
-  passwordHash: string
+  passwordHash?: string
+  image?: string
+  authProvider?: AuthProvider
   role: UserRole
 }
 
@@ -37,7 +40,17 @@ const userSchema = new Schema<IUser>(
     },
     passwordHash: {
       type: String,
-      required: true,
+      required: false,
+    },
+    image: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    authProvider: {
+      type: String,
+      enum: ['credentials', 'google', 'github'],
+      default: 'credentials',
     },
     role: {
       type: String,

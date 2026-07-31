@@ -7,6 +7,7 @@ export const size = {
 
 export const contentType = 'image/png'
 
+/** Matches `.hq-marketing-logo-mark` — brand blue with white HQ. */
 export default function Icon() {
   return new ImageResponse(
     (
@@ -17,11 +18,12 @@ export default function Icon() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'radial-gradient(circle at 30% 30%, #243B55 0%, #0B1220 60%, #050814 100%)',
-          color: '#E6F0FF',
-          fontSize: 220,
+          background: '#2563eb',
+          color: '#ffffff',
+          fontSize: 210,
           fontWeight: 800,
-          letterSpacing: -10,
+          letterSpacing: -8,
+          lineHeight: 1,
         }}
       >
         HQ
@@ -30,4 +32,3 @@ export default function Icon() {
     size,
   )
 }
-

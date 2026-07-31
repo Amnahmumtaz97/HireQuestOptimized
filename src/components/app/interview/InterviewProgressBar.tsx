@@ -17,9 +17,9 @@ export function InterviewProgressBar({ current, total }: InterviewProgressBarPro
           {current} / {total}
         </span>
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-input/40">
+      <div className="h-2 w-full overflow-hidden rounded-full hq-interview-progress-track">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-primary/90 to-primary transition-[width] duration-300 ease-out"
+          className="h-full rounded-full bg-primary transition-[width] duration-300 ease-out"
           style={{ width: `${pct}%` }}
         />
       </div>

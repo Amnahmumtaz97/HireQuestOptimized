@@ -1,23 +1,16 @@
 import { MarketingPageShell } from '@/components/landing/MarketingPageShell'
-import { LandingFeatures } from '@/components/landing/LandingFeatures'
-import { AIAnalysis } from '@/components/landing/AIAnalysis'
-import { PageHero } from '@/components/landing/PageHero'
+import { ProductShowcase } from '@/components/landing/product/ProductShowcase'
 
 export const metadata = {
   title: 'Product — HireQuest',
-  description: 'Explore HireQuest product capabilities for AI-powered interview preparation.',
+  description:
+    'Explore HireQuest in depth: AI mock interviews, instant feedback, department-specific practice, progress tracking, and more.',
 }
 
 export default function ProductPage() {
   return (
     <MarketingPageShell>
-      <PageHero
-        eyebrow="Product"
-        title={<>Everything you need to practice like it&apos;s the real interview.</>}
-        description="Voice analysis, behavioral coaching, and adaptive mock interviews in one place."
-      />
-      <LandingFeatures />
-      <AIAnalysis />
+      <ProductShowcase />
     </MarketingPageShell>
   )
 }

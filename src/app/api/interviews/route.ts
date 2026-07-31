@@ -46,18 +46,37 @@ const createInterviewSchema = z
     durationMinutes: z.number().int().positive().nullable().optional(),
   })
   .superRefine((data, ctx) => {
-    const hasDepartments =
-      data.selectAllDepartments ||
-      data.selectAllIndustries ||
-      (data.departmentKeys?.length ?? 0) > 0 ||
-      (data.industryKeys?.length ?? 0) > 0 ||
-      Boolean(data.departmentKey?.trim()) ||
-      Boolean(data.industryKey?.trim())
-    if (!hasDepartments) {
+    if (data.selectAllDepartments || data.selectAllIndustries) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Select at least one department',
-        path: ['departmentKeys'],
+        message: 'Only one department can be selected',
+        path: ['departmentKey'],
+      })
+    }
+
+    const multiKeys = data.departmentKeys?.length
+      ? data.departmentKeys
+      : data.industryKeys?.length
+        ? data.industryKeys
+        : []
+    if (multiKeys.length > 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Only one department can be selected',
+        path: ['departmentKey'],
+      })
+    }
+
+    const singleKey =
+      data.departmentKey?.trim() ||
+      data.industryKey?.trim() ||
+      multiKeys[0]?.trim() ||
+      ''
+    if (!singleKey) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Select one department',
+        path: ['departmentKey'],
       })
     }
 
@@ -136,21 +155,17 @@ export async function POST(request: Request) {
       encodeInterviewType(interviewTypes) ?? parsed.data.interviewType
 
     const departments = await loadInterviewCatalogDepartments()
-    const departmentKeysInput =
-      parsed.data.departmentKeys?.length
-        ? parsed.data.departmentKeys
-        : parsed.data.industryKeys?.length
-          ? parsed.data.industryKeys
-          : parsed.data.departmentKey
-            ? [parsed.data.departmentKey]
-            : parsed.data.industryKey
-              ? [parsed.data.industryKey]
-              : []
+    const departmentKey =
+      parsed.data.departmentKey?.trim() ||
+      parsed.data.industryKey?.trim() ||
+      parsed.data.departmentKeys?.[0]?.trim() ||
+      parsed.data.industryKeys?.[0]?.trim() ||
+      ''
+    const departmentKeysInput = departmentKey ? [departmentKey] : []
 
     const specializationRefs = normalizeSpecializationRefs(departments, {
       departmentKeys: departmentKeysInput,
-      selectAllDepartments:
-        parsed.data.selectAllDepartments || parsed.data.selectAllIndustries,
+      selectAllDepartments: false,
       specializationRefs: parsed.data.specializationRefs,
       roleRefs: parsed.data.roleRefs,
       specializationKeys: parsed.data.specializationKeys,
@@ -160,8 +175,7 @@ export async function POST(request: Request) {
     })
 
     const resolved = resolveTopicsForInterview(departments, {
-      selectAllDepartments:
-        parsed.data.selectAllDepartments || parsed.data.selectAllIndustries,
+      selectAllDepartments: false,
       departmentKeys: departmentKeysInput,
       interviewType,
       interviewTypes,
@@ -172,8 +186,11 @@ export async function POST(request: Request) {
       topics: parsed.data.topics,
     })
 
-    if (resolved.departmentKeys.length === 0) {
-      return NextResponse.json({ message: 'No valid departments selected' }, { status: 400 })
+    if (resolved.departmentKeys.length !== 1) {
+      return NextResponse.json(
+        { message: 'Select exactly one valid department' },
+        { status: 400 },
+      )
     }
 
     if (resolved.specializationRefs.length === 0) {
@@ -196,10 +213,10 @@ export async function POST(request: Request) {
       userId: session.user.id,
       industryKey: primaryDepartmentKey,
       departmentKey: primaryDepartmentKey,
-      departmentKeys: resolved.departmentKeys,
-      industryKeys: resolved.departmentKeys,
-      selectAllDepartments: parsed.data.selectAllDepartments || parsed.data.selectAllIndustries,
-      selectAllIndustries: parsed.data.selectAllDepartments || parsed.data.selectAllIndustries,
+      departmentKeys: [primaryDepartmentKey],
+      industryKeys: [primaryDepartmentKey],
+      selectAllDepartments: false,
+      selectAllIndustries: false,
       roleCategoryKey: primarySpecializationKey,
       specializationKey: primarySpecializationKey,
       specializationRefs: resolved.specializationRefs,

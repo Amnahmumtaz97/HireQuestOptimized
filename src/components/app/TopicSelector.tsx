@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useMemo } from 'react'
-import { Check } from 'lucide-react'
+import { BrainCircuit, Check, MessageCircle, Users, type LucideIcon } from 'lucide-react'
 import { SelectionChip } from '@/components/ui/selection-chip'
 
 export type TopicMode = 'all' | 'technical' | 'behavioral' | 'hr'
@@ -141,6 +141,8 @@ export function TopicSelector({
         {canShowTechnical && (mode === 'all' || mode === 'technical') ? (
           <TopicGroup
             title="Technical"
+            accentClass="text-cyan-300"
+            icon={BrainCircuit}
             topics={filteredTechnical}
             selectedSet={selectedSet}
             selectAll={selectAll}
@@ -151,6 +153,8 @@ export function TopicSelector({
         {canShowBehavioral && (mode === 'all' || mode === 'behavioral') ? (
           <TopicGroup
             title="Behavioral"
+            accentClass="text-blue-300"
+            icon={MessageCircle}
             topics={filteredBehavioral}
             selectedSet={selectedSet}
             selectAll={selectAll}
@@ -161,6 +165,8 @@ export function TopicSelector({
         {canShowHr ? (
           <TopicGroup
             title="HR"
+            accentClass="text-amber-300"
+            icon={Users}
             topics={filteredHr}
             selectedSet={selectedSet}
             selectAll={selectAll}
@@ -249,16 +255,25 @@ function TopicGroup({
   selectedSet,
   selectAll,
   onToggle,
+  icon: Icon,
+  accentClass,
 }: {
   title: string
   topics: string[]
   selectedSet: Set<string>
   selectAll: boolean
   onToggle: (topic: string) => void
+  icon: LucideIcon
+  accentClass: string
 }) {
   return (
     <div className="rounded-2xl border border-border bg-surface p-3 shadow-[0_1px_0_0_rgba(255,255,255,0.03)_inset]">
-      <div className="mb-2 text-xs font-semibold text-foreground/90">{title}</div>
+      <div className="mb-2.5 flex items-center gap-2.5">
+        <span className="icon-card-icon-wrap !h-8 !w-8">
+          <Icon className={`icon-card-glyph h-4 w-4 ${accentClass}`} strokeWidth={1.85} />
+        </span>
+        <div className="text-xs font-semibold text-foreground">{title}</div>
+      </div>
       <div className="flex flex-col gap-1.5">
         {topics.length === 0 ? (
           <p className="text-xs text-muted-foreground">No topics in this category.</p>

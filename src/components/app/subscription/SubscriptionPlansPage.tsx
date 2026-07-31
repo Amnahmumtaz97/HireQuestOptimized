@@ -65,7 +65,7 @@ export function SubscriptionPlansPage() {
             <Switch checked={yearly} onCheckedChange={setYearly} />
             <span className={['text-xs font-semibold', yearly ? 'text-foreground' : 'text-muted-foreground'].join(' ')}>Yearly</span>
             {yearly ? (
-              <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-200">
+              <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-emerald-600/25 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-700 dark:border-emerald-500/30 dark:text-emerald-300">
                 <Sparkles className="h-3 w-3" /> Save ~17%
               </span>
             ) : null}
@@ -87,9 +87,9 @@ export function SubscriptionPlansPage() {
                     : 'border-border bg-input/10',
                 ].join(' ')}
               >
-                {p.highlight ? (
-                  <span className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full border border-white/10 bg-input/20 px-2 py-1 text-[10px] font-semibold text-foreground">
-                    <Crown className="h-3 w-3 text-amber-300" /> Popular
+                  {p.highlight ? (
+                  <span className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2 py-1 text-[10px] font-semibold text-primary">
+                    <Crown className="h-3 w-3" /> Popular
                   </span>
                 ) : null}
 
@@ -158,7 +158,7 @@ export function SubscriptionPlansPage() {
                   {(['free', 'pro', 'enterprise'] as const).map((pid, idx) => (
                     <div key={pid} className="md:col-span-2 md:text-center">
                       <span className="font-semibold text-muted-foreground md:hidden">{['Free', 'Pro', 'Ent'][idx]}: </span>
-                      {has(pid) ? <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-input/20 text-emerald-300"><Check className="h-4 w-4" /></span> : <span className="text-muted-foreground/50">—</span>}
+                      {has(pid) ? <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"><Check className="h-4 w-4" /></span> : <span className="text-muted-foreground/50">—</span>}
                     </div>
                   ))}
                 </div>

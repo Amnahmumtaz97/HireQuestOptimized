@@ -108,7 +108,7 @@ export function InterviewSessionPage() {
   if (error && !session) {
     return (
       <div className="space-y-4">
-        <div className="text-sm text-red-400">{error}</div>
+        <div className="text-sm font-medium text-red-600 dark:text-red-400">{error}</div>
         <Link
           href="/app/interviews"
           className="hq-btn-outline px-4 py-2 text-sm btn-micro"
@@ -148,8 +148,8 @@ export function InterviewSessionPage() {
   }
 
   return (
-    <div className="flex min-h-[52vh] flex-col gap-8">
-      {error ? <div className="text-sm text-red-400">{error}</div> : null}
+    <div className="hq-interview-session flex min-h-[52vh] flex-col gap-8">
+      {error ? <div className="text-sm font-medium text-red-600 dark:text-red-400">{error}</div> : null}
 
       <InterviewQuestionHeader
         key={headerKey}

@@ -14,11 +14,15 @@ export interface IInterviewSession {
   userId: string
   /** @deprecated Use departmentKey */
   industryKey: string
+  /** Exactly one department per interview session. */
   departmentKey?: string
+  /** @deprecated Prefer departmentKey; kept as a one-element array for legacy readers. */
   departmentKeys?: string[]
+  /** @deprecated Multi-department selection is no longer supported. */
   selectAllDepartments?: boolean
-  /** @deprecated Use departmentKeys / selectAllDepartments */
+  /** @deprecated Use departmentKey */
   industryKeys?: string[]
+  /** @deprecated Multi-department selection is no longer supported. */
   selectAllIndustries?: boolean
   /** @deprecated Use specializationKey */
   roleCategoryKey: string

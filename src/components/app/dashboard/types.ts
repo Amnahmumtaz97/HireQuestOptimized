@@ -69,8 +69,6 @@ export type WizardStepKey =
 
 export type CreateInterviewDraft = {
   departmentKey: string
-  departmentKeys: string[]
-  selectAllDepartments: boolean
   specializationKey: string
   specializationRefs: string[]
   specializationKeys: string[]
@@ -84,7 +82,9 @@ export type CreateInterviewDraft = {
   durationMinutes?: number | null
   /** Legacy aliases for local draft restore */
   industryKey?: string
+  departmentKeys?: string[]
   industryKeys?: string[]
+  selectAllDepartments?: boolean
   selectAllIndustries?: boolean
   roleCategoryKey?: string
   roleRefs?: string[]

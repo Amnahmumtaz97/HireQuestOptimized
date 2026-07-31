@@ -94,12 +94,7 @@ export function InterviewTypeSelector({
               <Icon className="h-4 w-4" strokeWidth={2} />
             </span>
 
-            <span
-              className={[
-                'relative text-center text-sm font-semibold transition-colors',
-                selected ? option.accent : 'text-foreground',
-              ].join(' ')}
-            >
+            <span className="relative text-center text-sm font-semibold text-foreground">
               {option.title}
             </span>
 

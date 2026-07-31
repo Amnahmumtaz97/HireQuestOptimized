@@ -66,8 +66,12 @@ export const IconCard = forwardRef<HTMLButtonElement, IconCardProps>(
               ].join(' ')}
             >
               <IconComponent
-                className={`${sizes.icon} ${selected ? 'text-[var(--hq-display-blue)]' : icon.accentColor} transition-colors duration-300`}
-                strokeWidth={1.5}
+                className={[
+                  sizes.icon,
+                  'icon-card-glyph transition-colors duration-300',
+                  selected ? 'text-[var(--hq-display-blue)]' : icon.accentColor,
+                ].join(' ')}
+                strokeWidth={1.85}
                 aria-hidden
               />
             </div>
@@ -76,15 +80,15 @@ export const IconCard = forwardRef<HTMLButtonElement, IconCardProps>(
           <div className="min-w-0 flex-1">
             <div
               className={[
-                'font-semibold transition-colors duration-300',
-                selected ? 'text-foreground' : 'text-foreground/80 group-hover:text-foreground',
+                'font-semibold transition-colors duration-300 text-foreground',
+                selected ? '' : 'group-hover:text-foreground',
               ].join(' ')}
             >
               {title}
             </div>
 
             {subtitle && (
-              <div className="mt-1 text-xs text-muted-foreground/70 group-hover:text-muted-foreground transition-colors duration-300">
+              <div className="mt-1 text-xs text-muted-foreground transition-colors duration-300 group-hover:text-muted-foreground">
                 {subtitle}
               </div>
             )}

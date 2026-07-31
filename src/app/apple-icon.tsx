@@ -7,6 +7,7 @@ export const size = {
 
 export const contentType = 'image/png'
 
+/** Matches `.hq-marketing-logo-mark` — brand blue with white HQ. */
 export default function AppleIcon() {
   return new ImageResponse(
     (
@@ -17,11 +18,12 @@ export default function AppleIcon() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#0B1220',
-          color: '#E6F0FF',
-          fontSize: 76,
+          background: '#2563eb',
+          color: '#ffffff',
+          fontSize: 74,
           fontWeight: 800,
-          letterSpacing: -4,
+          letterSpacing: -3,
+          lineHeight: 1,
         }}
       >
         HQ
@@ -30,4 +32,3 @@ export default function AppleIcon() {
     size,
   )
 }
-

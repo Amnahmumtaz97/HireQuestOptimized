@@ -8,7 +8,7 @@ export function DifficultySelector({
   value,
   onChange,
 }: {
-  value: Difficulty
+  value: Difficulty | null
   onChange: (nextValue: Difficulty) => void
 }) {
   const options: Array<{ key: Difficulty; subtitle: string }> = [

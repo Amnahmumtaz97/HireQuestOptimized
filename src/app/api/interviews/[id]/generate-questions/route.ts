@@ -40,20 +40,18 @@ export async function POST(
     }
 
     const departments = await loadInterviewCatalogDepartments()
-    const departmentKeys =
-      doc.departmentKeys?.length
-        ? doc.departmentKeys
-        : doc.industryKeys?.length
-          ? doc.industryKeys
-          : doc.departmentKey
-            ? [doc.departmentKey]
-            : doc.industryKey
-              ? [doc.industryKey]
-              : []
+    // Prefer singular department; legacy multi-dept sessions use the first stored key only.
+    const departmentKey =
+      doc.departmentKey?.trim() ||
+      doc.industryKey?.trim() ||
+      doc.departmentKeys?.[0]?.trim() ||
+      doc.industryKeys?.[0]?.trim() ||
+      ''
+    const departmentKeys = departmentKey ? [departmentKey] : []
 
     const specializationRefs = normalizeSpecializationRefs(departments, {
       departmentKeys,
-      selectAllDepartments: Boolean(doc.selectAllDepartments ?? doc.selectAllIndustries),
+      selectAllDepartments: false,
       specializationRefs: doc.specializationRefs,
       roleRefs: doc.roleRefs,
       specializationKeys: doc.specializationKeys,
@@ -63,7 +61,7 @@ export async function POST(
     })
 
     const resolved = resolveTopicsForInterview(departments, {
-      selectAllDepartments: Boolean(doc.selectAllDepartments ?? doc.selectAllIndustries),
+      selectAllDepartments: false,
       departmentKeys,
       interviewType: doc.interviewType,
       interviewTypes: doc.interviewTypes,
@@ -74,7 +72,7 @@ export async function POST(
     })
 
     const result = await generateInterviewQuestions({
-      industryKey: doc.industryKey,
+      industryKey: departmentKey || doc.industryKey,
       industryKeys: resolved.departmentKeys,
       industryLabels: resolved.departmentLabels,
       roleCategoryKey: doc.roleCategoryKey,

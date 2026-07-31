@@ -25,8 +25,8 @@ export function InterviewAnswerEditor({ value, onChange, disabled }: InterviewAn
   }, [disabled])
 
   return (
-    <div className="w-full min-w-0 space-y-2 card-enhanced p-4">
-      <div className="text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
+    <div className="hq-interview-answer w-full min-w-0 space-y-2 rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]">
+      <div className="text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">
         Your answer
       </div>
       <textarea
@@ -41,7 +41,7 @@ export function InterviewAnswerEditor({ value, onChange, disabled }: InterviewAn
         data-form-type="other"
         onChange={(e) => onChange(e.target.value)}
         rows={4}
-        className="interview-answer-textarea min-h-[120px] w-full resize-none rounded-2xl border border-border bg-card px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground outline-none transition-[border-color,box-shadow] focus:border-ring focus:ring-2 focus:ring-primary/20 read-only:cursor-default read-only:pointer-events-none autofill:bg-card autofill:text-foreground"
+        className="interview-answer-textarea min-h-[120px] w-full resize-none rounded-xl border border-border bg-[var(--background)] px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground outline-none transition-[border-color,box-shadow] focus:border-primary/50 focus:ring-2 focus:ring-primary/20 read-only:cursor-default read-only:pointer-events-none autofill:bg-card autofill:text-foreground"
         placeholder="Type your answer…"
       />
     </div>

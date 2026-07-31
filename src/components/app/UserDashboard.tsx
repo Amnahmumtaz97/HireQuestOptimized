@@ -24,7 +24,6 @@ import { rowRevealDelay, useResponsiveColumns } from '@/hooks/use-reveal'
 import {
   formatDifficultyLabel,
   formatInterviewTypeLabel,
-  formatDepartmentsDisplay,
   formatSpecializationsDisplay,
   formatTopicsDisplay,
   formatIndustryDisplay,
@@ -37,7 +36,6 @@ import {
   filterDepartmentsBySearch,
   filterScopedSpecializationsBySearch,
   mergeTopicsFromRoles,
-  resolveIndustryKeys,
   resolveRoleRefs,
   resolveRolesFromRefs,
   unionDurationOptions,
@@ -973,8 +971,7 @@ export function CreateInterviewWizard() {
     [departments],
   )
 
-  const [departmentKeys, setDepartmentKeys] = useState<string[]>([])
-  const [selectAllDepartments, setSelectAllDepartments] = useState(false)
+  const [departmentKey, setDepartmentKey] = useState<string | null>(null)
   const [departmentSearch, setDepartmentSearch] = useState('')
   const [specializationRefs, setSpecializationRefs] = useState<string[]>([])
   const [selectAllSpecializations, setSelectAllSpecializations] = useState(false)
@@ -984,7 +981,7 @@ export function CreateInterviewWizard() {
   const [topics, setTopics] = useState<string[]>([])
   const [technicalRatio, setTechnicalRatio] = useState(70)
   const [duration, setDuration] = useState('')
-  const [difficulty, setDifficulty] = useState<Difficulty>('Medium')
+  const [difficulty, setDifficulty] = useState<Difficulty | null>(null)
   const [totalQuestions, setTotalQuestions] = useState(20)
   const [topicSearch, setTopicSearch] = useState('')
   const [topicMode, setTopicMode] = useState<TopicMode>('all')
@@ -1031,14 +1028,11 @@ export function CreateInterviewWizard() {
     ).filter((type): type is InterviewType => type === 'technical' || type === 'behavioral' || type === 'both')
   }, [departments, isLoadingConfig])
 
-  const resolvedDepartmentKeys = useMemo(
-    () =>
-      resolveIndustryKeys(departments, {
-        selectAllDepartments: selectAllDepartments,
-        departmentKeys,
-      }),
-    [departmentKeys, departments, selectAllDepartments],
-  )
+  const resolvedDepartmentKeys = useMemo(() => {
+    if (!departmentKey) return [] as string[]
+    const valid = departments.some((department) => department.key === departmentKey)
+    return valid ? [departmentKey] : []
+  }, [departmentKey, departments])
 
   const scopedSpecializationOptions = useMemo(
     () => buildScopedRoleOptions(departments, resolvedDepartmentKeys),
@@ -1090,7 +1084,7 @@ export function CreateInterviewWizard() {
     return 'both'
   }, [interviewType])
 
-  const hasDepartmentSelection = selectAllDepartments || departmentKeys.length > 0
+  const hasDepartmentSelection = Boolean(departmentKey) && resolvedDepartmentKeys.length > 0
   const hasSpecializationSelection = selectAllSpecializations || specializationRefs.length > 0
   const hasTopicSelection = selectAllTopics || topics.length > 0
 
@@ -1099,6 +1093,7 @@ export function CreateInterviewWizard() {
     hasSpecializationSelection &&
     hasTopicSelection &&
     Boolean(interviewType) &&
+    Boolean(difficulty) &&
     (isDurationEnabled ? Boolean(duration) : true)
 
   const stepStates = useMemo(() => {
@@ -1106,8 +1101,9 @@ export function CreateInterviewWizard() {
     const departmentDone = typeDone && hasDepartmentSelection
     const specializationDone = departmentDone && hasSpecializationSelection
     const topicsDone = specializationDone && hasTopicSelection
+    const difficultyDone = topicsDone && Boolean(difficulty)
     const generateReady =
-      topicsDone &&
+      difficultyDone &&
       pastDifficulty &&
       Boolean(totalQuestions) &&
       (isDurationEnabled ? Boolean(duration) : true)
@@ -1117,9 +1113,11 @@ export function CreateInterviewWizard() {
       departmentDone,
       specializationDone,
       topicsDone,
+      difficultyDone,
       generateReady,
     }
   }, [
+    difficulty,
     duration,
     hasDepartmentSelection,
     hasSpecializationSelection,
@@ -1135,7 +1133,7 @@ export function CreateInterviewWizard() {
     if (!stepStates.departmentDone) return 1
     if (!stepStates.specializationDone) return 2
     if (!stepStates.topicsDone) return 3
-    if (!pastDifficulty) return 4
+    if (!stepStates.difficultyDone || !pastDifficulty) return 4
     if (!stepStates.generateReady) return 5
     return 6
   }, [pastDifficulty, stepStates])
@@ -1146,7 +1144,7 @@ export function CreateInterviewWizard() {
       { key: 'department' as const, label: 'Department', isComplete: stepStates.departmentDone },
       { key: 'specialization' as const, label: 'Specialization', isComplete: stepStates.specializationDone },
       { key: 'topics' as const, label: 'Topics', isComplete: stepStates.topicsDone },
-      { key: 'difficulty' as const, label: 'Difficulty', isComplete: pastDifficulty },
+      { key: 'difficulty' as const, label: 'Difficulty', isComplete: stepStates.difficultyDone && pastDifficulty },
       { key: 'generate' as const, label: 'Generate', isComplete: stepStates.generateReady },
     ],
     [pastDifficulty, stepStates],
@@ -1161,25 +1159,21 @@ export function CreateInterviewWizard() {
     [availableTopicOptions.length, selectAllTopics, topics],
   )
 
-  const summaryDepartmentsPreview = useMemo(
-    () =>
-      formatDepartmentsDisplay(resolvedDepartmentKeys, configShim, {
-        selectAll: selectAllDepartments,
-        totalAvailable: departments.length,
-      }),
-    [configShim, departments.length, resolvedDepartmentKeys, selectAllDepartments],
-  )
+  const summaryDepartmentsPreview = useMemo(() => {
+    if (!departmentKey) return '—'
+    return formatIndustryDisplay(departmentKey, configShim)
+  }, [configShim, departmentKey])
 
   const summarySpecializationsPreview = useMemo(
     () =>
-      formatSpecializationsDisplay(resolvedDepartmentKeys[0] ?? '', [], configShim, {
+      formatSpecializationsDisplay(departmentKey ?? '', [], configShim, {
         selectAll: selectAllSpecializations,
         totalAvailable: scopedSpecializationOptions.length,
         specializationRefs: resolvedSpecializationRefs,
       }),
     [
       configShim,
-      resolvedDepartmentKeys,
+      departmentKey,
       resolvedSpecializationRefs,
       scopedSpecializationOptions.length,
       selectAllSpecializations,
@@ -1224,20 +1218,11 @@ export function CreateInterviewWizard() {
 
   const draftPayload = useMemo(
     () => ({
-      departmentKey: resolvedDepartmentKeys[0] ?? '',
-      departmentKeys: resolvedDepartmentKeys,
-      selectAllDepartments,
+      departmentKey: departmentKey ?? '',
       specializationKey: selectedSpecializations[0]?.key ?? '',
       specializationRefs: resolvedSpecializationRefs,
       specializationKeys: selectedSpecializations.map((spec) => spec.key),
       selectAllSpecializations,
-      industryKey: resolvedDepartmentKeys[0] ?? '',
-      industryKeys: resolvedDepartmentKeys,
-      selectAllIndustries: selectAllDepartments,
-      roleCategoryKey: selectedSpecializations[0]?.key ?? '',
-      roleRefs: resolvedSpecializationRefs,
-      roleCategoryKeys: selectedSpecializations.map((spec) => spec.key),
-      selectAllRoleCategories: selectAllSpecializations,
       selectAllTopics,
       interviewType,
       topics: selectAllTopics ? [] : topics,
@@ -1247,13 +1232,12 @@ export function CreateInterviewWizard() {
       durationMinutes: isDurationEnabled ? Number(duration) || null : null,
     }),
     [
+      departmentKey,
       difficulty,
       duration,
       interviewType,
       isDurationEnabled,
-      resolvedDepartmentKeys,
       resolvedSpecializationRefs,
-      selectAllDepartments,
       selectAllSpecializations,
       selectAllTopics,
       selectedSpecializations,
@@ -1286,6 +1270,8 @@ export function CreateInterviewWizard() {
         setActionError('Select at least one specialization.')
       } else if (!hasTopicSelection) {
         setActionError('Choose at least one topic.')
+      } else if (!difficulty) {
+        setActionError('Choose a difficulty level.')
       } else if (isDurationEnabled && !duration) {
         setActionError('Select a session duration for this specialization.')
       } else if (!totalQuestions || totalQuestions < 1) {
@@ -1359,11 +1345,6 @@ export function CreateInterviewWizard() {
   }, [availableTopicOptions, interviewType, selectAllTopics])
 
   useEffect(() => {
-    if (!selectAllDepartments) return
-    setDepartmentKeys(departments.map((department) => department.key))
-  }, [departments, selectAllDepartments])
-
-  useEffect(() => {
     if (!selectAllSpecializations) return
     setSpecializationRefs(scopedSpecializationOptions.map((option) => option.ref))
   }, [scopedSpecializationOptions, selectAllSpecializations])
@@ -1381,8 +1362,7 @@ export function CreateInterviewWizard() {
   }, [interviewType, selectedSpecializations])
 
   const resetInterviewForm = useCallback(() => {
-    setDepartmentKeys([])
-    setSelectAllDepartments(false)
+    setDepartmentKey(null)
     setDepartmentSearch('')
     setSpecializationRefs([])
     setSelectAllSpecializations(false)
@@ -1392,7 +1372,7 @@ export function CreateInterviewWizard() {
     setTopics([])
     setTechnicalRatio(70)
     setDuration('')
-    setDifficulty('Medium')
+    setDifficulty(null)
     setTotalQuestions(20)
     setTopicSearch('')
     setTopicMode('all')
@@ -1403,8 +1383,8 @@ export function CreateInterviewWizard() {
     setPastDifficulty(false)
   }, [])
 
-  const handleDepartmentsChange = useCallback((nextKeys: string[]) => {
-    setDepartmentKeys(nextKeys)
+  const handleDepartmentChange = useCallback((nextKey: string | null) => {
+    setDepartmentKey(nextKey)
     setSpecializationRefs([])
     setSelectAllSpecializations(false)
     setSelectAllTopics(false)
@@ -1413,18 +1393,6 @@ export function CreateInterviewWizard() {
     setTopicSearch('')
     setTopicMode('all')
     setPastDifficulty(false)
-  }, [])
-
-  const handleSelectAllDepartmentsChange = useCallback((next: boolean) => {
-    setSelectAllDepartments(next)
-    if (!next) {
-      setDepartmentKeys([])
-      setSpecializationRefs([])
-      setSelectAllSpecializations(false)
-      setSelectAllTopics(false)
-      setTopics([])
-      setDuration('')
-    }
   }, [])
 
   const handleSpecializationsChange = useCallback((nextRefs: string[]) => {
@@ -1503,6 +1471,10 @@ export function CreateInterviewWizard() {
         setWizardError('Complete topics first.')
         return
       }
+      if (!difficulty) {
+        setWizardError('Choose a difficulty to continue.')
+        return
+      }
       setPastDifficulty(true)
       setWizardStep('generate')
     }
@@ -1564,10 +1536,8 @@ export function CreateInterviewWizard() {
                       <div className="text-sm font-semibold text-foreground">Choose Department</div>
                       <IndustrySelector
                         options={filteredDepartments}
-                        selectedKeys={departmentKeys}
-                        onChange={handleDepartmentsChange}
-                        selectAll={selectAllDepartments}
-                        onSelectAllChange={handleSelectAllDepartmentsChange}
+                        selectedKey={departmentKey}
+                        onChange={handleDepartmentChange}
                         isLoading={isLoadingConfig}
                         search={departmentSearch}
                         onSearchChange={setDepartmentSearch}
@@ -1585,7 +1555,7 @@ export function CreateInterviewWizard() {
                           onChange={handleSpecializationsChange}
                           selectAll={selectAllSpecializations}
                           onSelectAllChange={handleSelectAllSpecializationsChange}
-                          showDepartmentLabels={resolvedDepartmentKeys.length > 1}
+                          showDepartmentLabels={false}
                           search={specializationSearch}
                           onSearchChange={setSpecializationSearch}
                         />
@@ -1685,7 +1655,9 @@ export function CreateInterviewWizard() {
                           <div className="text-sm text-muted-foreground">Topics</div>
                           <div className="text-sm font-semibold text-foreground">{summaryTopicsPreview}</div>
                           <div className="text-sm text-muted-foreground">Difficulty</div>
-                          <div className="text-sm font-semibold text-foreground">{formatDifficultyLabel(difficulty)}</div>
+                          <div className="text-sm font-semibold text-foreground">
+                            {difficulty ? formatDifficultyLabel(difficulty) : '—'}
+                          </div>
                           <div className="text-sm text-muted-foreground">Questions</div>
                           <div className="text-sm font-semibold text-foreground">
                             {totalQuestions}
@@ -1772,7 +1744,26 @@ export function CreateInterviewWizard() {
                 </div>
                 <div className="flex flex-col gap-0.5 border-b border-border/60 pb-3 last:border-0 last:pb-0">
                   <dt className="text-xs text-muted-foreground">Difficulty</dt>
-                  <dd className="font-medium text-foreground">{formatDifficultyLabel(difficulty)}</dd>
+                  <dd className="font-medium text-foreground">
+                    {difficulty ? (
+                      <span
+                        className={[
+                          'inline-flex rounded-md px-2 py-0.5 text-xs font-bold',
+                          difficulty === 'Easy'
+                            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                            : difficulty === 'Medium'
+                              ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
+                              : difficulty === 'Hard'
+                                ? 'bg-red-500/15 text-red-600 dark:text-red-400'
+                                : 'bg-primary/15 text-primary',
+                        ].join(' ')}
+                      >
+                        {formatDifficultyLabel(difficulty)}
+                      </span>
+                    ) : (
+                      <span className="font-medium text-muted-foreground">—</span>
+                    )}
+                  </dd>
                 </div>
               </dl>
             </div>

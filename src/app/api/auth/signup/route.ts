@@ -50,6 +50,7 @@ export async function POST(request: Request) {
       email: normalizedEmail,
       phoneNumber: parsed.data.phoneNumber,
       passwordHash,
+      authProvider: 'credentials',
       role: 'user',
     })
 

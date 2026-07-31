@@ -1,4 +1,7 @@
 import { SlidingAuth } from '@/components/auth/SlidingAuth'
+import { getEnabledOAuthProviders } from '@/lib/oauth-config'
+
+export const dynamic = 'force-dynamic'
 
 export const metadata = {
   title: 'Sign In / Sign Up — HireQuest',
@@ -6,5 +9,6 @@ export const metadata = {
 }
 
 export default function AuthPage() {
-  return <SlidingAuth />
+  const oauth = getEnabledOAuthProviders()
+  return <SlidingAuth oauth={oauth} />
 }

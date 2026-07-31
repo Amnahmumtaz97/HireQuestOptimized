@@ -110,7 +110,7 @@ export function InterviewResultsPage() {
   if (error || !session) {
     return (
       <div className="space-y-4">
-        <div className="text-sm text-red-400">{error || 'Interview not found.'}</div>
+        <div className="text-sm font-medium text-red-600 dark:text-red-400">{error || 'Interview not found.'}</div>
         <Link
           href="/app/interviews"
           className="hq-btn-outline h-10 px-4 text-sm btn-micro"
@@ -132,7 +132,7 @@ export function InterviewResultsPage() {
 
       <div className="space-y-6 animate-fade-up">
         {!isCompleted ? (
-          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          <div className="rounded-2xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
             This interview is not marked complete yet.{' '}
             <Link href={`/app/interviews/${id}`} className="font-semibold text-primary underline-offset-2 hover:underline">
               Continue interview
@@ -160,8 +160,8 @@ export function InterviewResultsPage() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-xl border border-border bg-input/15 p-4">
-              <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/80">
+            <div className="rounded-xl border border-border bg-card p-4">
+              <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                 Progress
               </div>
               <div className="mt-1 text-2xl font-bold text-foreground">
@@ -169,15 +169,15 @@ export function InterviewResultsPage() {
               </div>
               <div className="text-xs text-muted-foreground">Questions answered</div>
             </div>
-            <div className="rounded-xl border border-border bg-input/15 p-4">
-              <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/80">
+            <div className="rounded-xl border border-border bg-card p-4">
+              <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                 Flagged
               </div>
               <div className="mt-1 text-2xl font-bold text-foreground">{flagged.size}</div>
               <div className="text-xs text-muted-foreground">Marked for review</div>
             </div>
-            <div className="rounded-xl border border-border bg-input/15 p-4">
-              <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/80">
+            <div className="rounded-xl border border-border bg-card p-4">
+              <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                 Score
               </div>
               <div className="mt-1 text-2xl font-bold text-muted-foreground">—</div>
@@ -195,7 +195,7 @@ export function InterviewResultsPage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-border bg-input/10 p-4 sm:p-5">
+        <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-[var(--shadow-card)]">
           <button
             type="button"
             onClick={() => setShowAnswers((v) => !v)}
@@ -224,14 +224,14 @@ export function InterviewResultsPage() {
                 return (
                   <div
                     key={`${i}-${q.question.slice(0, 24)}`}
-                    className="rounded-2xl border border-border bg-input/10 p-4"
+                    className="rounded-2xl border border-border bg-[var(--background)] p-4"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div className="text-xs font-semibold text-muted-foreground">
                         Q{i + 1} · {q.topic} · {formatQuestionTypeLabel(q.type)} · {q.difficulty}
                       </div>
                       {flagged.has(i) ? (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/35 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-200">
+                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-800 dark:border-amber-500/35 dark:text-amber-200">
                           <Flag className="h-3 w-3" /> Flagged
                         </span>
                       ) : null}
@@ -239,7 +239,7 @@ export function InterviewResultsPage() {
                     <div className="mt-2 text-sm">
                       <InterviewQuestionMarkdown markdown={formatGeneratedQuestion(q.question)} />
                     </div>
-                    <div className="mt-3 rounded-xl border border-border bg-input/20 p-3 text-sm text-foreground/90">
+                    <div className="mt-3 rounded-xl border border-border bg-card p-3 text-sm text-foreground">
                       {hasAnswer ? ans : <span className="text-muted-foreground">Not answered</span>}
                     </div>
                   </div>

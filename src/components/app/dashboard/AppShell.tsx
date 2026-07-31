@@ -77,7 +77,7 @@ export function AppShell({ children }: AppShellProps) {
           <SheetHeader className="border-b border-border/60">
             <SheetTitle>Navigation</SheetTitle>
           </SheetHeader>
-          <div className="h-[calc(100vh-4rem)]">
+          <div className="h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain">
             <SidebarNav
               collapsed={false}
               onToggleCollapsed={() => undefined}
