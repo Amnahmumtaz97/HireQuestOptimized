@@ -25,11 +25,11 @@ export function InterviewQuestionHeader({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-1">
+        <div className="min-w-0 space-y-1">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             Question {questionNumber} of {totalQuestions}
           </div>
-          <div className="text-sm font-semibold text-foreground md:text-base">
+          <div className="break-words text-sm font-semibold text-foreground md:text-base">
             <span className="text-muted-foreground">{topic}</span>
             <span className="mx-2 text-border">·</span>
             <span>{formatQuestionTypeLabel(type)}</span>

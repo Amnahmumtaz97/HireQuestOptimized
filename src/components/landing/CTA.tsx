@@ -61,8 +61,8 @@ export function CTA() {
           Start practicing in under a minute. No credit card required.
         </p>
 
-        <div className="mt-10 flex justify-center">
-          <button className="cta-diagonal-btn inline-flex h-14 items-center gap-2 rounded-[10px] px-10 text-[15px] font-semibold">
+        <div className="mt-10 flex w-full justify-center px-1">
+          <button className="cta-diagonal-btn inline-flex h-14 w-full max-w-md items-center justify-center gap-2 rounded-[10px] px-6 text-[15px] font-semibold sm:w-auto sm:px-10">
             Start Your First Interview
             <ArrowRight className="h-5 w-5" />
           </button>

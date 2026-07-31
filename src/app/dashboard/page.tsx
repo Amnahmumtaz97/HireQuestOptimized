@@ -34,12 +34,12 @@ export default function DashboardPage() {
               </a>
 
               <a
-                href="/dashboard/account-settings"
+                href="/app/settings?tab=account"
                 className="dashboard-card p-6 hover-lift block"
               >
-                <div className="text-sm font-semibold text-foreground">Account Settings</div>
+                <div className="text-sm font-semibold text-foreground">Settings</div>
                 <div className="mt-1 text-sm text-muted-foreground">
-                  Update admin profile details and security preferences.
+                  Update profile details and security preferences.
                 </div>
                 <div className="mt-4 text-xs text-primary-glow">Open settings →</div>
               </a>

@@ -206,9 +206,9 @@ export function Process() {
         </div>
 
         {/* Desktop orbit */}
-        <div className="relative mx-auto mt-4 hidden w-full flex-1 overflow-visible px-6 pb-6 md:block lg:px-10">
+        <div className="relative mx-auto mt-4 hidden w-full flex-1 overflow-x-clip px-6 pb-6 md:block lg:px-10">
           <div
-            className="process-orbit group/orbit relative mx-auto aspect-square w-full max-w-[min(82vw,40rem)] overflow-visible"
+            className="process-orbit group/orbit relative mx-auto aspect-square w-full max-w-[min(82vw,40rem)] overflow-x-clip"
             style={{
               '--step-size': 'clamp(6.25rem, 15vw, 8.75rem)',
               '--core-size': 'clamp(7.25rem, 16.5vw, 10.5rem)',

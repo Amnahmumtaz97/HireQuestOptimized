@@ -2,6 +2,12 @@ import { Schema, model, models, type Model } from 'mongoose'
 
 export type UserRole = 'user' | 'admin'
 export type AuthProvider = 'credentials' | 'google' | 'github'
+export type PreferenceDifficulty = 'Easy' | 'Medium' | 'Hard' | 'Adaptive'
+
+export interface IUserPreferences {
+  defaultDifficulty?: PreferenceDifficulty
+  reduceMotion?: boolean
+}
 
 export interface IUser {
   firstName: string
@@ -12,6 +18,7 @@ export interface IUser {
   image?: string
   authProvider?: AuthProvider
   role: UserRole
+  preferences?: IUserPreferences
 }
 
 const userSchema = new Schema<IUser>(
@@ -56,6 +63,17 @@ const userSchema = new Schema<IUser>(
       type: String,
       enum: ['user', 'admin'],
       default: 'user',
+    },
+    preferences: {
+      defaultDifficulty: {
+        type: String,
+        enum: ['Easy', 'Medium', 'Hard', 'Adaptive'],
+        required: false,
+      },
+      reduceMotion: {
+        type: Boolean,
+        default: false,
+      },
     },
   },
   {

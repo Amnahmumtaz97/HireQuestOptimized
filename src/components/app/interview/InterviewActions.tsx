@@ -34,7 +34,7 @@ export function InterviewActions({
           type="button"
           onClick={onPrevious}
           disabled={isSaving || isFirstQuestion}
-          className="hq-btn-outline h-10 px-5 text-sm btn-micro disabled:pointer-events-none disabled:opacity-45"
+          className="hq-btn-outline btn-micro h-10 w-full px-5 text-sm disabled:pointer-events-none disabled:opacity-45 sm:w-auto"
         >
           <ArrowLeft className="h-4 w-4" /> Previous
         </button>
@@ -42,7 +42,7 @@ export function InterviewActions({
           type="button"
           onClick={onSaveAnswer}
           disabled={isSaving}
-          className="hq-btn-primary h-10 px-5 text-sm btn-micro disabled:pointer-events-none disabled:opacity-45"
+          className="hq-btn-primary btn-micro h-10 w-full px-5 text-sm disabled:pointer-events-none disabled:opacity-45 sm:w-auto"
         >
           <Save className="h-4 w-4" /> {isSaving ? 'Saving…' : 'Save Answer'}
         </button>
@@ -51,20 +51,20 @@ export function InterviewActions({
           onClick={onToggleFlag}
           disabled={isSaving}
           className={[
-            'h-10 px-5 text-sm btn-micro disabled:opacity-60',
+            'btn-micro h-10 w-full px-5 text-sm disabled:opacity-60 sm:w-auto',
             isFlagged ? 'hq-btn-warning' : 'hq-btn-outline',
           ].join(' ')}
         >
           <Flag className="h-4 w-4" />
-          {isFlagged ? 'Unflag' : 'Flag for review'}
+          {isFlagged ? 'Unflag' : <>Flag<span className="hidden sm:inline"> for review</span></>}
         </button>
         <button
           type="button"
           onClick={onNext}
           disabled={isSaving || isLastQuestion}
-          className="hq-btn-outline h-10 px-5 text-sm btn-micro disabled:pointer-events-none disabled:opacity-45"
+          className="hq-btn-outline btn-micro h-10 w-full px-5 text-sm disabled:pointer-events-none disabled:opacity-45 sm:w-auto"
         >
-          Next Question <ArrowRight className="h-4 w-4" />
+          Next<span className="hidden sm:inline"> Question</span> <ArrowRight className="h-4 w-4" />
         </button>
       </div>
 

@@ -41,7 +41,7 @@ export const SheetContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed z-50 flex flex-col gap-4 border border-border bg-surface-strong shadow-elegant",
+        "fixed z-50 flex max-h-dvh flex-col gap-4 overflow-y-auto border border-border bg-surface-strong shadow-elegant",
         "backdrop-blur-xl supports-[backdrop-filter]:bg-surface",
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=open]:duration-300 data-[state=closed]:duration-200",

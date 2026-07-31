@@ -68,16 +68,16 @@ export function AppShell({ children }: AppShellProps) {
             </div>
           </div>
 
-          <div className="p-4 sm:p-6 lg:p-8">{children}</div>
+          <div className="min-w-0 p-3 sm:p-6 lg:p-8">{children}</div>
         </section>
       </div>
 
       <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
         <SheetContent side="left" className="p-0">
-          <SheetHeader className="border-b border-border/60">
+          <SheetHeader className="sr-only">
             <SheetTitle>Navigation</SheetTitle>
           </SheetHeader>
-          <div className="h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain">
+          <div className="h-dvh overflow-y-auto overscroll-contain">
             <SidebarNav
               collapsed={false}
               onToggleCollapsed={() => undefined}

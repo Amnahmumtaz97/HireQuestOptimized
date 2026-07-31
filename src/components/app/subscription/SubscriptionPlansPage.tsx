@@ -60,12 +60,12 @@ export function SubscriptionPlansPage() {
             <div className="text-sm font-semibold text-foreground">Pricing</div>
             <div className="text-xs text-muted-foreground">Toggle billing and upgrade instantly</div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className={['text-xs font-semibold', yearly ? 'text-muted-foreground' : 'text-foreground'].join(' ')}>Monthly</span>
             <Switch checked={yearly} onCheckedChange={setYearly} />
             <span className={['text-xs font-semibold', yearly ? 'text-foreground' : 'text-muted-foreground'].join(' ')}>Yearly</span>
             {yearly ? (
-              <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-emerald-600/25 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-700 dark:border-emerald-500/30 dark:text-emerald-300">
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-600/25 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-700 dark:border-emerald-500/30 dark:text-emerald-300 sm:ml-2">
                 <Sparkles className="h-3 w-3" /> Save ~17%
               </span>
             ) : null}

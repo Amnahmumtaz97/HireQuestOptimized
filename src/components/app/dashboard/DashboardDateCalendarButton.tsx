@@ -112,7 +112,7 @@ export function DashboardDateCalendarButton({ id, label, value, onChange, minDat
         <div
           role="dialog"
           aria-label={label}
-          className="absolute right-0 z-[200] mt-1 w-[min(17.5rem,calc(100vw-1rem))] rounded-xl border border-[var(--hq-border)] bg-[var(--card)] p-2.5 sm:p-3 shadow-[var(--shadow-card)]"
+          className="absolute left-0 right-auto z-[200] mt-1 w-[min(17.5rem,calc(100%-0.5rem))] max-w-[calc(100vw-2rem)] rounded-xl border border-[var(--hq-border)] bg-[var(--card)] p-2.5 shadow-[var(--shadow-card)] sm:left-auto sm:right-0 sm:p-3"
         >
           <div className="mb-2 flex items-center justify-between gap-2">
             <button

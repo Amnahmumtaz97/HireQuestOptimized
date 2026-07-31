@@ -160,16 +160,16 @@ export function ResultsOverviewPage() {
               <div className="text-sm font-semibold text-foreground">Score history</div>
               <div className="text-xs text-muted-foreground">Your last 10 completed interviews</div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
               <button
                 type="button"
-                className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-input/15 px-4 text-xs font-semibold text-foreground hover:bg-input/25 btn-micro"
+                className="btn-micro inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-border bg-input/15 px-4 text-xs font-semibold text-foreground hover:bg-input/25 sm:w-auto"
               >
                 <Filter className="h-4 w-4 text-muted-foreground" /> Filters
               </button>
               <button
                 type="button"
-                className="hq-btn-primary h-10 gap-2 px-4 text-xs"
+                className="hq-btn-primary h-10 w-full gap-2 px-4 text-xs sm:w-auto"
               >
                 <Download className="h-4 w-4" /> Export
               </button>

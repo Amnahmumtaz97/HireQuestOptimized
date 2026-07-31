@@ -551,7 +551,7 @@ export function TrackConfigManager() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <div className="relative min-w-[220px] flex-1">
+            <div className="relative min-w-0 w-full flex-1 basis-full sm:basis-auto sm:min-w-[220px]">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={search}
@@ -897,7 +897,7 @@ export function TrackConfigManager() {
 
       {departmentModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-lg rounded-2xl border border-border bg-surface p-5">
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-surface p-5">
             <h2 className="text-lg font-semibold text-foreground">
               {editingDepartment ? 'Edit Department' : 'Add Department'}
             </h2>
@@ -1046,7 +1046,7 @@ export function TrackConfigManager() {
 
       {topicModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-lg rounded-2xl border border-border bg-surface p-5">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface p-5">
             <h2 className="text-lg font-semibold text-foreground">Add Topic</h2>
             <div className="mt-4 space-y-3">
               <label className="block space-y-1.5">

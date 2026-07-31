@@ -83,12 +83,16 @@ export function Navbar() {
               <>
                 <Link
                   href="/auth"
-                  className="hidden sm:inline-flex text-[15px] font-semibold text-foreground hover:text-primary transition-colors"
+                  className="hidden sm:inline-flex min-h-10 items-center px-2 text-[15px] font-semibold text-foreground transition-colors hover:text-primary"
                 >
                   Login
                 </Link>
-                <Link href="/auth" className="hq-marketing-cta !rounded-[10px] !pr-4">
-                  <span>Start Practicing Free</span>
+                <Link
+                  href="/auth"
+                  className="hq-marketing-cta max-w-[9.5rem] truncate !rounded-[10px] !px-3 !pr-3 text-[13px] sm:max-w-none sm:!px-4 sm:!pr-4 sm:text-[15px]"
+                >
+                  <span className="sm:hidden">Start free</span>
+                  <span className="hidden sm:inline">Start Practicing Free</span>
                 </Link>
               </>
             )}

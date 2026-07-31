@@ -83,7 +83,7 @@ export function ConfirmModal({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
-        className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-[var(--hq-row-elevated)] p-6 shadow-[var(--shadow-modal)]"
+        className="relative z-10 max-h-[min(90dvh,32rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-[var(--hq-row-elevated)] p-6 shadow-[var(--shadow-modal)]"
       >
         <h2 id={titleId} className="text-lg font-semibold text-foreground">
           {title}

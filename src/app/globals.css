@@ -877,32 +877,33 @@
     color: rgba(148, 163, 184, 0.28);
   }
 
-  @media (max-width: 420px) {
+  @media (max-width: 640px) {
     .hq-deck-stage {
       height: 340px;
       max-width: 100%;
+      overflow-x: clip;
     }
     .hq-deck-card {
-      width: min(280px, calc(100vw - 64px));
-      margin-left: calc(min(280px, calc(100vw - 64px)) / -2);
+      width: min(280px, calc(100% - 24px));
+      margin-left: calc(min(280px, calc(100% - 24px)) / -2);
       height: 230px;
       padding: 16px;
     }
     .hq-deck-stage--dealt .hq-deck-card--metrics,
     .hq-deck-stage--dealt[data-front='question'] .hq-deck-card--metrics:not(.hq-deck-card--front) {
-      transform: translate(72px, 8px) rotate(8deg);
+      transform: translate(clamp(48px, 18vw, 72px), 8px) rotate(8deg);
     }
     .hq-deck-stage--dealt .hq-deck-card--feedback,
     .hq-deck-stage--dealt[data-front='question'] .hq-deck-card--feedback:not(.hq-deck-card--front) {
-      transform: translate(-72px, 100px) rotate(-9deg);
+      transform: translate(calc(-1 * clamp(48px, 18vw, 72px)), 100px) rotate(-9deg);
     }
     .hq-deck-stage--dealt[data-front='metrics'] .hq-deck-card--question:not(.hq-deck-card--front),
     .hq-deck-stage--dealt[data-front='feedback'] .hq-deck-card--metrics:not(.hq-deck-card--front) {
-      transform: translate(-72px, 100px) rotate(-9deg);
+      transform: translate(calc(-1 * clamp(48px, 18vw, 72px)), 100px) rotate(-9deg);
     }
     .hq-deck-stage--dealt[data-front='metrics'] .hq-deck-card--feedback:not(.hq-deck-card--front),
     .hq-deck-stage--dealt[data-front='feedback'] .hq-deck-card--question:not(.hq-deck-card--front) {
-      transform: translate(72px, 8px) rotate(8deg);
+      transform: translate(clamp(48px, 18vw, 72px), 8px) rotate(8deg);
     }
     .hq-deck-card--front {
       transform: translate(0, 40px) rotate(0deg) scale(1.03) !important;
@@ -2469,6 +2470,7 @@
       flex-wrap: wrap;
       gap: 12px;
       min-height: 0;
+      justify-content: center;
     }
     .hq-glass-fan-card,
     .hq-glass-fan:hover .hq-glass-fan-card,
@@ -2476,13 +2478,13 @@
       transform: none;
       margin: 0;
       width: calc(33.333% - 12px);
-      min-width: 120px;
-      max-width: 148px;
+      min-width: min(120px, 100%);
+      max-width: min(148px, 100%);
       height: 160px;
     }
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 640px) {
     .hq-glass-fan-card,
     .hq-glass-fan:hover .hq-glass-fan-card,
     .hq-glass-fan:focus-within .hq-glass-fan-card {
@@ -2491,11 +2493,24 @@
     }
   }
 
+  @media (max-width: 380px) {
+    .hq-glass-fan-card,
+    .hq-glass-fan:hover .hq-glass-fan-card,
+    .hq-glass-fan:focus-within .hq-glass-fan-card {
+      width: 100%;
+      max-width: none;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .hq-glass-fan-card {
       transition: none;
       transform: none;
-      margin: 0 8px;
+    }
+    @media (min-width: 901px) {
+      .hq-glass-fan-card {
+        margin: 0 8px;
+      }
     }
   }
   .section-nightsky-star {

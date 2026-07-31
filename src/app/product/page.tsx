@@ -4,7 +4,7 @@ import { ProductShowcase } from '@/components/landing/product/ProductShowcase'
 export const metadata = {
   title: 'Product — HireQuest',
   description:
-    'Explore HireQuest in depth: AI mock interviews, instant feedback, department-specific practice, progress tracking, and more.',
+    'HireQuest product inventory: interview wizard, session runner, scored results, department catalog, practice modes, and analytics previews.',
 }
 
 export default function ProductPage() {

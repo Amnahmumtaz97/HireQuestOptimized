@@ -23,7 +23,7 @@ export function AIAssistantCard() {
           <p className="mt-1 text-sm text-muted-foreground">Get AI-powered suggestions to improve your interview performance.</p>
           
           {/* Action buttons */}
-          <div className="mt-4 flex gap-2">
+          <div className="mt-4 flex flex-wrap gap-2">
             <button className="hq-btn-primary px-3 py-1.5 text-xs">
               Get Suggestions
             </button>

@@ -51,7 +51,7 @@ export function Footer() {
               <Link
                 key={link.label}
                 href={link.href}
-                className="text-[14.5px] text-muted-foreground hover:text-foreground transition-colors"
+                className="inline-flex min-h-10 items-center py-2 text-[14.5px] text-muted-foreground transition-colors hover:text-foreground"
               >
                 {link.label}
               </Link>
@@ -63,7 +63,7 @@ export function Footer() {
               <a
                 key={label}
                 href="#"
-                className="h-[34px] w-[34px] rounded-[9px] border border-border grid place-items-center text-[13px] font-semibold text-muted-foreground hover:text-foreground hover:bg-[var(--secondary)] transition-colors"
+                className="grid h-10 w-10 place-items-center rounded-[9px] border border-border text-[13px] font-semibold text-muted-foreground transition-colors hover:bg-[var(--secondary)] hover:text-foreground"
                 aria-label={label}
               >
                 {label}
@@ -74,10 +74,10 @@ export function Footer() {
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-6 text-[13.5px] text-muted-foreground">
           <span>© {new Date().getFullYear()} HireQuest. All rights reserved.</span>
-          <span className="flex items-center gap-2">
-            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+          <span className="flex flex-wrap items-center gap-2">
+            <Link href="/privacy" className="inline-flex min-h-10 items-center py-2 transition-colors hover:text-foreground">Privacy</Link>
             <span>·</span>
-            <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+            <Link href="/terms" className="inline-flex min-h-10 items-center py-2 transition-colors hover:text-foreground">Terms</Link>
           </span>
         </div>
       </div>

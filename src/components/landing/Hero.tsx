@@ -76,7 +76,7 @@ export function Hero() {
             alt=""
             fill
             priority
-            sizes="100vw"
+            sizes="(max-width: 1024px) 100vw, 70vw"
             className="object-cover object-center"
           />
         </div>
@@ -187,7 +187,7 @@ export function Hero() {
 
         <div className="reveal relative" style={{ transitionDelay: '240ms' }}>
           <div
-            className="hq-hero-code-panel relative overflow-visible rounded-[24px]"
+            className="hq-hero-code-panel relative overflow-x-clip overflow-y-visible rounded-[24px]"
             style={{ boxShadow: '0 30px 80px -30px color-mix(in oklab, var(--primary) 35%, transparent)' }}
           >
             <div className="hq-hero-code-bg" aria-hidden>
@@ -213,25 +213,25 @@ async function interview() {
             </div>
 
             {/* Header strip */}
-            <div className="hq-hero-code-header relative z-[1] flex items-center justify-between px-4 py-3.5 sm:px-5">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-primary text-white shadow-[0_6px_18px_-6px_color-mix(in_oklab,var(--primary)_60%,transparent)]">
+            <div className="hq-hero-code-header relative z-[1] flex flex-wrap items-center justify-between gap-2 px-4 py-3.5 sm:px-5">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-primary text-white shadow-[0_6px_18px_-6px_color-mix(in_oklab,var(--primary)_60%,transparent)]">
                   <AudioLines className="h-4 w-4" strokeWidth={2} />
                 </div>
-                <div className="leading-tight">
-                  <div className="text-[13px] font-bold text-foreground">AI Interview Assistant</div>
+                <div className="min-w-0 leading-tight">
+                  <div className="truncate text-[13px] font-bold text-foreground">AI Interview Assistant</div>
                   <div className="text-[10.5px] text-muted-foreground">Live Interview</div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex shrink-0 items-center gap-2">
                 <span
-                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10.5px] font-semibold"
+                  className="hidden items-center gap-1.5 rounded-full px-2.5 py-1 text-[10.5px] font-semibold min-[380px]:inline-flex"
                   style={{
                     background: 'color-mix(in oklab, #10b981 14%, transparent)',
                     color: '#059669',
                   }}
                 >
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
                   AI Responding
                 </span>
                 <span
@@ -244,7 +244,7 @@ async function interview() {
             </div>
 
             {/* Content — interactive interview deck */}
-            <div className="relative z-[1] overflow-visible px-2 pb-8 pt-4 sm:px-4">
+            <div className="relative z-[1] overflow-x-clip px-2 pb-8 pt-4 sm:px-4">
               <InterviewDeck />
             </div>
           </div>

@@ -18,7 +18,7 @@ export function InterviewQuestionCard({
   const formatted = formatGeneratedQuestion(questionText)
 
   return (
-    <div className="hq-interview-question rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-card)]">
+    <div className="hq-interview-question rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)] sm:p-6">
       <InterviewQuestionMarkdown markdown={formatted} />
     </div>
   )

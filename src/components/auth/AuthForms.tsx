@@ -207,7 +207,7 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
         <form className="mt-7 space-y-4" onSubmit={handleSubmit}>
           {!isSignIn && (
             <>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor="firstName" className="text-[12px] font-semibold text-foreground/80">
                     First Name
@@ -389,16 +389,16 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
 
           {isSignIn && (
             <div className="flex items-center justify-between text-[12px]">
-              <label className="flex items-center gap-2 text-muted-foreground cursor-pointer">
+              <label className="flex min-h-10 cursor-pointer items-center gap-2 py-1 text-muted-foreground">
                 <input
                   type="checkbox"
-                  className="h-3.5 w-3.5 rounded border-border bg-input accent-primary"
+                  className="h-4 w-4 rounded border-border bg-input accent-primary"
                 />
                 Remember me
               </label>
               <button
                 type="button"
-                className="font-semibold text-primary transition-colors hover:opacity-80"
+                className="inline-flex min-h-10 items-center px-1 font-semibold text-primary transition-colors hover:opacity-80"
               >
                 Forgot password?
               </button>
@@ -424,7 +424,7 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
               </span>
               <div className="h-px flex-1 bg-border" />
             </div>
-            <div className={`mt-4 grid gap-2.5 ${showGoogle && showGitHub ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            <div className={`mt-4 grid gap-2.5 ${showGoogle && showGitHub ? 'grid-cols-1 min-[360px]:grid-cols-2' : 'grid-cols-1'}`}>
               {showGoogle ? (
                 <button
                   type="button"
@@ -465,7 +465,7 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
         <div className="mt-5 flex justify-center">
           <Link
             href="/"
-            className="hq-btn-outline inline-flex items-center gap-2 h-9 rounded-[10px] px-4 text-[13px]"
+            className="hq-btn-outline inline-flex h-10 items-center gap-2 rounded-[10px] px-4 text-[13px]"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to homepage

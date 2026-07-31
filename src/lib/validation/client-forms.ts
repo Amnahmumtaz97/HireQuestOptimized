@@ -91,3 +91,33 @@ export function validateAccountProfile(input: {
 
   return { ok: Object.keys(errors).length === 0, errors }
 }
+
+export function validateChangePassword(input: {
+  currentPassword: string
+  newPassword: string
+  confirmPassword: string
+}): { ok: boolean; errors: FieldErrors } {
+  const errors: FieldErrors = {}
+  if (!input.currentPassword) {
+    errors.currentPassword = 'Current password is required'
+  }
+
+  const pwErr = validatePassword(input.newPassword)
+  if (pwErr) errors.newPassword = pwErr
+
+  if (!input.confirmPassword) {
+    errors.confirmPassword = 'Confirm your new password'
+  } else if (input.newPassword !== input.confirmPassword) {
+    errors.confirmPassword = 'Passwords do not match'
+  }
+
+  if (
+    input.currentPassword &&
+    input.newPassword &&
+    input.currentPassword === input.newPassword
+  ) {
+    errors.newPassword = 'New password must be different from the current password'
+  }
+
+  return { ok: Object.keys(errors).length === 0, errors }
+}

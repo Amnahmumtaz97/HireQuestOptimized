@@ -145,8 +145,8 @@ export function InterviewResultsPage() {
             <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl stat-icon-blue">
               <Briefcase className="h-5 w-5" />
             </span>
-            <div>
-              <div className="text-lg font-semibold text-foreground">
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-lg font-semibold text-foreground">
                 {formatRoleCategoryDisplay(session.industryKey, session.roleCategoryKey, interviewConfigs)}
               </div>
               <div className="text-xs text-muted-foreground">
@@ -154,7 +154,7 @@ export function InterviewResultsPage() {
                 {formatDifficultyLabel(session.difficulty)}
               </div>
             </div>
-            <span className={`ml-auto rounded-full border px-2.5 py-0.5 text-[10px] font-semibold badge-${session.status.replace('_', '-')}`}>
+            <span className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold badge-${session.status.replace('_', '-')}`}>
               {session.status.replace('_', ' ')}
             </span>
           </div>

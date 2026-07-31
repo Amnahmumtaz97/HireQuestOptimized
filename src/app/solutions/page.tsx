@@ -1,17 +1,16 @@
 import { MarketingPageShell } from '@/components/landing/MarketingPageShell'
-import { Process } from '@/components/landing/Process'
+import { SolutionsShowcase } from '@/components/landing/solutions/SolutionsShowcase'
 
 export const metadata = {
   title: 'Solutions — HireQuest',
-  description: 'See how HireQuest guides you from setup to interview-ready feedback.',
+  description:
+    'Audience playbooks for students, career switchers, and working professionals—plus goal-based paths into HireQuest practice.',
 }
 
 export default function SolutionsPage() {
   return (
     <MarketingPageShell>
-      <div className="pt-16 sm:pt-20">
-        <Process />
-      </div>
+      <SolutionsShowcase />
     </MarketingPageShell>
   )
 }

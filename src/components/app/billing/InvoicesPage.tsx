@@ -74,8 +74,8 @@ export function InvoicesPage() {
 
           <Separator className="my-5" />
 
-          <div className="flex items-center justify-between gap-3">
-            <div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
               <div className="text-sm font-semibold text-foreground">Payment history</div>
               <div className="text-xs text-muted-foreground">Download invoices for records & reimbursements</div>
             </div>
