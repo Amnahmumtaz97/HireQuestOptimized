@@ -1,6 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import { BounceLoader } from '@/components/ui/bounce-loader'
 
 const TrackConfigManager = dynamic(
   () =>
@@ -8,8 +9,8 @@ const TrackConfigManager = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex min-h-[320px] items-center justify-center p-8 text-sm text-muted-foreground">
-        Loading track configuration...
+      <div className="flex min-h-[320px] items-center justify-center p-8">
+        <BounceLoader label="Loading track configuration" />
       </div>
     ),
   },

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { validateAccountProfile, type FieldErrors } from '@/lib/validation/client-forms'
 import { LoadingButton } from '@/components/ui/loading-button'
+import { BounceLoader } from '@/components/ui/bounce-loader'
 import { useToast } from '@/components/ui/toast'
 
 type AccountFormData = {
@@ -154,7 +155,9 @@ export function AccountSettingsPanel() {
         <p className="mt-1 text-sm text-muted-foreground">Update your personal details.</p>
 
         {isLoading ? (
-          <p className="mt-6 text-sm text-muted-foreground">Loading account details...</p>
+          <div className="mt-8 flex justify-center py-10">
+            <BounceLoader label="Loading account details" />
+          </div>
         ) : (
           <form className="mt-6 space-y-4" onSubmit={handleSave}>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -222,7 +225,7 @@ export function AccountSettingsPanel() {
               loading={isSaving}
               loadingLabel="Saving..."
               disabled={!isDirty || isSaving}
-              className="h-10 rounded-full bg-gradient-primary px-5 text-sm font-semibold text-white shadow-glow-sm btn-micro"
+              className="hq-btn-primary h-10 rounded-full px-5 text-sm"
             >
               Save changes
             </LoadingButton>

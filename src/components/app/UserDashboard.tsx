@@ -18,7 +18,9 @@ import {
 } from 'lucide-react'
 import { ProgressRing } from '@/components/dashboard/ProgressRing'
 import { AIAssistantCard } from '@/components/dashboard/AIAssistantCard'
+import { BounceLoader } from '@/components/ui/bounce-loader'
 import { defaultMonthToDateRange } from '@/utils/dashboard/date'
+import { rowRevealDelay, useResponsiveColumns } from '@/hooks/use-reveal'
 import {
   formatDifficultyLabel,
   formatInterviewTypeLabel,
@@ -139,7 +141,7 @@ function SelectCard({
       className={[
         'w-full rounded-2xl border p-4 text-left btn-micro',
         selected
-          ? 'border-[var(--hq-display-blue)] bg-input/50 shadow-glow-sm'
+          ? 'border-primary bg-primary/5 shadow-[var(--shadow-card)]'
           : 'border-border bg-input/30 hover:bg-input/50',
       ].join(' ')}
     >
@@ -159,6 +161,7 @@ export function AppDashboardPanel() {
   const [isLoading, setIsLoading] = useState(true)
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
   const [interviewConfigs, setInterviewConfigs] = useState<InterviewConfig[]>([])
+  const [listPage, setListPage] = useState(1)
 
   const loadSessions = useCallback(async () => {
     setIsLoading(true)
@@ -196,6 +199,10 @@ export function AppDashboardPanel() {
     }
   }, [])
 
+  useEffect(() => {
+    setListPage(1)
+  }, [startDate, endDate])
+
   const displayedSessions = useMemo(() => {
     const startMs = startDate ? new Date(`${startDate}T00:00:00`).getTime() : Number.NEGATIVE_INFINITY
     const endMs = endDate ? new Date(`${endDate}T23:59:59`).getTime() : Number.POSITIVE_INFINITY
@@ -213,6 +220,22 @@ export function AppDashboardPanel() {
       })
   }, [endDate, sessions, startDate])
 
+  const listPageSize = 6
+  const listTotalPages = Math.max(1, Math.ceil(displayedSessions.length / listPageSize))
+  const safeListPage = Math.min(Math.max(listPage, 1), listTotalPages)
+  const pagedSessions = useMemo(() => {
+    const start = (safeListPage - 1) * listPageSize
+    return displayedSessions.slice(start, start + listPageSize)
+  }, [displayedSessions, safeListPage])
+  const listPageNumbers = useMemo(() => {
+    const out: number[] = []
+    const radius = 2
+    const start = Math.max(1, safeListPage - radius)
+    const end = Math.min(listTotalPages, safeListPage + radius)
+    for (let p = start; p <= end; p++) out.push(p)
+    return out
+  }, [safeListPage, listTotalPages])
+
   const totalInterviews = displayedSessions.length
   const completed = displayedSessions.filter((s) => s.status === 'completed').length
   const inProgress = displayedSessions.filter((s) => s.status === 'in_progress').length
@@ -222,14 +245,14 @@ export function AppDashboardPanel() {
   const difficultyTagClass = (d: string) => {
     if (d === 'Easy') return 'hq-tag hq-tag--easy'
     if (d === 'Medium') return 'hq-tag hq-tag--medium'
-    if (d === 'Adaptive') return 'hq-tag hq-tag--purple'
+    if (d === 'Adaptive') return 'hq-tag hq-tag--accent'
     return 'hq-tag hq-tag--hard'
   }
 
   const interviewTypeTagClass = (t: string) => {
     if (t === 'behavioral') return 'hq-tag hq-tag--accent'
-    if (t === 'hr') return 'hq-tag hq-tag--purple'
-    return 'hq-tag hq-tag--purple'
+    if (t === 'hr') return 'hq-tag hq-tag--accent'
+    return 'hq-tag hq-tag--accent'
   }
 
   const statusTagClass = (status: InterviewSession['status']) => {
@@ -297,15 +320,15 @@ export function AppDashboardPanel() {
           </div>
         </Card>
 
-        <Card className="hq-stat-card hq-stat-card--purple">
+        <Card className="hq-stat-card hq-stat-card--blue">
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="hq-stat-label">Subscription</div>
-              <div className="hq-stat-value hq-stat-value--purple hq-stat-value--text">Active</div>
+              <div className="hq-stat-value hq-stat-value--blue hq-stat-value--text">Active</div>
               <div className="hq-stat-sub">$9.99 / month</div>
             </div>
-            <span className="hq-stat-icon-wrap hq-stat-icon-wrap--purple">
-              <CreditCard className="h-5 w-5 text-purple-300" aria-hidden />
+            <span className="hq-stat-icon-wrap hq-stat-icon-wrap--blue">
+              <CreditCard className="h-5 w-5 text-primary" aria-hidden />
             </span>
           </div>
         </Card>
@@ -345,7 +368,9 @@ export function AppDashboardPanel() {
         </div>
 
         {isLoading ? (
-          <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">Loading…</div>
+          <div className="flex h-32 items-center justify-center">
+            <BounceLoader label="Loading" />
+          </div>
         ) : displayedSessions.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-12">
             <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--hq-row-elevated)]">
@@ -354,46 +379,118 @@ export function AppDashboardPanel() {
             <p className="text-sm text-muted-foreground">No interviews in this date range.</p>
           </div>
         ) : (
-          <div className="flex max-h-[min(28rem,60vh)] flex-col gap-2 overflow-y-auto pr-1">
-            {displayedSessions.map((s) => (
-              <div key={s._id} className="hq-interview-row flex-wrap items-start sm:flex-nowrap sm:items-center">
-                <div className="hq-int-icon">
-                  <Briefcase className="h-4 w-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="hq-int-name">
-                    {formatRoleCategoryDisplay(s.industryKey, s.roleCategoryKey, interviewConfigs)}
+          <div className="space-y-3">
+            <div className="flex flex-col gap-2">
+              {pagedSessions.map((s) => (
+                <div key={s._id} className="hq-interview-row flex-wrap items-start sm:flex-nowrap sm:items-center">
+                  <div className="hq-int-icon">
+                    <Briefcase className="h-4 w-4" />
                   </div>
-                  <div className="hq-int-meta">
-                    <span>
-                      {s.createdAt
-                        ? new Date(s.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
-                        : '—'}
-                    </span>
-                    <span className="hq-dot" aria-hidden />
-                    <span className={interviewTypeTagClass(s.interviewType)}>
-                      {formatInterviewTypeLabel(s.interviewType)}
-                    </span>
-                    <span className={difficultyTagClass(s.difficulty)}>{formatDifficultyLabel(s.difficulty)}</span>
-                    <span>
-                      {s.totalQuestions}Q
-                      {typeof s.questions?.length === 'number' ? ` · ${s.questions.length} generated` : ''}
-                    </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="hq-int-name">
+                      {formatRoleCategoryDisplay(s.industryKey, s.roleCategoryKey, interviewConfigs)}
+                    </div>
+                    <div className="hq-int-meta">
+                      <span>
+                        {s.createdAt
+                          ? new Date(s.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+                          : '—'}
+                      </span>
+                      <span className="hq-dot" aria-hidden />
+                      <span className={interviewTypeTagClass(s.interviewType)}>
+                        {formatInterviewTypeLabel(s.interviewType)}
+                      </span>
+                      <span className={difficultyTagClass(s.difficulty)}>{formatDifficultyLabel(s.difficulty)}</span>
+                      <span>
+                        {s.totalQuestions}Q
+                        {typeof s.questions?.length === 'number' ? ` · ${s.questions.length} generated` : ''}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex w-full flex-shrink-0 items-center justify-end gap-2 sm:w-auto sm:justify-start">
+                    <span className={`${statusTagClass(s.status)} capitalize`}>{s.status.replace('_', ' ')}</span>
+                    <button
+                      type="button"
+                      title="Delete session"
+                      onClick={() => setDeleteTargetId(s._id)}
+                      className="hq-action-btn hq-action-btn--danger btn-micro hover:bg-red-500/20"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                    </button>
                   </div>
                 </div>
-                <div className="flex w-full flex-shrink-0 items-center justify-end gap-2 sm:w-auto sm:justify-start">
-                  <span className={`${statusTagClass(s.status)} capitalize`}>{s.status.replace('_', ' ')}</span>
-                  <button
-                    type="button"
-                    title="Delete session"
-                    onClick={() => setDeleteTargetId(s._id)}
-                    className="hq-action-btn hq-action-btn--danger btn-micro hover:bg-red-500/20"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                  </button>
-                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
+              <div className="text-xs text-muted-foreground">
+                Page <strong className="text-foreground">{safeListPage}</strong> of{' '}
+                <strong className="text-foreground">{listTotalPages}</strong>
               </div>
-            ))}
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setListPage((p) => Math.max(1, p - 1))}
+                  disabled={safeListPage <= 1}
+                  className="hq-panel-btn min-h-9 px-3 py-2 text-xs font-semibold disabled:pointer-events-none disabled:opacity-45"
+                >
+                  Prev
+                </button>
+
+                {listPageNumbers[0] && listPageNumbers[0] > 1 ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setListPage(1)}
+                      className="hq-panel-btn min-h-9 px-3 py-2 text-xs font-semibold"
+                    >
+                      1
+                    </button>
+                    {listPageNumbers[0] > 2 ? <span className="px-1 text-xs text-muted-foreground">…</span> : null}
+                  </>
+                ) : null}
+
+                {listPageNumbers.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setListPage(p)}
+                    className={[
+                      'hq-panel-btn min-h-9 px-3 py-2 text-xs font-semibold',
+                      p === safeListPage ? 'hq-panel-btn--active' : '',
+                    ].join(' ')}
+                  >
+                    {p}
+                  </button>
+                ))}
+
+                {listPageNumbers[listPageNumbers.length - 1] &&
+                listPageNumbers[listPageNumbers.length - 1] < listTotalPages ? (
+                  <>
+                    {listPageNumbers[listPageNumbers.length - 1] < listTotalPages - 1 ? (
+                      <span className="px-1 text-xs text-muted-foreground">…</span>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => setListPage(listTotalPages)}
+                      className="hq-panel-btn min-h-9 px-3 py-2 text-xs font-semibold"
+                    >
+                      {listTotalPages}
+                    </button>
+                  </>
+                ) : null}
+
+                <button
+                  type="button"
+                  onClick={() => setListPage((p) => Math.min(listTotalPages, p + 1))}
+                  disabled={safeListPage >= listTotalPages}
+                  className="hq-panel-btn min-h-9 px-3 py-2 text-xs font-semibold disabled:pointer-events-none disabled:opacity-45"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </Card>
@@ -514,14 +611,14 @@ export function InterviewsPanel() {
     Easy: 'text-emerald-400',
     Medium: 'text-amber-400',
     Hard: 'text-red-400',
-    Adaptive: 'text-violet-400',
+    Adaptive: 'text-primary',
   }
   const difficultyOptions: Array<{ key: 'all' | 'Easy' | 'Medium' | 'Hard' | 'Adaptive'; label: string; icon: React.ReactNode; iconClass: string }> = [
     { key: 'all', label: 'All', icon: <BarChart2 className="h-3.5 w-3.5" />, iconClass: 'text-[var(--hq-display-blue)]' },
     { key: 'Easy', label: 'Easy', icon: <Leaf className="h-3.5 w-3.5" />, iconClass: 'text-emerald-400' },
     { key: 'Medium', label: 'Medium', icon: <Activity className="h-3.5 w-3.5" />, iconClass: 'text-amber-400' },
     { key: 'Hard', label: 'Hard', icon: <Mountain className="h-3.5 w-3.5" />, iconClass: 'text-rose-400' },
-    { key: 'Adaptive', label: 'Adaptive AI', icon: <Sparkles className="h-3.5 w-3.5" />, iconClass: 'text-violet-400' },
+    { key: 'Adaptive', label: 'Adaptive AI', icon: <Sparkles className="h-3.5 w-3.5" />, iconClass: 'text-primary' },
   ]
   const selectedDifficulty = difficultyOptions.find((o) => o.key === difficultyFilter) ?? difficultyOptions[0]
 
@@ -546,9 +643,11 @@ export function InterviewsPanel() {
     return out
   }, [safePage, totalPages])
 
+  const cardCols = useResponsiveColumns({ base: 1, sm: 2, xl: 3 })
+
   return (
     <div className="space-y-5 animate-fade-up">
-      <div className="hq-interviews-toolbar flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-glass bg-input/10 p-2.5 sm:p-3">
+      <div className="hq-interviews-toolbar flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-input/10 p-2.5 sm:p-3">
         <div className="hq-segmented-tabs flex flex-wrap items-center gap-1.5">
           {(['all', 'created', 'in_progress', 'completed'] as const).map((f) => (
             <button
@@ -573,7 +672,7 @@ export function InterviewsPanel() {
         </button>
       </div>
 
-      <div className="hq-filter-command grid grid-cols-1 gap-4 rounded-3xl border border-glass bg-input/10 p-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="hq-filter-command grid grid-cols-1 gap-4 rounded-3xl border border-border bg-input/10 p-4 sm:grid-cols-2 lg:grid-cols-4">
         <label className="space-y-1">
           <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/80">Search</span>
           <input
@@ -685,10 +784,8 @@ export function InterviewsPanel() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="h-32 rounded-2xl border border-border bg-input/20 animate-pulse" />
-          ))}
+        <div className="flex min-h-[240px] items-center justify-center">
+          <BounceLoader label="Loading interviews" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 py-16 rounded-xl border border-border bg-input/10">
@@ -703,10 +800,11 @@ export function InterviewsPanel() {
       ) : (
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {pageItems.map((s) => (
+            {pageItems.map((s, index) => (
               <div
                 key={s._id}
-                className="dashboard-card p-5 flex flex-col justify-between gap-4 group min-h-[150px]"
+                className="dashboard-card card-drop-in p-5 flex flex-col justify-between gap-4 group min-h-[150px]"
+                style={{ animationDelay: `${rowRevealDelay(index, cardCols)}ms` }}
               >
                 <div className="flex items-start gap-3 min-w-0">
                   <span className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-input/40 stat-icon-blue">
@@ -1634,7 +1732,7 @@ export function CreateInterviewWizard() {
                   type="button"
                   onClick={goNext}
                   disabled={!canContinueFromStep || isCreatingInterview}
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-gradient-primary px-5 text-sm font-semibold text-white btn-micro shadow-glow-sm disabled:pointer-events-none disabled:opacity-45"
+                  className="hq-btn-primary h-10 px-5 text-sm disabled:pointer-events-none disabled:opacity-45"
                 >
                   Continue <ArrowRight className="h-4 w-4" />
                 </button>
@@ -1688,7 +1786,7 @@ export function CreateInterviewWizard() {
                 <div className="min-w-0 flex-1">
                   <div className="mb-2 h-2 overflow-hidden rounded-full bg-input/40">
                     <div
-                      className="h-full rounded-full bg-gradient-primary transition-[width] duration-300"
+                      className="h-full rounded-full bg-primary transition-[width] duration-300"
                       style={{ width: `${progressPct}%` }}
                     />
                   </div>

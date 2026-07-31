@@ -12,11 +12,11 @@ export function ProgressRing({ size = 84, progress = 0.62 }: { size?: number; pr
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
       <defs>
         <linearGradient id="g1" x1="0%" x2="100%">
-          <stop offset="0%" stopColor="#0031b0" />
-          <stop offset="100%" stopColor="#1e5af3" />
+          <stop offset="0%" stopColor="#1d4ed8" />
+          <stop offset="100%" stopColor="#2563eb" />
         </linearGradient>
       </defs>
-      <circle cx={size / 2} cy={size / 2} r={radius} strokeWidth={stroke} stroke="#0b1220" fill="none" />
+      <circle cx={size / 2} cy={size / 2} r={radius} strokeWidth={stroke} stroke="var(--border)" fill="none" />
       <motion.circle
         cx={size / 2}
         cy={size / 2}

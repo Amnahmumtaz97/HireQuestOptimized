@@ -41,7 +41,7 @@ export function InterviewQuestionHeader({
           {extraActions}
           <Link
             href="/app/interviews"
-            className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-input/25 px-3 text-sm font-semibold text-foreground transition-colors hover:bg-input/45 btn-micro"
+            className="hq-btn-outline h-9 px-3 text-sm btn-micro"
           >
             <ArrowLeft className="h-4 w-4" /> Exit
           </Link>

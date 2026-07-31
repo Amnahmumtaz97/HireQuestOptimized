@@ -2,42 +2,22 @@
 
 import {
   ArrowRight,
+  AudioLines,
   BadgeCheck,
+  Bot,
   Clock3,
   Mic,
   MessageSquareMore,
   Play,
   Sparkles,
+  type LucideIcon,
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { DotLottieReact } from '@lottiefiles/dotlottie-react'
+import { useSession } from 'next-auth/react'
 import { useReveal } from '@/hooks/use-reveal'
-
-function FloatingCard({
-  title,
-  value,
-  hint,
-  className = '',
-  style,
-}: {
-  title: string
-  value: string
-  hint: string
-  className?: string
-  style?: React.CSSProperties
-}) {
-  return (
-    <div
-      className={['glass-strong rounded-xl px-4 py-3 min-w-[170px]', className].join(' ')}
-      style={style}
-    >
-      <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{title}</div>
-      <div className="mt-1 text-lg font-semibold text-gradient">{value}</div>
-      <div className="mt-0.5 text-[11px] text-muted-foreground/80">{hint}</div>
-    </div>
-  )
-}
+import { ConstellationBackground } from '@/components/landing/ConstellationBackground'
+import { InterviewDeck } from '@/components/landing/InterviewDeck'
 
 function PracticeChip({
   icon: Icon,
@@ -46,7 +26,7 @@ function PracticeChip({
   className = '',
   delay = '0ms',
 }: {
-  icon: React.ComponentType<{ className?: string }>
+  icon: LucideIcon
   title: string
   detail: string
   className?: string
@@ -73,6 +53,10 @@ function PracticeChip({
 
 export function Hero() {
   const ref = useReveal<HTMLElement>()
+  const { data: session, status } = useSession()
+  const isAuthenticated = status === 'authenticated'
+  const isAdmin = session?.user?.role === 'admin'
+  const authedEntryHref = isAdmin ? '/dashboard' : '/app/new-interview'
 
   return (
     <section
@@ -80,11 +64,15 @@ export function Hero() {
       ref={ref}
       className="relative isolate overflow-hidden pt-28 pb-20 sm:pt-32 sm:pb-24 lg:pt-36 lg:pb-28"
     >
-      {/* Full-bleed brain hero background */}
+      {/* Hero-scoped background (contained within this section only) */}
       <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden>
+        <ConstellationBackground
+          className="absolute inset-0 h-full w-full pointer-events-none opacity-70"
+          intensity={0.4}
+        />
         <div className="absolute left-1/2 top-1/2 h-[90%] w-[90%] -translate-x-1/2 -translate-y-1/2">
           <Image
-            src="/hero-ai-brain.jpg"
+            src="/hero-ai-brain-removebg-preview.png"
             alt=""
             fill
             priority
@@ -93,7 +81,7 @@ export function Hero() {
           />
         </div>
         <div className="absolute inset-0 bg-[linear-gradient(to_right,color-mix(in_oklab,var(--background)_88%,transparent)_0%,color-mix(in_oklab,var(--background)_55%,transparent)_48%,color-mix(in_oklab,var(--background)_72%,transparent)_100%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,color-mix(in_oklab,var(--background)_35%,transparent)_0%,transparent_28%,color-mix(in_oklab,var(--background)_78%,transparent)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,color-mix(in_oklab,var(--background)_35%,transparent)_0%,transparent_28%,color-mix(in_oklab,var(--background)_40%,transparent)_100%)]" />
         <div className="absolute inset-0 bg-mesh opacity-40" />
       </div>
 
@@ -136,20 +124,32 @@ export function Hero() {
             className="reveal mt-9 flex flex-col gap-3 sm:flex-row sm:items-center"
             style={{ transitionDelay: '240ms' }}
           >
-            <Link
-              href="/app/new-interview"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-primary px-7 text-sm font-semibold text-primary-foreground shadow-[0_0_30px_-6px_var(--primary)] transition-all hover:scale-[1.03] hover:shadow-[0_0_44px_-4px_var(--primary)]"
-            >
-              Try Prep AI Now
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              href="/pricing"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-border px-7 text-sm font-semibold text-foreground transition-all hover:bg-input/30"
-            >
-              <Play className="h-4 w-4" />
-              See our plans
-            </Link>
+            {isAuthenticated ? (
+              <Link
+                href={authedEntryHref}
+                className="hq-btn-primary inline-flex h-12 items-center justify-center gap-2 rounded-[10px] px-7 text-sm"
+              >
+                Get Started
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/auth"
+                  className="hq-btn-primary inline-flex h-12 items-center justify-center gap-2 rounded-[10px] px-7 text-sm"
+                >
+                  Start Practicing Free
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  href="/auth"
+                  className="hq-btn-outline inline-flex h-12 items-center justify-center gap-2 rounded-[10px] px-7 text-sm"
+                >
+                  <Play className="h-4 w-4" />
+                  Login
+                </Link>
+              </>
+            )}
           </div>
 
           <div className="reveal mt-8 grid max-w-xl gap-3 sm:grid-cols-2" style={{ transitionDelay: '320ms' }}>
@@ -186,57 +186,66 @@ export function Hero() {
         </div>
 
         <div className="reveal relative" style={{ transitionDelay: '240ms' }}>
-          <div className="relative overflow-hidden rounded-[2rem] glass-strong shimmer-border border border-border/40 p-4 sm:p-5 glow-ring-strong">
-            <div className="relative overflow-hidden rounded-[1.75rem] border border-border/30 bg-card/40 min-h-[420px] sm:min-h-[520px] backdrop-blur-md">
-              <div className="absolute inset-x-4 top-4 flex items-center justify-between rounded-2xl border border-border/40 bg-card/50 px-4 py-3 text-xs text-muted-foreground backdrop-blur-md sm:inset-x-5">
-                <span>Live interview assistant</span>
-                <span className="inline-flex items-center gap-2 text-emerald-500 dark:text-emerald-300">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                  responding
+          <div
+            className="hq-hero-code-panel relative overflow-visible rounded-[24px] border border-border"
+            style={{ boxShadow: '0 30px 80px -30px color-mix(in oklab, var(--primary) 35%, transparent)' }}
+          >
+            <div className="hq-hero-code-bg" aria-hidden>
+              <pre className="hq-hero-code-pre">
+                <code>{`function reconcile(prev, next) {
+  if (prev.type !== next.type) {
+    return replace(prev, next);
+  }
+  // diff children by key
+  const patches = [];
+  for (const key of keys(next)) {
+    patches.push(update(prev[key], next[key]));
+  }
+  return apply(patches);
+}
+
+async function interview() {
+  const q = await ask("virtual DOM?");
+  const score = grade(q, { clarity: true });
+  return feedback(score);
+}`}</code>
+              </pre>
+            </div>
+
+            {/* Header strip */}
+            <div className="relative z-[1] flex items-center justify-between border-b border-border/70 bg-card/80 px-4 py-3.5 backdrop-blur-md sm:px-5">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-primary text-white shadow-[0_6px_18px_-6px_color-mix(in_oklab,var(--primary)_60%,transparent)]">
+                  <AudioLines className="h-4 w-4" strokeWidth={2} />
+                </div>
+                <div className="leading-tight">
+                  <div className="text-[13px] font-bold text-foreground">AI Interview Assistant</div>
+                  <div className="text-[10.5px] text-muted-foreground">Live Interview</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10.5px] font-semibold"
+                  style={{
+                    background: 'color-mix(in oklab, #10b981 14%, transparent)',
+                    color: '#059669',
+                  }}
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  AI Responding
+                </span>
+                <span
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-primary"
+                  style={{ background: 'color-mix(in oklab, var(--primary) 12%, transparent)' }}
+                >
+                  <Bot className="h-3.5 w-3.5" strokeWidth={1.8} />
                 </span>
               </div>
+            </div>
 
-              <div className="absolute left-1/2 top-1/2 w-[min(82vw,390px)] -translate-x-1/2 -translate-y-[44%] sm:-translate-y-1/2">
-                <div className="relative rounded-[1.75rem] border border-border/40 bg-card/30 p-4 shadow-[0_0_60px_-12px_color-mix(in_oklab,var(--primary)_55%,transparent)] backdrop-blur-xl">
-                  <div className="relative aspect-[1.05/1] overflow-hidden rounded-[1.5rem] bg-background/40">
-                    <DotLottieReact
-                      src="/Live%20chatbot.lottie"
-                      loop
-                      autoplay
-                      style={{ width: '100%', height: '100%' }}
-                    />
-
-                    <div className="absolute bottom-4 left-4 right-4 grid gap-3 sm:grid-cols-2">
-                      <FloatingCard
-                        className="animate-float"
-                        style={{ animationDelay: '0.2s' }}
-                        title="Confidence"
-                        value="92%"
-                        hint="↑ 14% this week"
-                      />
-                      <FloatingCard
-                        className="animate-float"
-                        style={{ animationDelay: '0.9s' }}
-                        title="Clarity"
-                        value="8.7 / 10"
-                        hint="better structure"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="absolute right-4 top-20 hidden xl:flex flex-col gap-3">
-                <div className="rounded-2xl glass px-4 py-3 text-xs text-muted-foreground animate-float" style={{ animationDelay: '0s' }}>
-                  Behavioral prep
-                </div>
-                <div className="rounded-2xl glass px-4 py-3 text-xs text-muted-foreground animate-float" style={{ animationDelay: '0.7s' }}>
-                  System design
-                </div>
-                <div className="rounded-2xl glass px-4 py-3 text-xs text-muted-foreground animate-float" style={{ animationDelay: '1.4s' }}>
-                  Rapid feedback
-                </div>
-              </div>
+            {/* Content — interactive interview deck */}
+            <div className="relative z-[1] overflow-visible px-2 pb-8 pt-4 sm:px-4">
+              <InterviewDeck />
             </div>
           </div>
         </div>

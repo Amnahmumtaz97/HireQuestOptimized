@@ -103,7 +103,7 @@ export function TopicSelector({
       <input
         value={search}
         onChange={(event) => onSearchChange(event.target.value)}
-        className="h-11 w-full rounded-2xl border border-border bg-surface px-4 text-sm text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] outline-none transition-all duration-200 ease-out placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-[color-mix(in_oklab,var(--primary)_25%,transparent)] focus:shadow-glow-sm hover:border-primary/30 hover:bg-surface-strong"
+        className="h-11 w-full rounded-2xl border border-border bg-surface px-4 text-sm text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] outline-none transition-all duration-200 ease-out placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-[color-mix(in_oklab,var(--primary)_25%,transparent)] focus:shadow-[var(--shadow-card)] hover:border-primary/30 hover:bg-surface-strong"
         placeholder="Search topics..."
       />
 

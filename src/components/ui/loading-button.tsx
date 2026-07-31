@@ -2,7 +2,7 @@
 
 import { forwardRef } from 'react'
 import type { ButtonHTMLAttributes } from 'react'
-import { Loader2 } from 'lucide-react'
+import { BounceLoader } from '@/components/ui/bounce-loader'
 
 export type LoadingButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   loading?: boolean
@@ -24,7 +24,7 @@ export const LoadingButton = forwardRef<HTMLButtonElement, LoadingButtonProps>(
         ].join(' ')}
         {...props}
       >
-        {loading ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden /> : null}
+        {loading ? <BounceLoader size="sm" label={loadingLabel || 'Loading'} /> : null}
         {loading && loadingLabel ? loadingLabel : children}
       </button>
     )

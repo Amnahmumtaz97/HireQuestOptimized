@@ -1,35 +1,18 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ArrowUpRight, Brain, Menu, Moon, Sun, X } from 'lucide-react'
+import { Menu, Moon, Sun, X } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useTheme } from '@/components/providers/ThemeProvider'
 
 const links = [
-  { label: 'Home', href: '/' },
+  { label: 'Product', href: '/product' },
+  { label: 'Solutions', href: '/solutions' },
   { label: 'Features', href: '/features' },
   { label: 'Pricing', href: '/pricing' },
-  { label: 'Contact', href: '/contact' },
 ]
-
-function NavCta({
-  href,
-  label,
-}: {
-  href: string
-  label: string
-}) {
-  return (
-    <Link href={href} className="hq-marketing-cta">
-      <span>{label}</span>
-      <span className="hq-marketing-cta-icon" aria-hidden>
-        <ArrowUpRight className="h-4 w-4" strokeWidth={2.25} />
-      </span>
-    </Link>
-  )
-}
 
 export function Navbar() {
   const [open, setOpen] = useState(false)
@@ -40,7 +23,7 @@ export function Navbar() {
   const role = session?.user?.role
   const isAdmin = role === 'admin'
   const isAuthenticated = status === 'authenticated'
-  const destination = isAdmin ? '/dashboard' : '/app/new-interview'
+  const authedEntryHref = isAdmin ? '/dashboard' : '/app/new-interview'
 
   useEffect(() => {
     setOpen(false)
@@ -56,9 +39,7 @@ export function Navbar() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <nav className="hq-marketing-nav">
           <Link href="/" className="hq-marketing-logo group">
-            <span className="hq-marketing-logo-mark">
-              <Brain className="h-5 w-5 text-white" strokeWidth={2} />
-            </span>
+            <span className="hq-marketing-logo-mark">HQ</span>
             <span className="hq-marketing-logo-text">HireQuest</span>
           </Link>
 
@@ -83,28 +64,40 @@ export function Navbar() {
             </div>
           </div>
 
-          <div className="ml-auto flex items-center gap-2 sm:gap-3">
+          <div className="ml-auto flex items-center gap-3 sm:gap-5">
             <button
               type="button"
               aria-label="Toggle theme"
               onClick={toggleTheme}
               suppressHydrationWarning
-              className="hidden sm:inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/50 bg-transparent text-muted-foreground transition-colors hover:text-foreground hover:bg-card/30"
+              className="hq-btn-icon hidden sm:inline-flex"
             >
               {theme === 'light' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
 
             {isAuthenticated ? (
-              <NavCta href={destination} label={isAdmin ? 'View Dashboard' : 'Get Started'} />
+              <Link href={authedEntryHref} className="hq-marketing-cta !rounded-[10px] !pr-4">
+                <span>Get Started</span>
+              </Link>
             ) : (
-              <NavCta href="/auth" label="Get Started" />
+              <>
+                <Link
+                  href="/auth"
+                  className="hidden sm:inline-flex text-[15px] font-semibold text-foreground hover:text-primary transition-colors"
+                >
+                  Login
+                </Link>
+                <Link href="/auth" className="hq-marketing-cta !rounded-[10px] !pr-4">
+                  <span>Start Practicing Free</span>
+                </Link>
+              </>
             )}
 
             <button
               type="button"
               aria-label="Menu"
               onClick={() => setOpen((value) => !value)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/50 bg-transparent text-foreground lg:hidden"
+              className="hq-btn-icon inline-flex lg:hidden"
             >
               {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </button>
@@ -112,22 +105,42 @@ export function Navbar() {
         </nav>
 
         {open ? (
-          <div className="mb-4 rounded-3xl border border-border bg-card p-3 shadow-elegant lg:hidden">
+          <div className="mb-4 rounded-2xl border border-border bg-card p-3 lg:hidden">
             <div className="flex flex-col gap-1">
               {links.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
                   className={[
-                    'rounded-2xl px-4 py-3 text-sm font-medium transition-colors',
+                    'rounded-xl px-4 py-3 text-sm font-medium transition-colors',
                     isActive(link.href)
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-foreground hover:bg-input/40',
+                      ? 'text-primary'
+                      : 'text-foreground hover:bg-[var(--secondary)]',
                   ].join(' ')}
+                  style={
+                    isActive(link.href)
+                      ? { background: 'color-mix(in oklab, var(--primary) 12%, transparent)' }
+                      : undefined
+                  }
                 >
                   {link.label}
                 </Link>
               ))}
+              {isAuthenticated ? (
+                <Link
+                  href={authedEntryHref}
+                  className="rounded-xl px-4 py-3 text-sm font-semibold text-primary hover:bg-[var(--secondary)]"
+                >
+                  Get Started
+                </Link>
+              ) : (
+                <Link
+                  href="/auth"
+                  className="rounded-xl px-4 py-3 text-sm font-semibold text-foreground hover:bg-[var(--secondary)]"
+                >
+                  Login
+                </Link>
+              )}
             </div>
           </div>
         ) : null}

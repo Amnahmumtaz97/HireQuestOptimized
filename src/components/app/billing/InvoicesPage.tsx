@@ -41,7 +41,7 @@ export function InvoicesPage() {
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 href="/app/subscription"
-                className="inline-flex h-10 items-center justify-center rounded-xl bg-gradient-primary px-4 text-xs font-semibold text-white shadow-glow-sm hover:shadow-glow btn-micro"
+                className="hq-btn-primary h-10 px-4 text-xs"
               >
                 Upgrade
               </Link>
@@ -166,7 +166,7 @@ export function InvoicesPage() {
 
           <Link
             href="/app/subscription"
-            className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-xl bg-gradient-primary px-5 text-xs font-semibold text-white shadow-glow-sm hover:shadow-glow btn-micro"
+            className="hq-btn-primary mt-4 h-10 w-full px-5 text-xs"
           >
             Compare plans
           </Link>

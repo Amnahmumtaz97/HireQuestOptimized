@@ -9,7 +9,8 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: ['Manrope', 'sans-serif'],
+        mono: ['Manrope', 'sans-serif'],
       },
       spacing: {
         13: '3.25rem',

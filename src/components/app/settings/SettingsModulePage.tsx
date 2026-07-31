@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { KeyRound, Palette, Shield, Trash2, User2, Bell, SlidersHorizontal } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Switch } from '@/components/ui/switch'
@@ -8,11 +9,28 @@ import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { useTheme } from '@/components/providers/ThemeProvider'
 import { useToast } from '@/components/ui/toast'
 
+const VALID_TABS = new Set([
+  'profile',
+  'preferences',
+  'security',
+  'notifications',
+  'appearance',
+  'danger',
+])
+
 export function SettingsModulePage() {
   const toast = useToast()
   const { theme, setTheme } = useTheme()
-  const [tab, setTab] = useState('profile')
+  const searchParams = useSearchParams()
+  const tabFromUrl = searchParams.get('tab')
+  const [tab, setTab] = useState(() =>
+    tabFromUrl && VALID_TABS.has(tabFromUrl) ? tabFromUrl : 'profile',
+  )
   const [deleteOpen, setDeleteOpen] = useState(false)
+
+  useEffect(() => {
+    if (tabFromUrl && VALID_TABS.has(tabFromUrl)) setTab(tabFromUrl)
+  }, [tabFromUrl])
 
   const appearanceLabel = useMemo(() => (theme === 'light' ? 'Light' : 'Dark'), [theme])
 
@@ -106,7 +124,7 @@ export function SettingsModulePage() {
                   <input className="h-11 w-full rounded-2xl border border-border bg-input/15 px-4 text-sm" placeholder="New password" type="password" />
                   <button
                     type="button"
-                    className="inline-flex h-11 w-full items-center justify-center rounded-2xl bg-gradient-primary px-5 text-xs font-semibold text-white shadow-glow-sm hover:shadow-glow btn-micro"
+                    className="hq-btn-primary h-11 w-full rounded-2xl px-5 text-xs"
                     onClick={() => toast.success('Password updated')}
                   >
                     Update password

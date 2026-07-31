@@ -106,19 +106,19 @@ export function ProfileManagementPage() {
   return (
     <div className="animate-fade-up space-y-6">
       <div className="dashboard-card overflow-hidden">
-        <div className="relative h-28 bg-gradient-to-r from-primary/35 via-purple-500/20 to-cyan-400/15">
+        <div className="relative h-28 bg-gradient-to-r from-primary/30 via-primary/10 to-transparent">
           <div className="absolute inset-0 bg-mesh opacity-40" />
           <div className="absolute inset-0 grid-bg opacity-25" />
         </div>
         <div className="p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex items-start gap-4">
-              <div className="relative -mt-14 h-24 w-24 overflow-hidden rounded-3xl border border-white/10 bg-input/15 shadow-glow-sm">
+              <div className="relative -mt-14 h-24 w-24 overflow-hidden rounded-3xl border border-white/10 bg-input/15 shadow-[var(--shadow-card)]">
                 {avatarDataUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={avatarDataUrl} alt="Avatar" className="h-full w-full object-cover" />
                 ) : (
-                  <div className="grid h-full w-full place-items-center bg-gradient-primary text-white">
+                  <div className="grid h-full w-full place-items-center bg-primary text-white">
                     <User className="h-7 w-7" />
                   </div>
                 )}
@@ -130,7 +130,7 @@ export function ProfileManagementPage() {
                   <button
                     type="button"
                     onClick={() => fileRef.current?.click()}
-                    className="inline-flex h-10 items-center gap-2 rounded-xl bg-gradient-primary px-4 text-xs font-semibold text-white shadow-glow-sm hover:shadow-glow btn-micro"
+                    className="hq-btn-primary h-10 gap-2 px-4 text-xs"
                   >
                     <Upload className="h-4 w-4" /> Upload avatar
                   </button>
@@ -172,7 +172,7 @@ export function ProfileManagementPage() {
             <button
               type="button"
               onClick={form.handleSubmit(onSubmit)}
-              className="inline-flex h-11 items-center gap-2 rounded-2xl bg-gradient-primary px-5 text-xs font-semibold text-white shadow-glow-sm hover:shadow-glow btn-micro"
+              className="hq-btn-primary h-11 gap-2 rounded-2xl px-5 text-xs"
               disabled={!form.formState.isValid}
             >
               <Save className="h-4 w-4" /> Save profile
@@ -227,7 +227,7 @@ export function ProfileManagementPage() {
               <button
                 type="button"
                 onClick={addSkill}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-primary text-white shadow-glow-sm hover:shadow-glow btn-micro"
+                className="hq-btn-primary h-11 w-11 items-center justify-center rounded-2xl p-0"
                 aria-label="Add skill"
               >
                 <Plus className="h-4.5 w-4.5" />
@@ -285,7 +285,7 @@ export function ProfileManagementPage() {
 
             <button
               type="submit"
-              className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-primary px-5 text-xs font-semibold text-white shadow-glow-sm hover:shadow-glow btn-micro"
+              className="hq-btn-primary mt-5 h-11 w-full gap-2 rounded-2xl px-5 text-xs"
               disabled={!form.formState.isValid}
             >
               <Save className="h-4 w-4" /> Save changes

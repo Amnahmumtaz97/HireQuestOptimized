@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export function useReveal<T extends HTMLElement = HTMLElement>() {
   const ref = useRef<T | null>(null)
@@ -9,12 +9,9 @@ export function useReveal<T extends HTMLElement = HTMLElement>() {
     const root = ref.current
     if (!root) return
 
-    const elements = Array.from(root.querySelectorAll<HTMLElement>('.reveal'))
+    const elements = Array.from(root.querySelectorAll<HTMLElement>('.reveal, .reveal-from-top'))
     if (elements.length === 0) return
 
-    // If elements are already within the viewport on first paint (above-the-fold),
-    // reveal immediately. We run this after the next paint to avoid timing issues
-    // (fonts/layout settling) that can otherwise leave sections invisible until scroll.
     const revealAboveFold = () => {
       const vh = window.innerHeight || 0
       for (const el of elements) {
@@ -26,7 +23,6 @@ export function useReveal<T extends HTMLElement = HTMLElement>() {
     }
     requestAnimationFrame(() => {
       revealAboveFold()
-      // One extra pass shortly after for late layout shifts.
       window.setTimeout(revealAboveFold, 200)
     })
 
@@ -50,6 +46,38 @@ export function useReveal<T extends HTMLElement = HTMLElement>() {
   }, [])
 
   return ref
+}
+
+/** Column count matching Tailwind breakpoints for row-staggered card reveals. */
+export function useResponsiveColumns(spec: {
+  base?: number
+  sm?: number
+  md?: number
+  lg?: number
+  xl?: number
+}) {
+  const [cols, setCols] = useState(spec.base ?? 1)
+
+  useEffect(() => {
+    const compute = () => {
+      const w = window.innerWidth
+      if (spec.xl != null && w >= 1280) setCols(spec.xl)
+      else if (spec.lg != null && w >= 1024) setCols(spec.lg)
+      else if (spec.md != null && w >= 768) setCols(spec.md)
+      else if (spec.sm != null && w >= 640) setCols(spec.sm)
+      else setCols(spec.base ?? 1)
+    }
+    compute()
+    window.addEventListener('resize', compute)
+    return () => window.removeEventListener('resize', compute)
+  }, [spec.base, spec.sm, spec.md, spec.lg, spec.xl])
+
+  return cols
+}
+
+/** Same delay for every card in a row — next row starts later. */
+export function rowRevealDelay(index: number, columns: number, rowMs = 420) {
+  return Math.floor(index / Math.max(1, columns)) * rowMs
 }
 
 export function useCountUp(target: number, durationMs = 1800) {

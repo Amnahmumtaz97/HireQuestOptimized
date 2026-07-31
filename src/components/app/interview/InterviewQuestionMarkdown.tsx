@@ -46,13 +46,13 @@ export function InterviewQuestionMarkdown({ markdown, className = '' }: Props) {
             const isBlock = Boolean(className?.includes('language-'))
             if (isBlock) {
               return (
-                <code className="my-2 block overflow-x-auto rounded-lg bg-input/30 p-3 text-xs font-mono" {...props}>
+                <code className="my-2 block overflow-x-auto rounded-lg bg-input/30 p-3 text-xs font-sans" {...props}>
                   {children}
                 </code>
               )
             }
             return (
-              <code className="rounded bg-input/40 px-1 py-0.5 font-mono text-[0.9em]" {...props}>
+              <code className="rounded bg-input/40 px-1 py-0.5 font-sans text-[0.9em]" {...props}>
                 {children}
               </code>
             )

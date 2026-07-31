@@ -1,6 +1,14 @@
 'use client'
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
+import { useServerInsertedHTML } from 'next/navigation'
 
 export type ThemeMode = 'dark' | 'light'
 
@@ -13,6 +21,9 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
 const STORAGE_KEY = 'hirequest.theme'
+
+/** Runs before hydration via SSR HTML injection (avoids React 19 script-in-component warning). */
+const THEME_BOOTSTRAP = `(function(){try{var t=localStorage.getItem("${STORAGE_KEY}");if(t==="light"||t==="dark"){document.documentElement.dataset.theme=t;}else if(window.matchMedia("(prefers-color-scheme: light)").matches){document.documentElement.dataset.theme="light";}else{document.documentElement.dataset.theme="dark";}}catch(e){document.documentElement.dataset.theme="dark";}})();`
 
 function applyTheme(theme: ThemeMode) {
   document.documentElement.dataset.theme = theme
@@ -35,6 +46,13 @@ function readInitialTheme(): ThemeMode {
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemeMode>('dark')
+
+  useServerInsertedHTML(() => (
+    <script
+      id="theme-bootstrap"
+      dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }}
+    />
+  ))
 
   useEffect(() => {
     const initial = readInitialTheme()
@@ -67,4 +85,3 @@ export function useTheme(): ThemeContextValue {
   }
   return context
 }
-

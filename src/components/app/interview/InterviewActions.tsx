@@ -34,7 +34,7 @@ export function InterviewActions({
           type="button"
           onClick={onPrevious}
           disabled={isSaving || isFirstQuestion}
-          className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-input/25 px-5 text-sm font-semibold text-foreground transition-colors hover:bg-input/45 btn-micro disabled:pointer-events-none disabled:opacity-45"
+          className="hq-btn-outline h-10 px-5 text-sm btn-micro disabled:pointer-events-none disabled:opacity-45"
         >
           <ArrowLeft className="h-4 w-4" /> Previous
         </button>
@@ -42,7 +42,7 @@ export function InterviewActions({
           type="button"
           onClick={onSaveAnswer}
           disabled={isSaving}
-          className="inline-flex h-10 items-center gap-2 rounded-xl bg-gradient-primary px-5 text-sm font-semibold text-white btn-micro shadow-glow-sm transition-opacity disabled:pointer-events-none disabled:opacity-45"
+          className="hq-btn-primary h-10 px-5 text-sm btn-micro disabled:pointer-events-none disabled:opacity-45"
         >
           <Save className="h-4 w-4" /> {isSaving ? 'Saving…' : 'Save Answer'}
         </button>
@@ -51,10 +51,8 @@ export function InterviewActions({
           onClick={onToggleFlag}
           disabled={isSaving}
           className={[
-            'inline-flex h-10 items-center gap-2 rounded-xl border px-5 text-sm font-semibold btn-micro disabled:opacity-60',
-            isFlagged
-              ? 'border-amber-500/40 bg-amber-500/15 text-amber-200'
-              : 'border-border bg-input/20 text-foreground hover:bg-input/40',
+            'h-10 px-5 text-sm btn-micro disabled:opacity-60',
+            isFlagged ? 'hq-btn-warning' : 'hq-btn-outline',
           ].join(' ')}
         >
           <Flag className="h-4 w-4" />
@@ -64,7 +62,7 @@ export function InterviewActions({
           type="button"
           onClick={onNext}
           disabled={isSaving || isLastQuestion}
-          className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-input/25 px-5 text-sm font-semibold text-foreground transition-colors hover:bg-input/45 btn-micro disabled:pointer-events-none disabled:opacity-45"
+          className="hq-btn-outline h-10 px-5 text-sm btn-micro disabled:pointer-events-none disabled:opacity-45"
         >
           Next Question <ArrowRight className="h-4 w-4" />
         </button>
@@ -75,7 +73,7 @@ export function InterviewActions({
           type="button"
           onClick={onFinish}
           disabled={isSaving}
-          className="inline-flex h-10 items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-5 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/15 btn-micro disabled:opacity-60"
+          className="hq-btn-success h-10 px-5 text-sm btn-micro disabled:opacity-60"
         >
           <CheckCircle2 className="h-4 w-4" /> Finish Interview
         </button>

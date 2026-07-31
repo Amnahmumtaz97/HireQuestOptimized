@@ -3,7 +3,6 @@
 import type { CSSProperties } from 'react'
 import {
   type LucideIcon,
-  Sparkles,
   FilePenLine,
   ClipboardList,
   Headphones,
@@ -37,7 +36,7 @@ const steps: Step[] = [
     glowShadow: 'process-glow-sky',
     orbitAngle: '0deg',
     counterAngle: '0deg',
-    connector: { x: 50, y: 8, color: 'rgba(56,189,248,0.45)' },
+    connector: { x: 50, y: 8, color: 'var(--process-spoke-sky)' },
   },
   {
     icon: ClipboardList,
@@ -49,7 +48,7 @@ const steps: Step[] = [
     glowShadow: 'process-glow-violet',
     orbitAngle: '72deg',
     counterAngle: '-72deg',
-    connector: { x: 90, y: 37, color: 'rgba(167,139,250,0.45)' },
+    connector: { x: 90, y: 37, color: 'var(--process-spoke-violet)' },
   },
   {
     icon: Headphones,
@@ -61,7 +60,7 @@ const steps: Step[] = [
     glowShadow: 'process-glow-teal',
     orbitAngle: '144deg',
     counterAngle: '-144deg',
-    connector: { x: 75, y: 84, color: 'rgba(45,212,191,0.45)' },
+    connector: { x: 75, y: 84, color: 'var(--process-spoke-teal)' },
   },
   {
     icon: BarChart3,
@@ -73,7 +72,7 @@ const steps: Step[] = [
     glowShadow: 'process-glow-amber',
     orbitAngle: '216deg',
     counterAngle: '-216deg',
-    connector: { x: 25, y: 84, color: 'rgba(251,191,36,0.45)' },
+    connector: { x: 25, y: 84, color: 'var(--process-spoke-amber)' },
   },
   {
     icon: TrendingUp,
@@ -85,7 +84,7 @@ const steps: Step[] = [
     glowShadow: 'process-glow-fuchsia',
     orbitAngle: '288deg',
     counterAngle: '-288deg',
-    connector: { x: 10, y: 37, color: 'rgba(232,121,249,0.45)' },
+    connector: { x: 10, y: 37, color: 'var(--process-spoke-fuchsia)' },
   },
 ]
 
@@ -105,13 +104,8 @@ function StepCard({ step }: { step: Step }) {
     >
       <div className="-translate-x-1/2 -translate-y-1/2">
         <div className="group/step relative">
-          {/* Outer glow pulse */}
           <div
-            className={`process-step-glow pointer-events-none absolute -inset-2 rounded-full opacity-0 blur-lg transition-all duration-500 group-hover/step:opacity-70 group-has-[.hq-core:hover]/orbit:opacity-70 ${step.glowShadow}`}
-          />
-
-          <div
-            className={`process-step-card reveal relative aspect-square w-[var(--step-size)] cursor-default overflow-hidden rounded-full border-2 backdrop-blur-sm transition-all duration-500 ease-&lsqb;cubic-bezier(0.22,1,0.36,1)&rsqb; group-hover/step:z-20 group-hover/step:scale-[1.14] group-hover/step:border-[3px] group-has-[.hq-core:hover]/orbit:z-20 group-has-[.hq-core:hover]/orbit:scale-[1.14] group-has-[.hq-core:hover]/orbit:border-[3px] ${step.ringColor} ${step.glowShadow}`}
+            className={`process-step-card reveal relative aspect-square w-[var(--step-size)] cursor-default overflow-hidden rounded-full border transition-all duration-300 ease-&lsqb;cubic-bezier(0.22,1,0.36,1)&rsqb; group-hover/step:z-20 group-hover/step:scale-[1.06] group-has-[.hq-core:hover]/orbit:z-20 group-has-[.hq-core:hover]/orbit:scale-[1.06] ${step.ringColor}`}
             style={{ transitionDelay: '80ms' }}
           >
             <div className="process-step-shine absolute inset-[3px] rounded-full" />
@@ -154,7 +148,7 @@ function MobileStepCard({ step }: { step: Step }) {
 
   return (
     <div
-      className="process-mobile-card reveal relative z-10 overflow-hidden rounded-2xl border p-5 backdrop-blur-xl"
+      className="process-mobile-card reveal-from-top relative z-10 overflow-hidden rounded-2xl border p-5"
       style={{ transitionDelay: '80ms' }}
     >
       <div className="relative">
@@ -185,28 +179,28 @@ export function Process() {
   return (
     <section
       ref={ref}
-      id="features"
-      className="relative min-h-[100svh] overflow-x-clip scroll-mt-24 sm:scroll-mt-28"
+      id="solutions"
+      className="relative min-h-[100svh] overflow-hidden scroll-mt-24 py-24 sm:scroll-mt-28 sm:py-28"
     >
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute top-0 left-1/4 h-72 w-96 bg-gradient-radial from-primary/20 to-transparent blur-3xl rounded-full opacity-20" />
-        <div className="absolute bottom-0 right-1/4 h-96 w-96 bg-gradient-radial from-accent/15 to-transparent blur-3xl rounded-full opacity-15" />
-      </div>
-
-      <div className="relative mx-auto flex min-h-[100svh] max-w-7xl flex-col px-4 sm:px-6">
-        <div className="reveal z-30 shrink-0 pb-10 pt-8 text-center sm:pb-12 sm:pt-10 md:pb-14 md:pt-12">
-          <div className="inline-flex items-center gap-2 rounded-full glass px-3.5 sm:px-4 py-1.5 mb-6">
-            <Sparkles className="h-3.5 w-3.5 text-primary-glow" />
-            <span className="text-xs sm:text-sm uppercase tracking-[0.15em] font-medium text-muted-foreground">
-              How It Works
-            </span>
+      <div
+        className="pointer-events-none absolute -top-20 left-1/2 h-[340px] w-[72%] -translate-x-1/2 rounded-full"
+        style={{
+          background:
+            'radial-gradient(ellipse at center, rgba(37, 99, 235, 0.3), transparent 65%)',
+          filter: 'blur(95px)',
+          zIndex: 0,
+        }}
+        aria-hidden
+      />
+      <div className="relative z-[1] mx-auto flex min-h-[100svh] max-w-7xl flex-col px-4 sm:px-6">
+        <div className="reveal z-30 mx-auto max-w-[720px] shrink-0 pb-10 pt-0 text-center sm:pb-12 md:pb-14">
+          <div className="text-[13px] font-semibold uppercase tracking-[0.12em] text-primary mb-4">
+            How it works
           </div>
-
-          <h2 className="mt-4 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground">
-            Your <span className="text-gradient">pathway</span> to interview success
+          <h2 className="text-[2rem] sm:text-[2.5rem] lg:text-[2.75rem] font-extrabold tracking-[-0.02em] leading-[1.1] text-foreground">
+            Your <span className="text-primary">pathway</span> to interview success
           </h2>
-
-          <p className="mt-3 sm:mt-4 text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-4 text-[15.5px] leading-[1.65] text-muted-foreground max-w-2xl mx-auto">
             Your journey to mastery, orchestrated by our central intelligence core.
           </p>
         </div>
@@ -234,7 +228,7 @@ export function Process() {
                 cy="50"
                 r="42"
                 stroke="var(--process-orbit-ring)"
-                strokeWidth="0.3"
+                strokeWidth="0.38"
                 strokeDasharray="1.5 2"
               />
 
@@ -247,9 +241,9 @@ export function Process() {
                   x2={pt.x}
                   y2={pt.y}
                   stroke={pt.color}
-                  strokeWidth="0.22"
+                  strokeWidth="0.28"
                   strokeDasharray="1.2 1.8"
-                  opacity="0.7"
+                  opacity="0.9"
                 />
               ))}
 
@@ -264,7 +258,7 @@ export function Process() {
                     x2={next.x}
                     y2={next.y}
                     stroke="var(--process-orbit-link)"
-                    strokeWidth="0.2"
+                    strokeWidth="0.26"
                     strokeDasharray="1.2 1.8"
                   />
                 )
@@ -278,18 +272,17 @@ export function Process() {
                   cy={pt.y}
                   r="0.9"
                   fill={pt.color}
-                  opacity="0.85"
+                  opacity="1"
                 />
               ))}
             </svg>
 
             {/* HQ Core — centred hub */}
             <div className="hq-core absolute left-1/2 top-1/2 z-30 -translate-x-1/2 -translate-y-1/2 cursor-pointer">
-              <div className="process-core-card reveal grid aspect-square w-[var(--core-size)] place-items-center rounded-full border-[3px] border-blue-400/80 backdrop-blur-sm transition-transform duration-300 hover:scale-105">
-                <div className="process-core-shine absolute inset-0 rounded-full" />
+              <div className="process-core-card reveal grid aspect-square w-[var(--core-size)] place-items-center rounded-full border-2 border-primary transition-transform duration-300 hover:scale-105">
                 <div className="relative flex flex-col items-center gap-1.5 px-2 text-center">
-                  <Boxes className="process-core-icon h-[clamp(1.5rem,3.8vw,2.4rem)] w-[clamp(1.5rem,3.8vw,2.4rem)]" strokeWidth={2.5} />
-                  <span className="text-[clamp(0.5rem,1.2vw,0.75rem)] font-black uppercase tracking-[0.14em] text-foreground">
+                  <Boxes className="process-core-icon h-[clamp(1.5rem,3.8vw,2.4rem)] w-[clamp(1.5rem,3.8vw,2.4rem)]" strokeWidth={1.6} />
+                  <span className="text-[clamp(0.5rem,1.2vw,0.75rem)] font-extrabold uppercase tracking-[0.14em] text-foreground">
                     HQ Core
                   </span>
                 </div>
@@ -305,10 +298,10 @@ export function Process() {
 
         {/* Mobile */}
         <div className="mt-8 flex flex-1 flex-col items-center gap-6 pb-8 md:hidden">
-          <div className="process-core-card reveal grid aspect-square w-28 place-items-center rounded-full border-[3px] border-blue-400/80">
+          <div className="process-core-card reveal grid aspect-square w-28 place-items-center rounded-full border-2 border-primary">
             <div className="flex flex-col items-center gap-1.5 text-center">
-              <Boxes className="process-core-icon h-9 w-9" strokeWidth={2.5} />
-              <span className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-foreground">HQ Core</span>
+              <Boxes className="process-core-icon h-9 w-9" strokeWidth={1.6} />
+              <span className="text-[0.65rem] font-extrabold uppercase tracking-[0.14em] text-foreground">HQ Core</span>
             </div>
           </div>
           <div className="grid w-full gap-4">
@@ -320,10 +313,10 @@ export function Process() {
 
         <div className="reveal z-30 shrink-0 pb-8 text-center sm:pb-10" style={{ transitionDelay: '400ms' }}>
           <div className="inline-flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-3">
-            <button className="rounded-full h-11 sm:h-12 px-6 sm:px-8 bg-gradient-primary text-primary-foreground font-semibold text-sm shadow-[0_0_30px_-6px_var(--primary)] hover:shadow-[0_0_44px_-4px_var(--primary)] hover:scale-[1.03] transition-all">
+            <button className="hq-btn-primary h-11 sm:h-12 px-6 sm:px-8 text-sm">
               Start Free Trial
             </button>
-            <button className="rounded-full h-11 sm:h-12 px-6 sm:px-8 glass border-border hover:bg-input/30 text-foreground font-semibold text-sm transition-all">
+            <button className="hq-btn-outline h-11 sm:h-12 px-6 sm:px-8 text-sm">
               Watch Demo
             </button>
           </div>

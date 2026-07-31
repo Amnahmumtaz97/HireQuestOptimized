@@ -164,7 +164,7 @@ export function DashboardDateCalendarButton({ id, label, value, onChange, minDat
                     disabled
                       ? 'cursor-not-allowed text-muted-foreground/35'
                       : 'text-foreground hover:bg-[var(--hq-row-elevated)]',
-                    selected ? 'bg-[var(--primary)] text-primary-foreground shadow-[var(--shadow-glow-sm)] hover:bg-[var(--primary)]' : '',
+                    selected ? 'bg-[var(--primary)] text-primary-foreground shadow-[var(--shadow-card)] hover:bg-[var(--primary)]' : '',
                     !selected && isToday ? 'ring-1 ring-[color-mix(in_oklab,var(--primary)_50%,transparent)]' : '',
                   ]
                     .filter(Boolean)

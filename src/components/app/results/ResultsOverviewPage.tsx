@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useTheme } from '@/components/providers/ThemeProvider'
 import type { InterviewConfig } from '@/components/app/dashboard/types'
 import { formatIndustryDisplay, formatRoleCategoryDisplay } from '@/utils/dashboard/interview-labels'
+import { BounceLoader } from '@/components/ui/bounce-loader'
 
 type InterviewSession = {
   _id: string
@@ -168,7 +169,7 @@ export function ResultsOverviewPage() {
               </button>
               <button
                 type="button"
-                className="inline-flex h-10 items-center gap-2 rounded-xl bg-gradient-primary px-4 text-xs font-semibold text-white shadow-glow-sm hover:shadow-glow btn-micro"
+                className="hq-btn-primary h-10 gap-2 px-4 text-xs"
               >
                 <Download className="h-4 w-4" /> Export
               </button>
@@ -244,10 +245,8 @@ export function ResultsOverviewPage() {
 
           <TabsContent value={statusFilter}>
             {loading ? (
-              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div key={i} className="h-28 rounded-2xl border border-border bg-input/15 animate-pulse" />
-                ))}
+              <div className="mt-8 flex min-h-[160px] items-center justify-center">
+                <BounceLoader label="Loading results" />
               </div>
             ) : filtered.length === 0 ? (
               <div className="mt-4 rounded-2xl border border-border bg-input/10 p-10 text-center">
@@ -255,7 +254,7 @@ export function ResultsOverviewPage() {
                 <div className="mt-1 text-xs text-muted-foreground">Complete an interview to see analytics here.</div>
                 <Link
                   href="/app/new-interview"
-                  className="mt-4 inline-flex h-10 items-center justify-center rounded-xl bg-gradient-primary px-5 text-xs font-semibold text-white shadow-glow-sm hover:shadow-glow btn-micro"
+                  className="hq-btn-primary mt-4 h-10 px-5 text-xs"
                 >
                   Create an interview
                 </Link>
@@ -274,7 +273,7 @@ export function ResultsOverviewPage() {
                     <Link
                       key={s._id}
                       href={s.status === 'completed' ? `/app/interviews/${s._id}/results` : `/app/interviews/${s._id}`}
-                      className="dashboard-card group p-4 hover:shadow-glow-sm"
+                      className="dashboard-card group p-4 hover:shadow-[var(--shadow-card)]"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">

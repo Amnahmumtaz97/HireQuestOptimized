@@ -1,27 +1,31 @@
 import { Navbar } from '@/components/landing/Navbar'
 import { Hero } from '@/components/landing/Hero'
 import { Stats } from '@/components/landing/Stats'
-import { Features } from '@/components/landing/Features'
-import { Testimonials } from '@/components/landing/Testimonials'
+import { Problem } from '@/components/landing/Problem'
 import { Process } from '@/components/landing/Process'
+import { LandingFeatures } from '@/components/landing/LandingFeatures'
+import { AIAnalysis } from '@/components/landing/AIAnalysis'
+import { Testimonials } from '@/components/landing/Testimonials'
+import { FAQ } from '@/components/landing/FAQ'
 import { CTA } from '@/components/landing/CTA'
 import { Footer } from '@/components/landing/Footer'
-import { ConstellationBackground } from '@/components/landing/ConstellationBackground'
+import { ChatbotWidget } from '@/components/chatbot/ChatbotWidget'
 
 export default function LandingPage() {
   return (
     <main className="landing-page-shell relative min-h-screen overflow-x-clip">
-      <ConstellationBackground className="absolute inset-0 z-0 min-h-full w-full pointer-events-none opacity-70" intensity={0.55} />
-      <div className="relative z-10">
-        <Navbar />
-        <Hero />
-        <Stats />
-        <Process />
-        <Features />
-        <Testimonials />
-        <CTA />
-        <Footer />
-      </div>
+      <Navbar />
+      <Hero />
+      <Stats />
+      <Problem />
+      <Process />
+      <LandingFeatures />
+      <AIAnalysis />
+      <Testimonials />
+      <FAQ />
+      <CTA />
+      <Footer />
+      <ChatbotWidget />
     </main>
   )
 }

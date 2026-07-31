@@ -14,7 +14,7 @@ export function StartInterviewButton({
   return (
     <div className="pt-2 animate-fade-up">
       <div className="h-px w-full bg-border/40" />
-      <div className="mt-5 rounded-2xl border border-border bg-input/10 p-4 sm:p-5">
+      <div className="mt-5 rounded-2xl border border-border bg-card p-6 sm:p-7">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
@@ -38,7 +38,7 @@ export function StartInterviewButton({
               type="button"
               onClick={onSaveDraft}
               disabled={isSaving}
-              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-border bg-input/30 px-4 text-sm font-semibold text-foreground hover:bg-input/50 disabled:opacity-60 btn-micro"
+              className="hq-btn-outline h-10 px-4 text-sm disabled:opacity-60 btn-micro"
             >
               <BookmarkCheck className="h-4 w-4" />
               {isSaving ? 'Saving...' : 'Save Draft'}
@@ -47,7 +47,7 @@ export function StartInterviewButton({
               type="button"
               onClick={onStart}
               disabled={!canStart || isCreating}
-              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-gradient-primary px-5 text-sm font-semibold text-white disabled:opacity-50 btn-micro shadow-glow-sm"
+              className="hq-btn-primary h-10 px-5 text-sm disabled:opacity-50 btn-micro"
             >
               <Plus className="h-4 w-4" aria-hidden />
               {isCreating ? 'Creating...' : 'Create Interview'}

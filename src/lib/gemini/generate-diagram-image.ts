@@ -49,7 +49,7 @@ function buildGeneralDiagramSvg(topic: string, questionText: string): string {
     </linearGradient>
     <linearGradient id="stroke" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="#4f6ef7" stop-opacity="0.85"/>
-      <stop offset="1" stop-color="#7c3aed" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#2563eb" stop-opacity="0.75"/>
     </linearGradient>
     <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
       <feGaussianBlur stdDeviation="6" result="blur"/>
@@ -59,7 +59,7 @@ function buildGeneralDiagramSvg(topic: string, questionText: string): string {
       </feMerge>
     </filter>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#7c3aed" fill-opacity="0.9"/>
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb" fill-opacity="0.9"/>
     </marker>
   </defs>
   <rect x="0" y="0" width="940" height="420" rx="26" fill="url(#bg)"/>
@@ -84,7 +84,7 @@ function buildGeneralDiagramSvg(topic: string, questionText: string): string {
 
   <path d="M 300 188 C 330 188, 330 188, 360 188" stroke="#4f6ef7" stroke-width="3" fill="none" marker-end="url(#arrow)" opacity="0.9"/>
   <path d="M 580 188 C 610 188, 610 188, 640 188" stroke="#22d3ee" stroke-width="3" fill="none" marker-end="url(#arrow)" opacity="0.8"/>
-  <path d="M 640 208 C 610 208, 610 208, 580 208" stroke="#7c3aed" stroke-width="3" fill="none" marker-end="url(#arrow)" opacity="0.65"/>
+  <path d="M 640 208 C 610 208, 610 208, 580 208" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" opacity="0.65"/>
 
   <text x="330" y="176" font-family="Inter, ui-sans-serif" font-size="11" fill="white" fill-opacity="0.55">request</text>
   <text x="610" y="176" font-family="Inter, ui-sans-serif" font-size="11" fill="white" fill-opacity="0.55">read/write</text>
@@ -118,7 +118,7 @@ function buildDpTableSvg(_questionText: string): string {
     </linearGradient>
     <linearGradient id="stroke" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="#4f6ef7" stop-opacity="0.85"/>
-      <stop offset="1" stop-color="#7c3aed" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#2563eb" stop-opacity="0.75"/>
     </linearGradient>
   </defs>
   <rect x="0" y="0" width="${w}" height="${h}" rx="26" fill="url(#bg)"/>
@@ -146,7 +146,7 @@ function buildDfdSvg(questionText: string): string {
     </linearGradient>
     <linearGradient id="stroke" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="#4f6ef7" stop-opacity="0.85"/>
-      <stop offset="1" stop-color="#7c3aed" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#2563eb" stop-opacity="0.75"/>
     </linearGradient>
     <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
       <feGaussianBlur stdDeviation="7" result="blur"/>

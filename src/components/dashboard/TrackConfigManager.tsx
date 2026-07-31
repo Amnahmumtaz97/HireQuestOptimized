@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input'
 import { SelectionChip } from '@/components/ui/selection-chip'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { LoadingButton } from '@/components/ui/loading-button'
+import { BounceLoader } from '@/components/ui/bounce-loader'
 import { useToast } from '@/components/ui/toast'
 import { getIndustryIcon, getRoleIcon } from '@/lib/icon-mapping'
 import type { DepartmentDto, SpecializationPayload } from '@/lib/interview-catalog/admin'
@@ -540,7 +541,7 @@ export function TrackConfigManager() {
                 className={[
                   'rounded-xl border px-4 py-2 text-sm font-semibold transition-all',
                   activeTab === key
-                    ? 'border-primary/50 bg-primary/10 text-foreground shadow-glow-sm'
+                    ? 'border-primary/50 bg-primary/10 text-foreground shadow-[var(--shadow-card)]'
                     : 'border-border bg-input/20 text-muted-foreground hover:text-foreground',
                 ].join(' ')}
               >
@@ -563,7 +564,7 @@ export function TrackConfigManager() {
               <button
                 type="button"
                 onClick={openCreateDepartment}
-                className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-gradient-primary px-4 text-sm font-semibold text-white shadow-glow-sm"
+                className="inline-flex h-10 items-center gap-1.5 hq-btn-primary h-10 px-4 text-sm"
               >
                 <Plus className="h-4 w-4" /> Add Department
               </button>
@@ -572,7 +573,7 @@ export function TrackConfigManager() {
               <button
                 type="button"
                 onClick={() => openCreateSpecialization()}
-                className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-gradient-primary px-4 text-sm font-semibold text-white shadow-glow-sm"
+                className="inline-flex h-10 items-center gap-1.5 hq-btn-primary h-10 px-4 text-sm"
               >
                 <Plus className="h-4 w-4" /> Add Specialization
               </button>
@@ -581,7 +582,7 @@ export function TrackConfigManager() {
               <button
                 type="button"
                 onClick={() => openCreateTopic()}
-                className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-gradient-primary px-4 text-sm font-semibold text-white shadow-glow-sm"
+                className="inline-flex h-10 items-center gap-1.5 hq-btn-primary h-10 px-4 text-sm"
               >
                 <Plus className="h-4 w-4" /> Add Topic
               </button>
@@ -594,7 +595,9 @@ export function TrackConfigManager() {
         <section className="p-4 sm:p-6 lg:p-8">
           {error ? <p className="mb-4 text-sm text-red-400">{error}</p> : null}
           {isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading catalog...</p>
+            <div className="flex justify-center py-12">
+              <BounceLoader label="Loading catalog" />
+            </div>
           ) : activeTab === 'departments' ? (
             <div className="space-y-3">
               {(pagedRows as DepartmentDto[]).map((department) => {
@@ -916,7 +919,7 @@ export function TrackConfigManager() {
               <button type="button" onClick={() => setDepartmentModalOpen(false)} className="rounded-xl border border-border px-4 py-2 text-sm">
                 Cancel
               </button>
-              <LoadingButton type="button" onClick={saveDepartment} loading={isSaving} className="rounded-xl bg-gradient-primary px-4 py-2 text-sm font-semibold text-white">
+              <LoadingButton type="button" onClick={saveDepartment} loading={isSaving} className="hq-btn-primary rounded-xl px-4 py-2 text-sm">
                 Save
               </LoadingButton>
             </div>
@@ -1033,7 +1036,7 @@ export function TrackConfigManager() {
               <button type="button" onClick={() => setSpecializationModalOpen(false)} className="rounded-xl border border-border px-4 py-2 text-sm">
                 Cancel
               </button>
-              <LoadingButton type="button" onClick={saveSpecialization} loading={isSaving} className="rounded-xl bg-gradient-primary px-4 py-2 text-sm font-semibold text-white">
+              <LoadingButton type="button" onClick={saveSpecialization} loading={isSaving} className="hq-btn-primary rounded-xl px-4 py-2 text-sm">
                 Save
               </LoadingButton>
             </div>
@@ -1095,7 +1098,7 @@ export function TrackConfigManager() {
               <button type="button" onClick={() => setTopicModalOpen(false)} className="rounded-xl border border-border px-4 py-2 text-sm">
                 Cancel
               </button>
-              <LoadingButton type="button" onClick={saveTopic} loading={isSaving} className="rounded-xl bg-gradient-primary px-4 py-2 text-sm font-semibold text-white">
+              <LoadingButton type="button" onClick={saveTopic} loading={isSaving} className="hq-btn-primary rounded-xl px-4 py-2 text-sm">
                 Save
               </LoadingButton>
             </div>

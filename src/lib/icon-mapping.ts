@@ -52,8 +52,8 @@ export const INDUSTRY_ICONS: Record<string, IconConfig> = {
   software_engineering: {
     icon: Code2,
     label: 'Software Engineering',
-    gradient: 'from-indigo-800 to-blue-600',
-    accentColor: 'text-indigo-300',
+    gradient: 'from-blue-800 to-blue-600',
+    accentColor: 'text-blue-300',
   },
   information_technology: {
     icon: Monitor,
@@ -82,8 +82,8 @@ export const INDUSTRY_ICONS: Record<string, IconConfig> = {
   human_resources: {
     icon: Users,
     label: 'Human Resources',
-    gradient: 'from-violet-800 to-purple-600',
-    accentColor: 'text-violet-300',
+    gradient: 'from-blue-800 to-blue-600',
+    accentColor: 'text-blue-300',
   },
   business_administration: {
     icon: Building2,
@@ -124,8 +124,8 @@ export const INDUSTRY_ICONS: Record<string, IconConfig> = {
   artificial_intelligence: {
     icon: BrainCircuit,
     label: 'Artificial Intelligence',
-    gradient: 'from-fuchsia-800 to-violet-600',
-    accentColor: 'text-fuchsia-300',
+    gradient: 'from-blue-800 to-sky-600',
+    accentColor: 'text-blue-300',
   },
   healthcare: {
     icon: HeartPulse,
@@ -142,13 +142,13 @@ export const INDUSTRY_ICONS: Record<string, IconConfig> = {
   psychology: {
     icon: Brain,
     label: 'Psychology',
-    gradient: 'from-purple-800 to-fuchsia-600',
-    accentColor: 'text-purple-300',
+    gradient: 'from-blue-800 to-blue-600',
+    accentColor: 'text-blue-300',
   },
   education: {
     icon: GraduationCap,
     label: 'Education',
-    gradient: 'from-blue-800 to-indigo-600',
+    gradient: 'from-blue-800 to-blue-600',
     accentColor: 'text-blue-300',
   },
   software_it: {
@@ -215,13 +215,13 @@ export const ROLE_ICONS: Record<string, IconConfig> = {
   frontend: {
     icon: Layout,
     label: 'Frontend Engineering',
-    gradient: 'from-indigo-600 to-violet-600',
-    accentColor: 'text-indigo-300',
+    gradient: 'from-blue-700 to-sky-600',
+    accentColor: 'text-blue-300',
   },
   full_stack: {
     icon: Blocks,
     label: 'Full Stack',
-    gradient: 'from-blue-700 to-purple-600',
+    gradient: 'from-blue-700 to-sky-600',
     accentColor: 'text-blue-300',
   },
   devops: {
@@ -317,8 +317,8 @@ export const ROLE_ICONS: Record<string, IconConfig> = {
   seo: {
     icon: Search,
     label: 'SEO',
-    gradient: 'from-fuchsia-700 to-pink-600',
-    accentColor: 'text-fuchsia-300',
+    gradient: 'from-blue-700 to-sky-600',
+    accentColor: 'text-blue-300',
   },
   sem: {
     icon: TrendingUp,
@@ -329,8 +329,8 @@ export const ROLE_ICONS: Record<string, IconConfig> = {
   branding: {
     icon: Palette,
     label: 'Branding',
-    gradient: 'from-purple-700 to-fuchsia-600',
-    accentColor: 'text-purple-300',
+    gradient: 'from-blue-700 to-sky-600',
+    accentColor: 'text-blue-300',
   },
   social_media: {
     icon: Globe,
@@ -341,31 +341,31 @@ export const ROLE_ICONS: Record<string, IconConfig> = {
   content_marketing: {
     icon: NotebookPen,
     label: 'Content Marketing',
-    gradient: 'from-violet-700 to-purple-600',
-    accentColor: 'text-violet-300',
+    gradient: 'from-blue-700 to-blue-600',
+    accentColor: 'text-blue-300',
   },
   product_marketing: {
     icon: BriefcaseBusiness,
     label: 'Product Marketing',
-    gradient: 'from-indigo-700 to-purple-600',
-    accentColor: 'text-indigo-300',
+    gradient: 'from-blue-700 to-sky-600',
+    accentColor: 'text-blue-300',
   },
   recruitment: {
     icon: Users,
     label: 'Recruitment',
-    gradient: 'from-violet-700 to-purple-600',
-    accentColor: 'text-violet-300',
+    gradient: 'from-blue-700 to-blue-600',
+    accentColor: 'text-blue-300',
   },
   employee_relations: {
     icon: Users,
     label: 'Employee Relations',
-    gradient: 'from-purple-700 to-fuchsia-600',
-    accentColor: 'text-purple-300',
+    gradient: 'from-blue-700 to-sky-600',
+    accentColor: 'text-blue-300',
   },
   payroll: {
     icon: Calculator,
     label: 'Payroll',
-    gradient: 'from-blue-700 to-indigo-600',
+    gradient: 'from-blue-700 to-sky-600',
     accentColor: 'text-blue-300',
   },
   performance_management: {
@@ -377,8 +377,8 @@ export const ROLE_ICONS: Record<string, IconConfig> = {
   organizational_behavior: {
     icon: Brain,
     label: 'Organizational Behavior',
-    gradient: 'from-fuchsia-700 to-violet-600',
-    accentColor: 'text-fuchsia-300',
+    gradient: 'from-blue-700 to-sky-600',
+    accentColor: 'text-blue-300',
   },
   operations: {
     icon: Workflow,
@@ -437,13 +437,13 @@ export const ROLE_ICONS: Record<string, IconConfig> = {
   control_systems: {
     icon: Workflow,
     label: 'Control Systems',
-    gradient: 'from-indigo-700 to-sky-600',
-    accentColor: 'text-indigo-300',
+    gradient: 'from-blue-700 to-sky-600',
+    accentColor: 'text-blue-300',
   },
   signal_processing: {
     icon: Activity,
     label: 'Signal Processing',
-    gradient: 'from-blue-700 to-violet-600',
+    gradient: 'from-blue-700 to-sky-600',
     accentColor: 'text-blue-300',
   },
   thermodynamics: {
@@ -485,8 +485,8 @@ export const ROLE_ICONS: Record<string, IconConfig> = {
   machine_learning: {
     icon: BrainCircuit,
     label: 'Machine Learning',
-    gradient: 'from-fuchsia-700 to-violet-600',
-    accentColor: 'text-fuchsia-300',
+    gradient: 'from-blue-700 to-sky-600',
+    accentColor: 'text-blue-300',
   },
   data_engineering: {
     icon: Database,
@@ -497,14 +497,14 @@ export const ROLE_ICONS: Record<string, IconConfig> = {
   deep_learning: {
     icon: Bot,
     label: 'Deep Learning',
-    gradient: 'from-violet-700 to-fuchsia-600',
-    accentColor: 'text-violet-300',
+    gradient: 'from-blue-700 to-sky-600',
+    accentColor: 'text-blue-300',
   },
   nlp: {
     icon: Languages,
     label: 'NLP',
-    gradient: 'from-indigo-700 to-violet-600',
-    accentColor: 'text-indigo-300',
+    gradient: 'from-blue-700 to-sky-600',
+    accentColor: 'text-blue-300',
   },
   clinical: {
     icon: HeartPulse,
@@ -539,31 +539,31 @@ export const ROLE_ICONS: Record<string, IconConfig> = {
   intellectual_property: {
     icon: Fingerprint,
     label: 'Intellectual Property',
-    gradient: 'from-violet-700 to-indigo-600',
-    accentColor: 'text-violet-300',
+    gradient: 'from-blue-700 to-sky-600',
+    accentColor: 'text-blue-300',
   },
   clinical_psych: {
     icon: Brain,
     label: 'Clinical Psychology',
-    gradient: 'from-fuchsia-700 to-pink-600',
-    accentColor: 'text-fuchsia-300',
+    gradient: 'from-blue-700 to-sky-600',
+    accentColor: 'text-blue-300',
   },
   organizational_psych: {
     icon: Users,
     label: 'Organizational Psychology',
-    gradient: 'from-purple-700 to-violet-600',
-    accentColor: 'text-purple-300',
+    gradient: 'from-blue-700 to-blue-600',
+    accentColor: 'text-blue-300',
   },
   cognitive_psych: {
     icon: BrainCircuit,
     label: 'Cognitive Psychology',
-    gradient: 'from-indigo-700 to-blue-600',
-    accentColor: 'text-indigo-300',
+    gradient: 'from-blue-700 to-blue-600',
+    accentColor: 'text-blue-300',
   },
   pedagogy: {
     icon: BookOpen,
     label: 'Pedagogy',
-    gradient: 'from-blue-700 to-indigo-600',
+    gradient: 'from-blue-700 to-sky-600',
     accentColor: 'text-blue-300',
   },
   curriculum: {
@@ -575,13 +575,13 @@ export const ROLE_ICONS: Record<string, IconConfig> = {
   edtech: {
     icon: Monitor,
     label: 'Educational Technology',
-    gradient: 'from-indigo-700 to-cyan-600',
-    accentColor: 'text-indigo-300',
+    gradient: 'from-blue-700 to-cyan-600',
+    accentColor: 'text-blue-300',
   },
   cs_core: {
     icon: Terminal,
     label: 'Computer Science Core',
-    gradient: 'from-blue-700 to-indigo-600',
+    gradient: 'from-blue-700 to-sky-600',
     accentColor: 'text-blue-300',
   },
   networking: {
@@ -593,7 +593,7 @@ export const ROLE_ICONS: Record<string, IconConfig> = {
   web_development: {
     icon: Globe,
     label: 'Web Development',
-    gradient: 'from-sky-700 to-indigo-600',
+    gradient: 'from-sky-700 to-blue-600',
     accentColor: 'text-sky-300',
   },
   cloud_computing: {

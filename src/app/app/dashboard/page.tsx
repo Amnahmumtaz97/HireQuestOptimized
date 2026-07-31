@@ -3,7 +3,7 @@ import { DashboardPageHeader } from '@/components/app/dashboard/DashboardPageHea
 import { DashboardRobotLottie } from '@/components/app/dashboard/DashboardRobotLottie'
 
 export const metadata = {
-  title: 'App Dashboard — HireQuest',
+  title: 'Dashboard — HireQuest',
 }
 
 export default function AppDashboardRoute() {
@@ -12,7 +12,7 @@ export default function AppDashboardRoute() {
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <DashboardPageHeader
-            title="App Dashboard"
+            title="Dashboard"
             description="Activity snapshot, upcoming interviews & progress."
             titleHighlight="accent"
             variant="dashboard"

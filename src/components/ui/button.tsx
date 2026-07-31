@@ -9,26 +9,27 @@ const buttonVariants = cva(
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
     'disabled:pointer-events-none disabled:opacity-50',
     'pressable ripple',
+    'transition-[background,box-shadow,transform,border-color] duration-150',
   ].join(' '),
   {
     variants: {
       variant: {
         primary:
-          'bg-gradient-primary text-primary-foreground hover:text-primary-foreground shadow-glow-sm hover:shadow-glow border border-transparent',
+          'bg-primary text-primary-foreground border border-transparent shadow-[0_1px_2px_rgba(37,99,235,0.15)] hover:bg-[#1E4FCC] hover:-translate-y-px hover:shadow-[0_12px_28px_-16px_rgba(17,24,39,0.16)]',
         secondary:
-          'glass border-glass text-foreground hover:bg-input/18 hover:border-white/10',
+          'border border-border bg-card text-foreground hover:bg-[var(--secondary)] hover:-translate-y-px hover:shadow-[0_12px_28px_-16px_rgba(17,24,39,0.12)]',
         outline:
-          'border border-glass bg-transparent text-foreground hover:bg-input/14 hover:border-white/12',
+          'border border-border bg-card text-foreground hover:bg-[var(--secondary)] hover:-translate-y-px hover:shadow-[0_12px_28px_-16px_rgba(17,24,39,0.12)]',
         ghost:
-          'border border-transparent bg-transparent text-foreground hover:bg-input/14',
+          'border border-border bg-card text-foreground hover:bg-[var(--secondary)] hover:-translate-y-px',
         destructive:
-          'border border-transparent bg-red-500/15 text-red-200 hover:bg-red-500/20 hover:text-red-100',
+          'border border-red-500/30 bg-red-500/15 text-red-700 hover:bg-red-500/20',
       },
       size: {
-        sm: 'h-9 rounded-xl px-3 text-sm',
-        md: 'h-10 rounded-2xl px-4 text-sm',
-        lg: 'h-12 rounded-2xl px-5 text-sm',
-        icon: 'h-10 w-10 rounded-2xl p-0',
+        sm: 'h-9 rounded-[10px] px-3 text-sm',
+        md: 'h-10 rounded-[10px] px-4 text-sm',
+        lg: 'h-12 rounded-[10px] px-5 text-sm',
+        icon: 'h-10 w-10 rounded-[10px] p-0',
       },
     },
     defaultVariants: {

@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, type FC } from 'react'
 import {
-  Bell,
   Brain,
   CreditCard,
   LogOut,
@@ -24,6 +23,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { NotificationsMenu } from '@/components/dashboard/NotificationsMenu'
 
 export type DashboardNavbarProps = {
   sidebarCollapsed?: boolean
@@ -78,21 +78,28 @@ export const DashboardNavbar: FC<DashboardNavbarProps> = ({
       }
     >
       <div className={isFixed ? 'mx-auto max-w-[92rem] px-3 sm:px-6' : ''}>
-        <nav className="hq-dashboard-nav">
+        <nav
+          className={
+            isFixed
+              ? 'hq-dashboard-nav'
+              : 'flex items-center justify-between gap-3 py-1'
+          }
+        >
           <div className="flex items-center gap-2.5 min-w-0">
             <button
               type="button"
               onClick={onMobileNavOpen}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:bg-input/30 hover:text-foreground md:hidden"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:bg-input/30 hover:text-foreground md:hidden"
               aria-label="Open navigation"
             >
               <Menu className="h-4.5 w-4.5" />
             </button>
 
-            <Link href="/" className="hq-marketing-logo group min-w-0">
-              <span className="hq-marketing-logo-mark">
-                <Brain className="h-5 w-5 text-white" strokeWidth={2} />
-              </span>
+            <Link
+              href="/"
+              className={['hq-marketing-logo group min-w-0', isFixed ? '' : 'md:hidden'].join(' ')}
+            >
+              <span className="hq-marketing-logo-mark">HQ</span>
               <span className="hq-marketing-logo-text truncate">HireQuest</span>
             </Link>
           </div>
@@ -103,7 +110,7 @@ export const DashboardNavbar: FC<DashboardNavbarProps> = ({
               aria-label="Toggle theme"
               onClick={toggleTheme}
               suppressHydrationWarning
-              className="hidden sm:inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
+              className="hq-btn-icon hidden sm:inline-flex rounded-full"
             >
               {!themeReady ? (
                 <Moon className="h-4 w-4" />
@@ -114,22 +121,7 @@ export const DashboardNavbar: FC<DashboardNavbarProps> = ({
               )}
             </button>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  suppressHydrationWarning
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
-                  aria-label="Notifications"
-                >
-                  <Bell className="h-4.5 w-4.5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-[min(92vw,320px)] p-2">
-                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-                <div className="px-2 pb-1 text-xs text-muted-foreground">You’re all caught up.</div>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <NotificationsMenu />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

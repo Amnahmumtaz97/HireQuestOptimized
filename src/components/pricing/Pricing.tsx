@@ -141,10 +141,8 @@ function PricingCard({ plan, yearly, delay }: { plan: Plan; yearly: boolean; del
       <Link href={isFree ? '/auth' : '/pricing/checkout'}>
         <button
           className={[
-            'relative mt-6 w-full rounded-2xl h-11 text-sm font-semibold transition-all duration-200 btn-micro',
-            popular
-              ? 'bg-gradient-primary text-primary-foreground shadow-glow hover:scale-[1.02]'
-              : 'glass border border-white/10 text-foreground hover:bg-white/5',
+            'relative mt-6 w-full rounded-[10px] h-11 text-sm font-semibold transition-all duration-200 btn-micro',
+            popular ? 'hq-btn-primary' : 'hq-btn-outline',
           ].join(' ')}
         >
           {plan.cta}
@@ -172,12 +170,14 @@ export function Pricing() {
             Practice smarter with AI-powered interviews and personalized feedback.
           </p>
 
-          <div className="mt-6 inline-flex items-center gap-1 rounded-xl glass border border-white/10 p-1">
+          <div className="mt-6 inline-flex items-center gap-1 rounded-xl border border-border bg-card p-1">
             <button
               onClick={() => setYearly(false)}
               className={[
-                'rounded-lg px-5 py-2 text-sm font-medium transition-all duration-200 btn-micro',
-                !yearly ? 'bg-gradient-primary text-primary-foreground shadow-glow-sm' : 'text-muted-foreground hover:text-foreground',
+                'rounded-lg px-5 py-2 text-sm font-semibold transition-all duration-200 btn-micro',
+                !yearly
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-transparent text-muted-foreground hover:text-foreground hover:bg-[var(--secondary)]',
               ].join(' ')}
             >
               Monthly
@@ -185,12 +185,14 @@ export function Pricing() {
             <button
               onClick={() => setYearly(true)}
               className={[
-                'rounded-lg px-5 py-2 text-sm font-medium transition-all duration-200 btn-micro flex items-center gap-2',
-                yearly ? 'bg-gradient-primary text-primary-foreground shadow-glow-sm' : 'text-muted-foreground hover:text-foreground',
+                'rounded-lg px-5 py-2 text-sm font-semibold transition-all duration-200 btn-micro flex items-center gap-2',
+                yearly
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-transparent text-muted-foreground hover:text-foreground hover:bg-[var(--secondary)]',
               ].join(' ')}
             >
               Yearly
-              <span className="rounded-full bg-emerald-500/20 border border-emerald-500/30 px-1.5 py-0.5 text-[9px] font-bold text-emerald-400">
+              <span className="rounded-full border border-emerald-500/30 bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-bold text-emerald-600">
                 -17%
               </span>
             </button>

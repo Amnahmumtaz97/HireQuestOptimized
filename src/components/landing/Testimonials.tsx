@@ -1,212 +1,229 @@
 'use client'
 
 import { Star } from 'lucide-react'
-import { useReveal } from '@/hooks/use-reveal'
+import { useReveal, useResponsiveColumns, rowRevealDelay } from '@/hooks/use-reveal'
 
 type Testimonial = {
   name: string
   role: string
+  goal: string
   initials: string
+  color: string
   rating: number
-  title: string
   text: string
-  hue: string
 }
 
 const testimonials: Testimonial[] = [
   {
+    name: 'Sarah Khan',
+    role: 'CS Student, LUMS',
+    goal: 'Backend Engineering internship',
+    initials: 'SK',
+    color: '#3B82F6',
+    rating: 5,
+    text: 'After 2 weeks of practice, I finally understood how to structure my system design answers.',
+  },
+  {
+    name: 'Daniel Ma',
+    role: 'Final-year CS Student',
+    goal: 'New-grad SWE role',
+    initials: 'DM',
+    color: '#22C55E',
+    rating: 5,
+    text: "I practiced the exact question type I got asked three days later. That doesn't happen by luck.",
+  },
+  {
+    name: 'Sara Raza',
+    role: 'Software Engineering Student',
+    goal: 'Product Engineer role',
+    initials: 'SR',
+    color: '#F59E0B',
+    rating: 5,
+    text: "Behavioral prep is usually an afterthought everywhere else. Here it's treated as seriously as the coding round.",
+  },
+  {
     name: 'Aarav Mehta',
     role: 'Software Engineer @ Stripe',
+    goal: 'Landed offer in 3 weeks',
     initials: 'AM',
+    color: '#8B5CF6',
     rating: 5,
-    title: 'Amazing Experience',
-    text: "HireQuest's mock interviews felt incredibly realistic. The AI feedback pinpointed weaknesses I didn't know I had — I landed my offer in three weeks.",
-    hue: '262',
-  },
-  {
-    name: 'Sofia Lindqvist',
-    role: 'Product Designer @ Linear',
-    initials: 'SL',
-    rating: 5,
-    title: 'Genuinely game-changing',
-    text: "The behavioral practice with real-time tone analysis is unreal. It's like having a senior coach available at midnight before every interview.",
-    hue: '245',
-  },
-  {
-    name: 'Daniel Park',
-    role: 'ML Engineer @ Anthropic',
-    initials: 'DP',
-    rating: 5,
-    title: 'Worth every minute',
-    text: 'I ran 40+ system design sessions. The structured feedback and follow-up questions were sharper than what I got from human mocks.',
-    hue: '230',
-  },
-  {
-    name: 'Priya Nair',
-    role: 'PM @ Notion',
-    initials: 'PN',
-    rating: 4,
-    title: 'Confidence on tap',
-    text: 'I went from freezing on case prompts to walking in calm. The replay + transcript feature is a quiet superpower.',
-    hue: '275',
+    text: "HireQuest's mock interviews felt incredibly realistic. The AI feedback pinpointed weaknesses I didn't know I had.",
   },
   {
     name: 'Marcus Chen',
     role: 'Frontend Engineer @ Vercel',
+    goal: 'Senior FE role',
     initials: 'MC',
+    color: '#06B6D4',
     rating: 5,
-    title: 'Incredible AI feedback',
-    text: 'The specificity of the feedback blew me away. It caught subtle issues in my system design explanations that I never would have noticed on my own.',
-    hue: '210',
+    text: 'The specificity of the feedback blew me away. It caught subtle issues in my system design explanations.',
   },
   {
-    name: 'Aisha Rahman',
-    role: 'Data Scientist @ OpenAI',
-    initials: 'AR',
-    rating: 5,
-    title: 'Best prep tool I have used',
-    text: 'I was skeptical at first, but after my first mock session I was hooked. The follow-up questions felt like a real panel interview — I was hired in two rounds.',
-    hue: '290',
+    name: 'Priya Nair',
+    role: 'PM @ Notion',
+    goal: 'PM role',
+    initials: 'PN',
+    color: '#EC4899',
+    rating: 4,
+    text: 'I went from freezing on case prompts to walking in calm. The replay + transcript feature is a quiet superpower.',
   },
 ]
 
-function TCard({
-  t,
-  compact,
-}: {
-  t: Testimonial
-  compact?: boolean
-}) {
+type StarDot = { left: string; top: string; size: number; delay: string }
+
+const STARS: StarDot[] = [
+  { left: '6%', top: '14%', size: 2, delay: '0s' },
+  { left: '18%', top: '32%', size: 3, delay: '1.2s' },
+  { left: '11%', top: '58%', size: 2, delay: '2.6s' },
+  { left: '22%', top: '78%', size: 2, delay: '3.4s' },
+  { left: '34%', top: '18%', size: 3, delay: '0.6s' },
+  { left: '42%', top: '46%', size: 2, delay: '1.9s' },
+  { left: '38%', top: '72%', size: 2, delay: '2.2s' },
+  { left: '52%', top: '22%', size: 2, delay: '4.1s' },
+  { left: '58%', top: '54%', size: 3, delay: '0.9s' },
+  { left: '64%', top: '30%', size: 2, delay: '2.9s' },
+  { left: '72%', top: '68%', size: 2, delay: '1.4s' },
+  { left: '78%', top: '20%', size: 3, delay: '3.6s' },
+  { left: '85%', top: '52%', size: 2, delay: '0.4s' },
+  { left: '91%', top: '76%', size: 2, delay: '2.1s' },
+  { left: '46%', top: '84%', size: 2, delay: '1.6s' },
+]
+
+type Drift = { left: string; bottom: string; delay: string; duration: string }
+
+const DRIFTS: Drift[] = [
+  { left: '14%', bottom: '10%', delay: '0s', duration: '15s' },
+  { left: '38%', bottom: '30%', delay: '4s', duration: '18s' },
+  { left: '62%', bottom: '18%', delay: '2s', duration: '16s' },
+  { left: '82%', bottom: '38%', delay: '6s', duration: '17s' },
+]
+
+function TCard({ t, delay }: { t: Testimonial; delay: number }) {
   return (
     <article
-      className={[
-        'glass relative overflow-hidden rounded-2xl p-6 sm:p-8',
-        'group border border-white/[0.06] shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset]',
-        'transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_50px_-20px_rgba(59,130,246,0.25)]',
-        compact ? 'w-[85vw] max-w-[24rem] min-w-[280px] flex-shrink-0 sm:w-96' : '',
-      ].join(' ')}
+      className="tst-card reveal-from-top hover-lift flex h-full flex-col rounded-2xl p-7 sm:p-8"
+      style={{ transitionDelay: `${delay}ms` }}
     >
-      <div
-        className="absolute -right-24 -top-24 h-56 w-56 rounded-full opacity-0 blur-3xl transition-opacity group-hover:opacity-50"
-        style={{ background: `oklch(0.62 0.21 ${t.hue} / 0.6)` }}
-        aria-hidden
-      />
+      <div className="flex items-center gap-0.5" aria-label={`${t.rating} out of 5 stars`}>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Star
+            key={i}
+            className={[
+              'h-4 w-4',
+              i < t.rating ? 'fill-amber-400 text-amber-400' : 'tst-star-empty',
+            ].join(' ')}
+          />
+        ))}
+      </div>
 
-      <header className="relative flex items-center gap-3 sm:gap-4">
+      <p className="tst-body mt-4 flex-1 text-[15px] leading-[1.65]">
+        &ldquo;{t.text}&rdquo;
+      </p>
+
+      <div className="tst-divider mt-6 pt-5 flex items-center gap-3">
         <div
-          className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-full text-sm font-bold text-foreground glow-ring sm:h-14 sm:w-14 sm:text-base"
-          style={{
-            background: `linear-gradient(135deg, oklch(0.62 0.21 ${t.hue}), oklch(0.7 0.18 ${Number(t.hue) - 15}))`,
-          }}
+          className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full text-sm font-bold text-white"
+          style={{ background: t.color, boxShadow: `0 0 20px ${t.color}55` }}
           aria-hidden
         >
           {t.initials}
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold text-foreground sm:text-base">{t.name}</div>
-          <div className="truncate text-xs text-muted-foreground sm:text-sm">{t.role}</div>
+        <div className="min-w-0">
+          <div className="tst-name text-[14.5px] font-bold truncate">
+            {t.name}
+          </div>
+          <div className="tst-role text-[13px] truncate">{t.role}</div>
+          <div className="tst-goal text-[12.5px] font-semibold mt-0.5 truncate">
+            Goal: {t.goal}
+          </div>
         </div>
-        <div className="ml-auto flex flex-shrink-0 items-center gap-0.5">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Star
-              key={i}
-              className={[
-                'h-4 w-4 sm:h-5 sm:w-5',
-                i < t.rating
-                  ? 'fill-[oklch(0.85_0.16_85)] text-[oklch(0.85_0.16_85)]'
-                  : 'text-muted-foreground/40',
-              ].join(' ')}
-            />
-          ))}
-        </div>
-      </header>
-
-      <h3 className="relative mt-5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">{t.title}</h3>
-      <p className="relative mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">{t.text}</p>
+      </div>
     </article>
-  )
-}
-
-function MarqueeRow({
-  testimonials: items,
-  reverse,
-  ariaHidden,
-}: {
-  testimonials: Testimonial[]
-  reverse?: boolean
-  ariaHidden?: boolean
-}) {
-  return (
-    <div
-      className={[
-        'flex w-max gap-5',
-        'animate-testimonials-marquee motion-reduce:animate-none',
-        reverse ? '[animation-direction:reverse] [animation-duration:55s]' : '',
-        'hover:[animation-play-state:paused]',
-      ].join(' ')}
-      aria-hidden={ariaHidden}
-    >
-      <div className="flex gap-5 pr-5">
-        {items.map((t, i) => (
-          <TCard key={`a-${t.name}-${i}`} t={t} compact />
-        ))}
-      </div>
-      <div className="flex gap-5 pr-5">
-        {items.map((t, i) => (
-          <TCard key={`b-${t.name}-${i}`} t={t} compact />
-        ))}
-      </div>
-    </div>
   )
 }
 
 export function Testimonials() {
   const ref = useReveal<HTMLElement>()
+  const cols = useResponsiveColumns({ base: 1, md: 2, lg: 3 })
 
   return (
-    <section ref={ref} id="testimonials" className="relative py-20 sm:py-28">
-      <div
-        className="absolute inset-x-0 top-0 h-px"
-        style={{
-          background:
-            'linear-gradient(90deg, transparent, color-mix(in oklab, var(--primary) 60%, transparent), transparent)',
-        }}
-        aria-hidden
-      />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="reveal mx-auto mb-12 max-w-2xl text-center sm:mb-14">
-          <span className="inline-flex items-center rounded-full glass px-4 py-1.5 text-sm uppercase tracking-wider text-muted-foreground">
-            Testimonials
-          </span>
-          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-            Loved by people who got <span className="text-gradient">hired</span>
-          </h2>
-          <p className="mt-3 text-muted-foreground">
-            Real stories from candidates who used HireQuest to prep — and won.
-          </p>
-        </div>
-      </div>
+    <section
+      ref={ref}
+      id="testimonials"
+      className="section-nightsky relative overflow-hidden py-24 sm:py-28"
+    >
+      <div className="section-nightsky-glow-a" aria-hidden />
+      <div className="section-nightsky-glow-b" aria-hidden />
 
-      {/* Full-bleed marquee — static grid when prefers-reduced-motion */}
-      <div className="mx-auto hidden max-w-7xl grid-cols-1 gap-5 px-4 motion-reduce:grid sm:grid-cols-2 lg:px-6">
-        {testimonials.map((t) => (
-          <TCard key={`static-${t.name}`} t={t} />
+      <div className="pointer-events-none absolute inset-0" aria-hidden>
+        {STARS.map((s, i) => (
+          <span
+            key={`s-${i}`}
+            className="section-nightsky-star"
+            style={{
+              left: s.left,
+              top: s.top,
+              width: `${s.size}px`,
+              height: `${s.size}px`,
+              animationDelay: s.delay,
+            }}
+          />
+        ))}
+        {DRIFTS.map((d, i) => (
+          <span
+            key={`d-${i}`}
+            className="section-nightsky-drift"
+            style={{
+              left: d.left,
+              bottom: d.bottom,
+              animationDelay: d.delay,
+              animationDuration: d.duration,
+            }}
+          />
         ))}
       </div>
 
-      <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen overflow-hidden pb-2 pt-1 motion-reduce:hidden">
-        <div
-          className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-[var(--background)] to-transparent sm:w-28"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-[var(--background)] to-transparent sm:w-28"
-          aria-hidden
-        />
+      {/* End-of-section circular line doodles */}
+      <div
+        className="pointer-events-none absolute -right-20 bottom-[-10%] h-80 w-80 rounded-full border border-[color:color-mix(in_oklab,var(--primary)_40%,transparent)] opacity-55"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -right-8 bottom-[0%] h-56 w-56 rounded-full border border-[color:color-mix(in_oklab,var(--primary)_28%,transparent)] opacity-45"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute right-[6%] bottom-[8%] h-32 w-32 rounded-full border border-[color:color-mix(in_oklab,var(--primary)_20%,transparent)] opacity-40"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -left-24 bottom-[-14%] h-72 w-72 rounded-full border border-[color:color-mix(in_oklab,var(--primary)_36%,transparent)] opacity-50"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute left-[4%] bottom-[-2%] h-44 w-44 rounded-full border border-[color:color-mix(in_oklab,var(--primary)_24%,transparent)] opacity-40"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute left-[14%] bottom-[10%] h-24 w-24 rounded-full border border-[color:color-mix(in_oklab,var(--primary)_18%,transparent)] opacity-35"
+        aria-hidden
+      />
 
-        <div className="flex flex-col gap-8">
-          <MarqueeRow testimonials={testimonials} />
-          <MarqueeRow testimonials={[...testimonials].reverse()} reverse ariaHidden />
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="reveal mx-auto mb-14 max-w-[620px] text-center">
+          <div className="tst-eyebrow text-[13px] font-semibold uppercase tracking-[0.06em] mb-3.5">
+            Testimonials
+          </div>
+          <h2 className="tst-heading text-[2rem] sm:text-[2.375rem] font-extrabold tracking-[-0.02em] leading-[1.15]">
+            Trusted by students who got the offer.
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-6">
+          {testimonials.map((t, i) => (
+            <TCard key={t.name} t={t} delay={rowRevealDelay(i, cols)} />
+          ))}
         </div>
       </div>
     </section>

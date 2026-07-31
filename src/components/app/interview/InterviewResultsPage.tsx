@@ -9,6 +9,7 @@ import { DashboardPageHeader } from '@/components/app/dashboard/DashboardPageHea
 import { InterviewQuestionMarkdown } from '@/components/app/interview/InterviewQuestionMarkdown'
 import { formatGeneratedQuestion } from '@/lib/interview-questions/clean-question-text'
 import { formatDifficultyLabel, formatInterviewTypeLabel, formatIndustryDisplay, formatRoleCategoryDisplay, formatQuestionTypeLabel } from '@/utils/dashboard/interview-labels'
+import { BounceLoader } from '@/components/ui/bounce-loader'
 
 type ResultsSession = {
   _id: string
@@ -100,8 +101,8 @@ export function InterviewResultsPage() {
 
   if (isLoading) {
     return (
-      <div className="text-sm text-muted-foreground">
-        Loading results…
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <BounceLoader label="Loading results" />
       </div>
     )
   }
@@ -112,7 +113,7 @@ export function InterviewResultsPage() {
         <div className="text-sm text-red-400">{error || 'Interview not found.'}</div>
         <Link
           href="/app/interviews"
-          className="inline-flex items-center gap-2 rounded-xl border border-border bg-input/20 px-4 py-2 text-sm font-semibold text-foreground hover:bg-input/40 btn-micro"
+          className="hq-btn-outline h-10 px-4 text-sm btn-micro"
         >
           <ArrowLeft className="h-4 w-4" /> Back to interviews
         </Link>
@@ -198,7 +199,7 @@ export function InterviewResultsPage() {
           <button
             type="button"
             onClick={() => setShowAnswers((v) => !v)}
-            className="flex w-full items-center justify-between gap-3 rounded-xl border border-border bg-input/20 px-4 py-3 text-left btn-micro hover:bg-input/35"
+            className="hq-btn-outline flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-left btn-micro"
             aria-expanded={showAnswers}
           >
             <span className="flex flex-wrap items-center gap-2 text-sm font-semibold text-foreground">
@@ -251,7 +252,7 @@ export function InterviewResultsPage() {
         <div className="flex flex-wrap gap-2">
           <Link
             href="/app/interviews"
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-input/20 px-4 text-sm font-semibold text-foreground hover:bg-input/40 btn-micro"
+            className="hq-btn-outline h-10 px-4 text-sm btn-micro"
           >
             <ArrowLeft className="h-4 w-4" /> All interviews
           </Link>

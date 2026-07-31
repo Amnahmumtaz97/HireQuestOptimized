@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Loader2 } from 'lucide-react'
+import { BounceLoader } from '@/components/ui/bounce-loader'
 
 export type ConfirmModalProps = {
   open: boolean
@@ -112,10 +112,10 @@ export function ConfirmModal({
               'inline-flex h-10 min-w-[8rem] items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold text-white disabled:opacity-50 btn-micro',
               confirmVariant === 'danger'
                 ? 'bg-red-600 hover:bg-red-500 focus-visible:ring-2 focus-visible:ring-red-400'
-                : 'bg-gradient-primary hover:opacity-95',
+                : 'bg-primary hover:bg-[var(--primary-hover)]',
             ].join(' ')}
           >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+            {loading ? <BounceLoader size="sm" label="Working" /> : null}
             {confirmLabel}
           </button>
         </div>

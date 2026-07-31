@@ -1,104 +1,84 @@
-import { Brain, Briefcase, GitFork, X } from 'lucide-react'
 import Link from 'next/link'
 
-const groups = [
-  { title: 'Product', links: ['Features', 'Pricing', 'Changelog', 'Roadmap'] },
-  { title: 'Company', links: ['About', 'Blog', 'Careers', 'Contact'] },
-  { title: 'Resources', links: ['Docs', 'Guides', 'Support', 'Community'] },
+const footerLinks = [
+  { label: 'Product', href: '/product' },
+  { label: 'Solutions', href: '/solutions' },
+  { label: 'Features', href: '/features' },
+  { label: 'Pricing', href: '/pricing' },
+  { label: 'Contact', href: '/features' },
 ]
-
-const routes: Record<string, string> = {
-  Features: '/features',
-  Pricing: '/pricing',
-  Changelog: '/changelog',
-  Roadmap: '/roadmap',
-  About: '/about',
-  Blog: '/blog',
-  Careers: '/careers',
-  Contact: '/contact',
-  Docs: '/docs',
-  Guides: '/guides',
-  Support: '/support',
-  Community: '/community',
-  Privacy: '/privacy',
-  Terms: '/terms',
-  Security: '/security',
-}
 
 export function Footer() {
   return (
-    <footer className="relative pt-16 pb-10">
+    <footer className="relative overflow-hidden pt-14 pb-10">
+      <div className="footer-glow" aria-hidden />
       <div
-        className="absolute inset-x-0 top-0 h-px"
+        className="pointer-events-none absolute -left-16 bottom-0 h-56 w-56 rounded-full"
         style={{
-          background:
-            'linear-gradient(90deg, transparent, color-mix(in oklab, var(--primary) 60%, transparent), transparent)',
+          background: 'radial-gradient(circle, rgba(37, 99, 235, 0.18), transparent 70%)',
+          filter: 'blur(70px)',
         }}
         aria-hidden
       />
+      <div
+        className="pointer-events-none absolute -right-10 top-0 h-48 w-48 rounded-full"
+        style={{
+          background: 'radial-gradient(circle, rgba(59, 130, 246, 0.16), transparent 70%)',
+          filter: 'blur(60px)',
+        }}
+        aria-hidden
+      />
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
+        <div
+          className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between pb-9"
+          style={{
+            borderBottom: '1px solid transparent',
+            borderImage:
+              'linear-gradient(90deg, transparent 0%, color-mix(in oklab, var(--border) 80%, transparent) 50%, transparent 100%) 1',
+          }}
+        >
+          <Link href="/" className="inline-flex items-center gap-2.5">
+            <span className="hq-marketing-logo-mark !h-[26px] !min-w-[30px] !w-auto px-1 !text-[10px]">
+              HQ
+            </span>
+            <span className="text-[19px] font-extrabold tracking-[-0.02em] text-foreground">
+              HireQuest
+            </span>
+          </Link>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="glass rounded-3xl p-8 sm:p-12">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
-            {/* Brand */}
-            <div className="col-span-2">
-              <Link href="/" className="flex items-center gap-2.5">
-                <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary glow-ring">
-                  <Brain className="h-5 w-5 text-foreground" />
-                </span>
-                <span className="text-base font-semibold tracking-tight text-foreground">
-                  Hire<span className="text-gradient">Quest</span>
-                </span>
+          <nav className="flex flex-wrap gap-x-8 gap-y-3">
+            {footerLinks.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                className="text-[14.5px] text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {link.label}
               </Link>
+            ))}
+          </nav>
 
-              <p className="mt-4 max-w-sm text-sm text-muted-foreground">
-                AI-powered interview preparation that helps you practice smarter, get sharper
-                feedback, and land the role.
-              </p>
-
-              <div className="mt-5 flex items-center gap-2">
-                {[X, GitFork, Briefcase].map((Icon, i) => (
-                  <a
-                    key={i}
-                    href="#"
-                    className="h-9 w-9 grid place-items-center rounded-lg border border-white/10 text-muted-foreground hover:text-foreground hover:bg-input/30 transition-colors"
-                    aria-label="Social link"
-                  >
-                    <Icon className="h-4 w-4" />
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            {/* Link groups */}
-            {groups.map((g) => (
-              <div key={g.title}>
-                <h4 className="text-xs uppercase tracking-wider text-muted-foreground">{g.title}</h4>
-                <ul className="mt-4 flex flex-col gap-2.5">
-                  {g.links.map((l) => (
-                    <li key={l}>
-                      <Link
-                        href={routes[l] ?? '#'}
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {l}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+          <div className="flex items-center gap-4">
+            {['𝕏', 'in', 'gh'].map((label) => (
+              <a
+                key={label}
+                href="#"
+                className="h-[34px] w-[34px] rounded-[9px] border border-border grid place-items-center text-[13px] font-semibold text-muted-foreground hover:text-foreground hover:bg-[var(--secondary)] transition-colors"
+                aria-label={label}
+              >
+                {label}
+              </a>
             ))}
           </div>
+        </div>
 
-          <div className="mt-10 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} HireQuest. All rights reserved.</p>
-
-            <div className="flex items-center gap-5 text-xs text-muted-foreground">
-              <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
-              <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
-              <Link href="/security" className="hover:text-foreground transition-colors">Security</Link>
-            </div>
-          </div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-6 text-[13.5px] text-muted-foreground">
+          <span>© {new Date().getFullYear()} HireQuest. All rights reserved.</span>
+          <span className="flex items-center gap-2">
+            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+            <span>·</span>
+            <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+          </span>
         </div>
       </div>
     </footer>

@@ -45,8 +45,8 @@ export function ConstellationBackground({ className, intensity = 0.5 }: Props) {
 
   const intensity01 = useMemo(() => {
     const base = clamp(intensity, 0, 1)
-    // Light backgrounds need a touch more contrast so the mesh stays visible
-    return isLight ? clamp(base * 1.2, 0, 1) : base
+    // Light backgrounds need much more contrast so the mesh stays visible against pure white
+    return isLight ? clamp(base * 1.9, 0, 1) : base
   }, [intensity, isLight])
 
   const colorMode = isLight ? 'light' : 'dark'
@@ -258,8 +258,8 @@ function drawLinesAndPoints(
   const maxDist2 = maxDist * maxDist
 
   const isLight = colorMode === 'light'
-  const pointAlpha = (isLight ? 0.95 : 0.85) * intensity01
-  const lineAlpha = (isLight ? 0.55 : 0.42) * intensity01
+  const pointAlpha = (isLight ? 1 : 0.85) * intensity01
+  const lineAlpha = (isLight ? 0.75 : 0.42) * intensity01
 
   const boostRadius = clamp(Math.min(width, height) * 0.26, 170, 310)
   const boostRadius2 = boostRadius * boostRadius
@@ -290,9 +290,9 @@ function drawLinesAndPoints(
         cursorBoost = 0.26 * (1 - Math.sqrt(md2) / boostRadius)
       }
 
-      const alpha = clamp((f * f) * (lineAlpha + cursorBoost), 0, isLight ? 0.55 : 0.75)
+      const alpha = clamp((f * f) * (lineAlpha + cursorBoost), 0, isLight ? 0.8 : 0.75)
       ctx.strokeStyle = isLight
-        ? `rgba(79, 110, 247, ${alpha})`
+        ? `rgba(37, 99, 235, ${alpha})`
         : `rgba(120, 200, 255, ${alpha})`
       ctx.beginPath()
       ctx.moveTo(a.p.x, a.p.y)
@@ -314,14 +314,14 @@ function drawLinesAndPoints(
     }
 
     ctx.fillStyle = isLight
-      ? `rgba(79, 110, 247, ${clamp(a * 0.85, 0, 0.92)})`
+      ? `rgba(37, 99, 235, ${clamp(a * 1.1, 0, 0.98)})`
       : `rgba(205, 235, 255, ${clamp(a, 0, 0.95)})`
     ctx.beginPath()
     ctx.arc(p.p.x, p.p.y, p.r, 0, Math.PI * 2)
     ctx.fill()
 
     ctx.fillStyle = isLight
-      ? `rgba(124, 58, 237, ${0.12 * intensity01 * tw})`
+      ? `rgba(124, 58, 237, ${0.22 * intensity01 * tw})`
       : `rgba(90, 175, 255, ${0.08 * intensity01 * tw})`
     ctx.beginPath()
     ctx.arc(p.p.x, p.p.y, p.r * 4.2, 0, Math.PI * 2)

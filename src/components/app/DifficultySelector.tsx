@@ -24,21 +24,21 @@ export function DifficultySelector({
         const selected = value === option.key
         const selectedClasses =
           option.key === 'Easy'
-            ? 'border-emerald-400/55 bg-emerald-500/12 shadow-[0_10px_24px_-14px_rgba(16,185,129,0.7)]'
+            ? 'border-emerald-500/50 bg-emerald-500/10 shadow-[0_8px_20px_-14px_rgba(16,185,129,0.45)]'
             : option.key === 'Medium'
-              ? 'border-amber-400/55 bg-amber-500/12 shadow-[0_10px_24px_-14px_rgba(251,191,36,0.7)]'
+              ? 'border-amber-500/50 bg-amber-500/10 shadow-[0_8px_20px_-14px_rgba(245,158,11,0.4)]'
               : option.key === 'Hard'
-                ? 'border-red-400/55 bg-red-500/12 shadow-[0_10px_24px_-14px_rgba(239,68,68,0.7)]'
-                : 'border-violet-400/55 bg-violet-500/12 shadow-[0_10px_24px_-14px_rgba(139,92,246,0.7)]'
+                ? 'border-red-500/50 bg-red-500/10 shadow-[0_8px_20px_-14px_rgba(239,68,68,0.4)]'
+                : 'border-primary/50 bg-primary/10 shadow-[0_8px_20px_-14px_rgba(37,99,235,0.35)]'
 
         const titleClasses =
           option.key === 'Easy'
-            ? 'text-emerald-400'
+            ? 'text-emerald-600 dark:text-emerald-400'
             : option.key === 'Medium'
-              ? 'text-amber-400'
+              ? 'text-amber-600 dark:text-amber-400'
               : option.key === 'Hard'
-                ? 'text-red-400'
-                : 'text-violet-400'
+                ? 'text-red-600 dark:text-red-400'
+                : 'text-primary'
         return (
           <button
             key={option.key}

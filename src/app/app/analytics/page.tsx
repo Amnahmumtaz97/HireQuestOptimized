@@ -33,17 +33,17 @@ export default function AnalyticsPage() {
           </div>
 
           <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div className="glass rounded-2xl p-4">
+            <div className="rounded-2xl border border-border bg-[var(--hq-stat-surface)] p-4">
               <div className="text-xs text-muted-foreground">Weekly consistency</div>
               <div className="mt-1 text-xl font-semibold text-foreground">4/5</div>
               <div className="mt-1 text-[11px] text-muted-foreground">Sessions completed</div>
             </div>
-            <div className="glass rounded-2xl p-4">
+            <div className="rounded-2xl border border-border bg-[var(--hq-stat-surface)] p-4">
               <div className="text-xs text-muted-foreground">Avg. AI score</div>
               <div className="mt-1 text-xl font-semibold text-foreground">72</div>
               <div className="mt-1 text-[11px] text-muted-foreground">Across completed sessions</div>
             </div>
-            <div className="glass rounded-2xl p-4">
+            <div className="rounded-2xl border border-border bg-[var(--hq-stat-surface)] p-4">
               <div className="text-xs text-muted-foreground">Response time</div>
               <div className="mt-1 text-xl font-semibold text-foreground">1.8s</div>
               <div className="mt-1 text-[11px] text-muted-foreground">Median generation latency</div>
@@ -60,15 +60,15 @@ export default function AnalyticsPage() {
           </div>
           <ul className="mt-3 space-y-2 text-sm text-foreground">
             <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-gradient-primary" aria-hidden />
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
               Topic mastery breakdown
             </li>
             <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-gradient-primary" aria-hidden />
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
               Difficulty vs. score trendline
             </li>
             <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-gradient-primary" aria-hidden />
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
               Personalized AI recommendations
             </li>
           </ul>

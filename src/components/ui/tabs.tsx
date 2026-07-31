@@ -31,7 +31,7 @@ export const TabsTrigger = React.forwardRef<
     className={cn(
       "inline-flex items-center justify-center whitespace-nowrap rounded-xl px-3 py-2 text-xs font-semibold transition-all",
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-      "data-[state=active]:bg-gradient-primary data-[state=active]:text-white data-[state=active]:shadow-glow-sm",
+      "data-[state=active]:bg-primary data-[state=active]:text-white",
       "data-[state=inactive]:hover:bg-input/30 data-[state=inactive]:hover:text-foreground",
       className,
     )}

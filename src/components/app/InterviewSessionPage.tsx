@@ -11,6 +11,7 @@ import { InterviewQuestionCard } from '@/components/app/interview/InterviewQuest
 import { InterviewQuestionHeader } from '@/components/app/interview/InterviewQuestionHeader'
 import { InterviewProgressBar } from '@/components/app/interview/InterviewProgressBar'
 import { InterviewSessionTimer } from '@/components/app/interview/InterviewSessionTimer'
+import { BounceLoader } from '@/components/ui/bounce-loader'
 
 export function InterviewSessionPage() {
   const params = useParams<{ id: string }>()
@@ -97,7 +98,11 @@ export function InterviewSessionPage() {
   const headerKey = useMemo(() => `${index}-${current?.question ?? ''}`, [current?.question, index])
 
   if (isLoading) {
-    return <div className="text-sm text-muted-foreground">Loading interview…</div>
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <BounceLoader label="Loading interview" />
+      </div>
+    )
   }
 
   if (error && !session) {
@@ -106,7 +111,7 @@ export function InterviewSessionPage() {
         <div className="text-sm text-red-400">{error}</div>
         <Link
           href="/app/interviews"
-          className="inline-flex items-center gap-2 rounded-xl border border-border bg-input/20 px-4 py-2 text-sm font-semibold text-foreground hover:bg-input/40 btn-micro"
+          className="hq-btn-outline px-4 py-2 text-sm btn-micro"
         >
           <ArrowLeft className="h-4 w-4" /> Back
         </Link>
@@ -133,7 +138,7 @@ export function InterviewSessionPage() {
         <button
           type="button"
           onClick={() => void regenerateQuestions()}
-          className="inline-flex items-center gap-2 rounded-xl bg-gradient-primary px-4 py-2 text-sm font-semibold text-white btn-micro shadow-glow-sm disabled:opacity-60"
+          className="hq-btn-primary px-4 py-2 text-sm btn-micro disabled:opacity-60"
           disabled={busy}
         >
           {busy ? 'Generating…' : 'Generate Questions'}

@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
-import Script from 'next/script'
 import './globals.css'
 import { SessionProvider } from '@/components/providers/SessionProvider'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { MotionProvider } from '@/components/providers/MotionProvider'
 import { ToastProvider } from '@/components/ui/toast'
+
 export const metadata: Metadata = {
   title: 'HireQuest – Your Shortcut to Interview Success',
   description: 'AI-powered interview preparation made simple and effective. Practice with realistic mock interviews, get instant feedback, and land your dream role.',
@@ -23,14 +23,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Performance: preconnect to font origin */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* Performance: prevent flash of wrong theme (must run before hydration) */}
-        <Script
-          id="theme-bootstrap"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{
-            __html:
-              '(function(){try{var t=localStorage.getItem("hirequest.theme");if(t==="light"||t==="dark"){document.documentElement.dataset.theme=t;}else if(window.matchMedia("(prefers-color-scheme: light)").matches){document.documentElement.dataset.theme="light";}}catch(e){}})();',
-          }}
+        <link
+          href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet"
         />
       </head>
       <body>

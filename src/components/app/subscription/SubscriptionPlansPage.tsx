@@ -83,7 +83,7 @@ export function SubscriptionPlansPage() {
                 className={[
                   'relative overflow-hidden rounded-3xl border p-6',
                   p.highlight
-                    ? 'border-white/10 bg-gradient-to-br from-primary/15 via-transparent to-purple-500/10 shadow-glow-sm'
+                    ? 'border-primary/25 bg-primary/5 shadow-[var(--shadow-card)]'
                     : 'border-border bg-input/10',
                 ].join(' ')}
               >
@@ -118,7 +118,7 @@ export function SubscriptionPlansPage() {
                   className={[
                     'mt-6 inline-flex h-11 w-full items-center justify-center rounded-2xl text-xs font-semibold btn-micro',
                     p.highlight
-                      ? 'bg-gradient-primary text-white shadow-glow-sm hover:shadow-glow'
+                      ? 'bg-primary text-white hover:bg-[var(--primary-hover)]'
                       : 'border border-border bg-input/15 text-foreground hover:bg-input/25',
                   ].join(' ')}
                 >

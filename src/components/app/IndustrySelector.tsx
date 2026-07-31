@@ -4,6 +4,7 @@ import React, { useMemo } from 'react'
 import { Search } from 'lucide-react'
 import { IconCard, IconGrid } from '@/components/ui/icon-card'
 import { SelectionChip } from '@/components/ui/selection-chip'
+import { BounceLoader } from '@/components/ui/bounce-loader'
 import { getIndustryIcon } from '@/lib/icon-mapping'
 import type { DepartmentConfig } from '@/lib/interview-catalog/types'
 
@@ -64,8 +65,8 @@ export function IndustrySelector({
 
   if (isLoading) {
     return (
-      <div className="rounded-2xl border border-border bg-input/20 p-4 text-sm text-muted-foreground animate-pulse">
-        Loading departments...
+      <div className="flex items-center justify-center rounded-2xl border border-border bg-input/20 p-8">
+        <BounceLoader label="Loading departments" />
       </div>
     )
   }
