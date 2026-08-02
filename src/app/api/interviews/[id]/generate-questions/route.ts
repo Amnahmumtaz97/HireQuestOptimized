@@ -1,15 +1,34 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { isValidObjectId } from 'mongoose'
+import { z } from 'zod'
 import { authOptions } from '@/lib/auth'
 import { connectToDatabase } from '@/lib/mongoose'
 import { InterviewSessionModel } from '@/models/InterviewSession'
 import { generateInterviewQuestions } from '@/lib/interview-questions/generate'
+import type { InterviewGenerationParams } from '@/lib/interview-questions/prompt'
 import {
   normalizeSpecializationRefs,
   resolveTopicsForInterview,
 } from '@/lib/interview-catalog'
 import { loadInterviewCatalogDepartments } from '@/lib/interview-catalog/load'
+import { resumeContextSchema } from '@/lib/interview/resume-context-schema'
+import { validatePathStageLinkage } from '@/lib/learning-paths/validate-link'
+import { checkRateLimit } from '@/lib/rate-limit'
+
+const generateBodySchema = z.object({
+  resumeContext: resumeContextSchema,
+  learningPathId: z.string().trim().min(1).optional(),
+  learningStageId: z.string().trim().min(1).optional(),
+})
+
+function asResumeContext(
+  value: unknown,
+): InterviewGenerationParams['resumeContext'] {
+  const parsed = resumeContextSchema.safeParse(value)
+  if (!parsed.success || !parsed.data) return null
+  return parsed.data
+}
 
 export async function POST(
   request: Request,
@@ -20,15 +39,28 @@ export async function POST(
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
   }
 
+  const rate = checkRateLimit(`generate:${session.user.id}`, {
+    limit: 10,
+    windowMs: 60 * 60 * 1000,
+  })
+  if (rate.ok === false) {
+    return NextResponse.json(
+      {
+        message: `Too many question generations. Try again in ${rate.retryAfterSec}s.`,
+      },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(rate.retryAfterSec) },
+      },
+    )
+  }
+
   const { id } = await params
   if (!isValidObjectId(id)) {
     return NextResponse.json({ message: 'Invalid interview id' }, { status: 400 })
   }
 
   try {
-    const url = new URL(request.url)
-    void url
-
     await connectToDatabase()
     const doc = await InterviewSessionModel.findOne({
       _id: id,
@@ -39,8 +71,101 @@ export async function POST(
       return NextResponse.json({ message: 'Interview not found' }, { status: 404 })
     }
 
+    let bodyResume: InterviewGenerationParams['resumeContext'] = null
+    let bodyPathId: string | undefined
+    let bodyStageId: string | undefined
+    try {
+      const raw = await request.json()
+      const parsed = generateBodySchema.safeParse(raw ?? {})
+      if (parsed.success) {
+        if (parsed.data.resumeContext) bodyResume = parsed.data.resumeContext
+        if (parsed.data.learningPathId && isValidObjectId(parsed.data.learningPathId)) {
+          bodyPathId = parsed.data.learningPathId
+        }
+        if (parsed.data.learningStageId && isValidObjectId(parsed.data.learningStageId)) {
+          bodyStageId = parsed.data.learningStageId
+        }
+      }
+    } catch {
+      // empty body is fine
+    }
+
+    const resumeContext =
+      bodyResume ?? asResumeContext(doc.resumeContext) ?? null
+
+    // Path linkage: prefer existing session values; body may only set when session empty,
+    // and must pass enrollment + current-stage checks.
+    let learningPathId =
+      doc.learningPathId && isValidObjectId(doc.learningPathId)
+        ? doc.learningPathId
+        : null
+    let learningStageId =
+      doc.learningStageId && isValidObjectId(doc.learningStageId)
+        ? doc.learningStageId
+        : null
+
+    if ((!learningPathId || !learningStageId) && bodyPathId && bodyStageId) {
+      const link = await validatePathStageLinkage({
+        userId: session.user.id,
+        learningPathId: bodyPathId,
+        learningStageId: bodyStageId,
+        requireCurrentStage: true,
+      })
+      if (link.ok === false) {
+        return NextResponse.json({ message: link.message }, { status: link.status })
+      }
+      learningPathId = bodyPathId
+      learningStageId = bodyStageId
+    } else if (bodyPathId || bodyStageId) {
+      // Reject attempts to rewrite an existing or partial path linkage via regenerate.
+      if (
+        (bodyPathId && bodyPathId !== learningPathId) ||
+        (bodyStageId && bodyStageId !== learningStageId)
+      ) {
+        return NextResponse.json(
+          {
+            message:
+              'Cannot change learning path linkage on regenerate. Create a new path-linked interview.',
+          },
+          { status: 400 },
+        )
+      }
+    }
+
+    let learningPathTitle: string | null = null
+    let learningStageTitle: string | null = null
+    let learningStageType: InterviewGenerationParams['learningStageType'] = null
+    let stageSuggestedTopics: string[] = []
+
+    if (learningPathId) {
+      const { LearningPathModel } = await import('@/models/LearningPath')
+      const path = await LearningPathModel.findById(learningPathId).lean()
+      learningPathTitle = path?.title ?? null
+    }
+    if (learningStageId) {
+      const { StageModel } = await import('@/models/Stage')
+      const stage = await StageModel.findById(learningStageId).lean()
+      if (stage) {
+        learningStageTitle = stage.title ?? null
+        learningStageType = stage.type ?? null
+        stageSuggestedTopics = (stage.suggestedTopics || []).filter(Boolean)
+      }
+    }
+
+    const persistSet: Record<string, unknown> = {}
+    if (bodyResume) persistSet.resumeContext = bodyResume
+    if (bodyPathId && bodyStageId && !doc.learningPathId) {
+      persistSet.learningPathId = bodyPathId
+      persistSet.learningStageId = bodyStageId
+    }
+    if (Object.keys(persistSet).length > 0) {
+      await InterviewSessionModel.updateOne(
+        { _id: id, userId: session.user.id },
+        { $set: persistSet },
+      )
+    }
+
     const departments = await loadInterviewCatalogDepartments()
-    // Prefer singular department; legacy multi-dept sessions use the first stored key only.
     const departmentKey =
       doc.departmentKey?.trim() ||
       doc.industryKey?.trim() ||
@@ -65,11 +190,39 @@ export async function POST(
       departmentKeys,
       interviewType: doc.interviewType,
       interviewTypes: doc.interviewTypes,
-      selectAllSpecializations: Boolean(doc.selectAllSpecializations ?? doc.selectAllRoleCategories),
+      selectAllSpecializations: Boolean(
+        doc.selectAllSpecializations ?? doc.selectAllRoleCategories,
+      ),
       specializationRefs,
       selectAllTopics: Boolean(doc.selectAllTopics),
       topics: doc.topics ?? [],
     })
+
+    const catalogTopicSet = new Set(resolved.topics.map((t) => t.trim()).filter(Boolean))
+    const sessionTopics = (doc.topics ?? []).map((t) => t.trim()).filter(Boolean)
+    const mergedTopics = [
+      ...new Set([
+        ...(doc.selectAllTopics
+          ? resolved.topics
+          : sessionTopics.length
+            ? sessionTopics
+            : resolved.topics),
+        ...stageSuggestedTopics.filter(
+          (t) => catalogTopicSet.has(t) || resolved.topics.includes(t),
+        ),
+      ]),
+    ]
+    const topicBank =
+      mergedTopics.length > 0
+        ? mergedTopics.filter(
+            (t) =>
+              catalogTopicSet.size === 0 ||
+              catalogTopicSet.has(t) ||
+              resolved.topics.includes(t),
+          )
+        : resolved.topics
+
+    const finalTopics = topicBank.length > 0 ? topicBank : resolved.topics
 
     const result = await generateInterviewQuestions({
       industryKey: departmentKey || doc.industryKey,
@@ -80,10 +233,14 @@ export async function POST(
       roleCategoryLabels: resolved.specializationLabels,
       interviewType: doc.interviewType,
       interviewTypes: doc.interviewTypes,
-      topics: resolved.topics,
+      topics: finalTopics,
       difficulty: doc.difficulty,
       totalQuestions: doc.totalQuestions,
       technicalQuestionRatio: doc.technicalQuestionRatio,
+      resumeContext,
+      learningPathTitle,
+      learningStageTitle,
+      learningStageType,
     })
 
     const updated = await InterviewSessionModel.findOneAndUpdate(
@@ -107,6 +264,7 @@ export async function POST(
       warnings: result.warnings,
     })
   } catch (error) {
+    console.error('[generate-questions]', error)
     return NextResponse.json(
       { message: error instanceof Error ? error.message : 'Failed to generate questions' },
       { status: 500 },

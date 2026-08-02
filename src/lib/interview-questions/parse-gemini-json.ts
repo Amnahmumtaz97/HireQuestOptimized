@@ -2,6 +2,9 @@ import { z } from 'zod'
 
 const geminiItemSchema = z.object({
   question: z.string(),
+  topic: z.string().optional(),
+  type: z.enum(['technical', 'behavioral', 'hr']).optional(),
+  difficulty: z.enum(['Easy', 'Medium', 'Hard']).optional(),
   requiresDiagram: z.boolean().optional(),
 })
 
@@ -17,7 +20,15 @@ export function extractJsonArrayText(raw: string): string {
   return t
 }
 
-export function parseGeminiQuestionJsonArray(raw: string): { question: string; requiresDiagram?: boolean }[] {
+export type ParsedGeminiQuestion = {
+  question: string
+  topic?: string
+  type?: 'technical' | 'behavioral' | 'hr'
+  difficulty?: 'Easy' | 'Medium' | 'Hard'
+  requiresDiagram?: boolean
+}
+
+export function parseGeminiQuestionJsonArray(raw: string): ParsedGeminiQuestion[] {
   const jsonText = extractJsonArrayText(raw)
   const parsed = JSON.parse(jsonText) as unknown
   return geminiArraySchema.parse(parsed)

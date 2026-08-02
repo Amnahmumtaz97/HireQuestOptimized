@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "create:admin": "node scripts/create-admin.js",
-    "seed:interview-config": "node scripts/seed-interview-config.js"
+    "seed:interview-config": "node scripts/seed-interview-config.js",
+    "seed:learning-paths": "node scripts/seed-learning-paths.js"
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.11.2",
@@ -34,11 +35,13 @@
     "lottie-react": "^2.4.1",
     "lottie-web": "^5.13.0",
     "lucide-react": "^1.14.0",
+    "mammoth": "^1.12.0",
     "mongodb": "^6.21.0",
     "mongoose": "^9.6.0",
     "next": "^16.2.4",
     "next-auth": "^4.24.14",
     "next-pwa": "^5.6.0",
+    "pdf-parse": "^2.4.5",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-hook-form": "^7.75.0",
@@ -51,6 +54,7 @@
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/pdf-parse": "^1.1.5",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.4.19",

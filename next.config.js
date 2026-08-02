@@ -47,6 +47,7 @@ const withPWA = require('next-pwa')({
 const nextConfig = {
   reactStrictMode: true,
   turbopack: {},
+  serverExternalPackages: ['pdf-parse', 'pdfjs-dist', 'mammoth'],
   // Performance: compiler optimizations
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',

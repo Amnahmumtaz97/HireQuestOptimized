@@ -15,6 +15,10 @@ import {
   encodeInterviewType,
   normalizeInterviewTypeKinds,
 } from '@/lib/interview-types'
+import { resumeContextSchema } from '@/lib/interview/resume-context-schema'
+import { validatePathStageLinkage } from '@/lib/learning-paths/validate-link'
+
+const MAX_QUESTIONS = 40
 
 const createInterviewSchema = z
   .object({
@@ -41,9 +45,14 @@ const createInterviewSchema = z
       .optional(),
     topics: z.array(z.string().trim().min(1)).default([]),
     difficulty: z.enum(['Easy', 'Medium', 'Hard', 'Adaptive']),
-    totalQuestions: z.number().int().positive(),
+    totalQuestions: z.number().int().positive().max(MAX_QUESTIONS),
     technicalQuestionRatio: z.number().int().min(0).max(100),
     durationMinutes: z.number().int().positive().nullable().optional(),
+    entryMode: z.enum(['manual', 'resume', 'path']).optional().default('manual'),
+    learningPathId: z.string().trim().min(1).nullable().optional(),
+    learningStageId: z.string().trim().min(1).nullable().optional(),
+    pathRemediationId: z.string().trim().min(1).nullable().optional(),
+    resumeContext: resumeContextSchema,
   })
   .superRefine((data, ctx) => {
     if (data.selectAllDepartments || data.selectAllIndustries) {
@@ -204,6 +213,26 @@ export async function POST(request: Request) {
       )
     }
 
+    let learningPathId = parsed.data.learningPathId ?? null
+    let learningStageId = parsed.data.learningStageId ?? null
+    if (learningPathId || learningStageId) {
+      if (!learningPathId || !learningStageId) {
+        return NextResponse.json(
+          { message: 'Both learningPathId and learningStageId are required when linking a path' },
+          { status: 400 },
+        )
+      }
+      const link = await validatePathStageLinkage({
+        userId: session.user.id,
+        learningPathId,
+        learningStageId,
+        requireCurrentStage: true,
+      })
+      if (link.ok === false) {
+        return NextResponse.json({ message: link.message }, { status: link.status })
+      }
+    }
+
     const primaryDepartmentKey = resolved.departmentKeys[0]
     const primarySpecializationKey =
       parseSpecializationRef(resolved.specializationRefs[0])?.specializationKey ??
@@ -230,12 +259,17 @@ export async function POST(request: Request) {
       selectAllTopics: parsed.data.selectAllTopics,
       interviewType,
       interviewTypes,
-      topics: parsed.data.selectAllTopics ? [] : parsed.data.topics,
+      topics: parsed.data.selectAllTopics ? [] : resolved.topics,
       difficulty: parsed.data.difficulty,
       totalQuestions: parsed.data.totalQuestions,
       technicalQuestionRatio: parsed.data.technicalQuestionRatio,
       durationMinutes: parsed.data.durationMinutes ?? null,
       status: 'created',
+      entryMode: parsed.data.entryMode ?? 'manual',
+      learningPathId,
+      learningStageId,
+      pathRemediationId: parsed.data.pathRemediationId ?? null,
+      resumeContext: parsed.data.resumeContext ?? null,
     })
 
     return NextResponse.json({ session: created }, { status: 201 })

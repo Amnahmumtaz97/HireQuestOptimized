@@ -9,6 +9,15 @@ export interface IUserPreferences {
   reduceMotion?: boolean
 }
 
+export interface IUserGamification {
+  xp?: number
+  currentStreak?: number
+  longestStreak?: number
+  lastPracticeDate?: string | null
+  interviewsCompleted?: number
+  questionsAnswered?: number
+}
+
 export interface IUser {
   firstName: string
   lastName: string
@@ -19,6 +28,7 @@ export interface IUser {
   authProvider?: AuthProvider
   role: UserRole
   preferences?: IUserPreferences
+  gamification?: IUserGamification
 }
 
 const userSchema = new Schema<IUser>(
@@ -74,6 +84,14 @@ const userSchema = new Schema<IUser>(
         type: Boolean,
         default: false,
       },
+    },
+    gamification: {
+      xp: { type: Number, default: 0 },
+      currentStreak: { type: Number, default: 0 },
+      longestStreak: { type: Number, default: 0 },
+      lastPracticeDate: { type: String, default: null },
+      interviewsCompleted: { type: Number, default: 0 },
+      questionsAnswered: { type: Number, default: 0 },
     },
   },
   {

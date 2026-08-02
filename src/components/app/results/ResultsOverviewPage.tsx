@@ -22,6 +22,8 @@ import { useTheme } from '@/components/providers/ThemeProvider'
 import type { InterviewConfig } from '@/components/app/dashboard/types'
 import { formatIndustryDisplay, formatRoleCategoryDisplay } from '@/utils/dashboard/interview-labels'
 import { BounceLoader } from '@/components/ui/bounce-loader'
+import { ListPagination } from '@/components/ui/list-pagination'
+import { useClientPagination } from '@/hooks/useClientPagination'
 
 type InterviewSession = {
   _id: string
@@ -112,6 +114,23 @@ export function ResultsOverviewPage() {
     if (statusFilter === 'all') return sessions
     return sessions.filter((s) => s.status === statusFilter)
   }, [sessions, statusFilter])
+
+  const sortedFiltered = useMemo(
+    () =>
+      [...filtered].sort((a, b) => {
+        const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0
+        const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0
+        return tb - ta
+      }),
+    [filtered],
+  )
+
+  const {
+    page: resultsPage,
+    setPage: setResultsPage,
+    pageItems: pagedSessions,
+    totalPages: resultsTotalPages,
+  } = useClientPagination(sortedFiltered, 9, statusFilter)
 
   const completedSessions = useMemo(() => sessions.filter((s) => s.status === 'completed'), [sessions])
 
@@ -260,16 +279,9 @@ export function ResultsOverviewPage() {
                 </Link>
               </div>
             ) : (
-              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {filtered
-                  .slice()
-                  .sort((a, b) => {
-                    const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0
-                    const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0
-                    return tb - ta
-                  })
-                  .slice(0, 9)
-                  .map((s) => (
+              <div className="mt-4 space-y-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {pagedSessions.map((s) => (
                     <Link
                       key={s._id}
                       href={s.status === 'completed' ? `/app/interviews/${s._id}/results` : `/app/interviews/${s._id}`}
@@ -297,6 +309,12 @@ export function ResultsOverviewPage() {
                       </div>
                     </Link>
                   ))}
+                </div>
+                <ListPagination
+                  page={resultsPage}
+                  totalPages={resultsTotalPages}
+                  onPageChange={setResultsPage}
+                />
               </div>
             )}
           </TabsContent>

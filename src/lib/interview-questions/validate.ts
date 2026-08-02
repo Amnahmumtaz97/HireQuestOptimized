@@ -77,9 +77,9 @@ export function validateGeneratedQuestions(
 
     if (topicSet.size > 0 && !topicSet.has(q.topic.trim())) {
       issues.push({
-        level: 'warning',
+        level: 'error',
         index: i,
-        message: 'Topic is not one of the selected topics.',
+        message: `Topic "${q.topic}" is outside the resolved topic bank.`,
       })
     }
   }

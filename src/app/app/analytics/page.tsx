@@ -56,20 +56,24 @@ export default function AnalyticsPage() {
             Insights
           </div>
           <div className="mt-2 text-sm text-muted-foreground">
-            Coming next:
+            Path recommendations are live on Learning Paths (history-based weak topics).
           </div>
           <ul className="mt-3 space-y-2 text-sm text-foreground">
             <li className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
-              Topic mastery breakdown
+              <a href="/app/learning-paths" className="text-primary hover:underline">
+                Open recommended paths
+              </a>
             </li>
             <li className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
-              Difficulty vs. score trendline
+              <a href="/app/learning-paths/categories" className="text-primary hover:underline">
+                Browse categories
+              </a>
             </li>
             <li className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
-              Personalized AI recommendations
+              Topic mastery from path practice scores
             </li>
           </ul>
         </div>

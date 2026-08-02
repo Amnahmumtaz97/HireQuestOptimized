@@ -165,6 +165,11 @@ export const DashboardNavbar: FC<DashboardNavbarProps> = ({
                         <Brain className="h-4 w-4" /> Admin: Track Config
                       </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard/learning-paths" className="flex items-center gap-2">
+                        <Brain className="h-4 w-4" /> Admin: Learning Paths
+                      </Link>
+                    </DropdownMenuItem>
                   </>
                 ) : null}
                 <DropdownMenuSeparator />

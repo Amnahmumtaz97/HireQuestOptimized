@@ -12,6 +12,7 @@ import {
   Settings,
   Plus,
   ChevronsLeft,
+  Route,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { FC } from 'react'
@@ -27,6 +28,7 @@ export type SidebarNavItem = {
 export const sidebarNavItems: SidebarNavItem[] = [
   { href: '/app/new-interview', label: 'New Interview', icon: Plus, primary: true },
   { href: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/app/learning-paths', label: 'Learning Paths', icon: Route },
   { href: '/app/interviews', label: 'Interviews', icon: MessageSquare },
   { href: '/app/results', label: 'Results', icon: BarChart2 },
   { href: '/app/analytics', label: 'Analytics', icon: LineChart },
@@ -37,6 +39,7 @@ export const sidebarNavItems: SidebarNavItem[] = [
 
 function isNavActive(pathname: string, href: string): boolean {
   if (pathname === href) return true
+  if (href === '/app/learning-paths' && pathname.startsWith('/app/learning-paths')) return true
   if (href === '/app/interviews' && pathname.startsWith('/app/interviews')) return true
   if (href === '/app/results' && pathname.startsWith('/app/interviews/') && pathname.endsWith('/results')) return true
   if (href === '/app/billing' && (pathname.startsWith('/app/subscription') || pathname.startsWith('/app/invoices'))) return true

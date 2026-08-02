@@ -84,18 +84,22 @@ function roundRobinKinds(
 export function buildTemplateQuestions(params: InterviewGenerationParams): InterviewQuestionItem[] {
   const { topics, difficulty, totalQuestions, interviewType, technicalQuestionRatio, interviewTypes } =
     params
+  const topicList = (topics || []).map((t) => t.trim()).filter(Boolean)
+  if (topicList.length === 0) {
+    throw new Error('No interview topics selected.')
+  }
   const kinds = allocateKinds(interviewType, totalQuestions, technicalQuestionRatio, interviewTypes)
-  const assignedTopics = assignTopicsEvenly(totalQuestions, topics)
+  const assignedTopics = assignTopicsEvenly(totalQuestions, topicList)
 
   return kinds.map((kind, i) => {
-    const topic = assignedTopics[i] ?? 'General'
+    const topic = assignedTopics[i] ?? topicList[i % topicList.length]
     const questionDifficulty = difficultyForQuestionIndex(difficulty, i)
     const draft =
       kind === 'technical'
-        ? `For "${topic}" at ${questionDifficulty} difficulty: describe how you would approach a realistic scenario, key trade-offs, and how you would validate your solution.`
+        ? `Explain a practical challenge involving "${topic}" at ${questionDifficulty} difficulty, including how you would implement and test your solution.`
         : kind === 'hr'
-          ? `For "${topic}" at ${questionDifficulty} difficulty: answer as you would in a real HR interview. Be specific, professional, and tie your response to the role, department, and your experience.`
-          : `For "${topic}" at ${questionDifficulty} difficulty: describe a concrete situation, your actions, stakeholders involved, and what you learned.`
+          ? `In an HR interview at ${questionDifficulty} difficulty, discuss "${topic}" with a concrete example tied to your experience.`
+          : `Describe a concrete situation related to "${topic}" at ${questionDifficulty} difficulty: your actions, stakeholders involved, and what you learned.`
     return {
       type: kind,
       topic,

@@ -58,6 +58,11 @@ export interface IInterviewSession {
     answer: string
     updatedAt: Date
   }>
+  learningPathId?: string | null
+  learningStageId?: string | null
+  pathRemediationId?: string | null
+  entryMode?: 'manual' | 'resume' | 'path'
+  resumeContext?: Record<string, unknown> | null
 }
 
 const interviewSessionSchema = new Schema<IInterviewSession>(
@@ -137,9 +142,40 @@ const interviewSessionSchema = new Schema<IInterviewSession>(
       ],
       default: [],
     },
+    learningPathId: { type: String, trim: true, default: null, index: true },
+    learningStageId: { type: String, trim: true, default: null, index: true },
+    pathRemediationId: { type: String, trim: true, default: null },
+    entryMode: {
+      type: String,
+      enum: ['manual', 'resume', 'path'],
+      default: 'manual',
+    },
+    resumeContext: { type: Schema.Types.Mixed, default: null },
   },
   { timestamps: true },
 )
+
+// Hot-reload safe: ensure new paths exist on a previously cached model.
+if (models.InterviewSession) {
+  const cached = models.InterviewSession.schema
+  if (!cached.path('pathRemediationId')) {
+    cached.add({
+      pathRemediationId: { type: String, trim: true, default: null },
+    })
+  }
+  if (!cached.path('resumeContext')) {
+    cached.add({
+      learningPathId: { type: String, trim: true, default: null, index: true },
+      learningStageId: { type: String, trim: true, default: null, index: true },
+      entryMode: {
+        type: String,
+        enum: ['manual', 'resume', 'path'],
+        default: 'manual',
+      },
+      resumeContext: { type: Schema.Types.Mixed, default: null },
+    })
+  }
+}
 
 export const InterviewSessionModel: Model<IInterviewSession> =
   models.InterviewSession ||

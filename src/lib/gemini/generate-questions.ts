@@ -79,46 +79,116 @@ function buildBatchPrompt(params: InterviewGenerationParams): string {
           ? 'Focus: HR interview questions only (screening, culture fit, motivation, logistics, and common HR scenarios).'
           : `Focus: ${kinds[0] ?? params.interviewType} questions only.`
 
-  const diagramBudget = Math.min(MAX_DIAGRAM_QUESTIONS, n)
+  const topicBank = params.topics.map((t) => t.trim()).filter(Boolean)
+  if (topicBank.length === 0) {
+    throw new Error('No interview topics selected.')
+  }
+  const topicBankLine = topicBank.map((t) => `"${t}"`).join(', ')
+  const setup = params.interviewSetup
+  const hasDesignPatterns = topicBank.some((t) =>
+    /creational|structural|behavioral|design pattern/i.test(t),
+  )
+  const hasSystemDesign = topicBank.some((t) =>
+    /scalability|load balancing|caching|microservices|cap theorem|message queues|rate limiting|database design/i.test(
+      t,
+    ),
+  )
 
   return `You generate interview questions for an online hiring product.
 
 Output ONLY valid JSON: an array of exactly ${n} objects. Each object must be exactly:
-{"question":"...","requiresDiagram":true|false}
+{"question":"...","topic":"<one of the topic bank>","type":"technical"|"behavioral"|"hr","difficulty":"Easy"|"Medium"|"Hard","requiresDiagram":true|false}
+
+CRITICAL — selected topics ONLY (do not invent or substitute):
+- Every question MUST set "topic" to exactly one string from this list: [${topicBankLine}]
+- Distribute questions evenly across the topic bank.
+- NEVER introduce topics that are not in this list (including Design Patterns, System Design, DSA, etc. unless listed).
+${!hasDesignPatterns ? '- Design Patterns were NOT selected: do not ask about GoF patterns, creational/structural/behavioral pattern catalogs, or "approach / trade-offs / validation" frameworks framed as design-pattern drills.\n' : ''}
+${!hasSystemDesign ? '- System Design topics were NOT selected: do not ask generic scalability / CAP / load-balancer textbook questions unless those exact topics appear in the bank.\n' : ''}
 
 CRITICAL — candidate cannot draw or upload:
 - Never ask the candidate to draw, sketch, whiteboard, diagram, paint, illustrate, photograph, scan, attach, upload, or generate an image.
-- Never say "show your work in a figure" or "provide a picture". All figures are supplied by the platform when requiresDiagram is true.
-- Put every numeric instance (item weights/values, capacities, graph edges, matrix entries) in the question text itself.
-
-The "question" string may use GitHub-flavored Markdown inside the JSON value:
-- Knapsack, bin packing, DP, scheduling with parameters: MUST include a markdown pipe table (e.g. columns Item | Weight | Value) with concrete numbers, then the task in prose below or above.
-- Graph/tree/DAG questions: you may use a short bullet list of edges or nodes if no weights table is needed.
-- Use \\n for newlines inside the JSON string. Escape double quotes in strings.
-
-requiresDiagram rules:
-- ALWAYS set requiresDiagram:false. Never set it to true.
-- Diagrams are disabled on this platform.
-- All questions must be pure text, with markdown tables only when needed for data presentation.
-- Behavioral questions: plain text only, no images or diagrams.
-
-No other keys. Markdown is allowed ONLY inside each "question" string.
+- ALWAYS set requiresDiagram:false.
 
 Style rules:
-- Behavioral: one or two short sentences ending with "?".
-- HR: professional screening questions about motivation, teamwork, communication, goals, ethics, logistics, or role fit. Tailor wording to the department, specialization, and experience level implied by difficulty. One or two sentences ending with "?".
-- Technical: specific; if you include a table, ask the actual task after the table.
-- Do NOT start with labels like "Technical:", "Behavioral:", "Easy:", or bracketed tags.
-- Professional tone. Tie questions to the role and topics.
+- Technical: specific, grounded in the selected topic and the candidate profile when provided.
+- Behavioral/HR: short professional questions ending with "?".
+- Do NOT start with labels like "Technical:", "Easy:", or "For \\"Topic\\" at Easy difficulty:".
+- Prefer personalizing to listed projects/skills; do not invent resume facts.
+- Only use "approach", "trade-offs", and "validation" framing when the selected topic naturally calls for it (e.g. System Design / Design Patterns topics that are IN the bank).
 
-Context:
-- Role: ${roleLabel(params)}
-- Topics (distribute questions evenly across these): ${params.topics.join(', ') || 'General'}
-- Difficulty level for all questions: ${difficultyPromptLabel(params.difficulty)}
+${setupContextBlock(params)}
+${pathStageContextBlock(params)}
+- Role context: ${roleLabel(params)}
+- Topic bank: ${topicBank.join(', ')}
+- Difficulty level: ${difficultyPromptLabel(params.difficulty)}
 - Interview type: ${typeLabel}
 - ${ratioHint}
-
+${resumeContextBlock(params)}
 Return exactly ${n} questions as JSON array.`
+}
+
+function setupContextBlock(params: InterviewGenerationParams): string {
+  const s = params.interviewSetup
+  if (!s) return ''
+  return `Confirmed InterviewConfig (authoritative — use ONLY this):
+- Target role: ${s.targetRole || 'n/a'}
+- Categories: ${s.categories.join(', ') || 'n/a'}
+- Topics: ${s.topics.join(', ')}
+- Round: ${s.interviewRoundType || 'n/a'}
+- Format: ${s.preferredQuestionFormat || 'n/a'}
+- Company type: ${s.targetCompanyType || 'n/a'}
+- Focus areas: ${s.focusAreas.join(', ') || 'n/a'}
+- Language: ${s.language}
+${s.companies?.length ? `- Companies: ${s.companies.slice(0, 8).join(', ')}` : ''}
+${s.achievements?.length ? `- Achievements: ${s.achievements.slice(0, 5).join('; ')}` : ''}
+`
+}
+
+function pathStageContextBlock(params: InterviewGenerationParams): string {
+  const bits: string[] = []
+  if (params.learningPathTitle) bits.push(`Learning path: ${params.learningPathTitle}`)
+  if (params.learningStageTitle) bits.push(`Stage title: ${params.learningStageTitle}`)
+  if (params.learningStageType) {
+    bits.push(
+      `Stage type: ${params.learningStageType}` +
+        (params.learningStageType === 'mock_interview'
+          ? ' (full mock — realistic, comprehensive questions)'
+          : params.learningStageType === 'practice'
+            ? ' (practice — focused drills on bank topics)'
+            : ''),
+    )
+  }
+  if (bits.length === 0) return '- Path stage: (none)'
+  return `- Path stage: ${bits.join(' · ')}`
+}
+
+function resumeContextBlock(params: InterviewGenerationParams): string {
+  const r = params.resumeContext
+  if (!r) return ''
+
+  const skills = r?.skills?.filter(Boolean).slice(0, 20).join(', ') || ''
+  const projects =
+    r?.projects
+      ?.slice(0, 5)
+      .map(
+        (p) =>
+          `${p.name}: ${p.description}${
+            p.technologies?.length ? ` [${p.technologies.slice(0, 6).join(', ')}]` : ''
+          }`,
+      )
+      .join('; ') || ''
+
+  return `
+Resume context (REQUIRED when present — tailor every question to this candidate; do not invent facts not listed):
+${r?.name ? `- Candidate: ${r.name}` : ''}
+${r?.domain ? `- Domain: ${r.domain}` : ''}
+${r?.seniorityLevel ? `- Seniority: ${r.seniorityLevel}` : ''}
+${typeof r?.yearsExperience === 'number' ? `- Years experience: ${r.yearsExperience}` : ''}
+${skills ? `- Skills: ${skills}` : ''}
+${projects ? `- Projects: ${projects}` : ''}
+- Prefer scenarios, stacks, and wording that match the skills/projects above while staying inside the topic bank.
+`
 }
 
 export async function generateQuestionsWithGemini(
@@ -185,14 +255,22 @@ export async function generateQuestionsWithGemini(
     spareDiagramSlots -= 1
   }
   const assignedTopics = assignTopicsEvenly(params.totalQuestions, params.topics)
+  const topicBank = new Set(params.topics.map((t) => t.trim()).filter(Boolean))
 
-  const questions: InterviewQuestionItem[] = parsed.map((item, i) => ({
-    type: kinds[i],
-    topic: assignedTopics[i] ?? 'General',
-    difficulty: difficultyForQuestionIndex(params.difficulty, i),
-    question: formatGeneratedQuestion(item.question),
-    illustrationRequired: Boolean(item.requiresDiagram),
-  }))
+  const questions: InterviewQuestionItem[] = parsed.map((item, i) => {
+    const rawTopic = item.topic?.trim() || ''
+    const topic =
+      rawTopic && topicBank.has(rawTopic)
+        ? rawTopic
+        : (assignedTopics[i] ?? 'General')
+    return {
+      type: kinds[i],
+      topic,
+      difficulty: difficultyForQuestionIndex(params.difficulty, i),
+      question: formatGeneratedQuestion(item.question),
+      illustrationRequired: Boolean(item.requiresDiagram),
+    }
+  })
 
   for (let i = 0; i < questions.length; i++) {
     if (!diagramFlags[i]) continue

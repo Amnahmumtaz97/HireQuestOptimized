@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { authOptions } from '@/lib/auth'
 import { connectToDatabase } from '@/lib/mongoose'
 import { InterviewSessionModel } from '@/models/InterviewSession'
+import { advancePathProgressForInterview } from '@/lib/learning-paths/advance-on-complete'
 
 function validateId(id: string): NextResponse | null {
   if (!isValidObjectId(id)) {
@@ -55,6 +56,19 @@ const patchSchema = z.object({
     .optional(),
 })
 
+/** Share of questions with a non-empty answer (0–100). No invented baseline. */
+function completionScore(doc: {
+  questions?: unknown[]
+  answers?: Array<{ index?: number; answer?: string }>
+}): number {
+  const total = Array.isArray(doc.questions) ? doc.questions.length : 0
+  if (total <= 0) return 0
+  const answered = (doc.answers ?? []).filter(
+    (a) => typeof a.answer === 'string' && a.answer.trim().length > 0,
+  ).length
+  return Math.max(0, Math.min(100, Math.round((answered / total) * 100)))
+}
+
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) {
@@ -69,7 +83,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const body = await request.json()
     const parsed = patchSchema.safeParse(body)
     if (!parsed.success) {
-      return NextResponse.json({ message: parsed.error.issues[0]?.message ?? 'Invalid input' }, { status: 400 })
+      return NextResponse.json(
+        { message: parsed.error.issues[0]?.message ?? 'Invalid input' },
+        { status: 400 },
+      )
     }
 
     await connectToDatabase()
@@ -81,6 +98,51 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return NextResponse.json({ message: 'Interview not found' }, { status: 404 })
     }
 
+    const questionCount = Array.isArray(exists.questions) ? exists.questions.length : 0
+
+    if (parsed.data.answer) {
+      if (questionCount <= 0) {
+        return NextResponse.json(
+          { message: 'Generate questions before saving answers' },
+          { status: 400 },
+        )
+      }
+      if (parsed.data.answer.index >= questionCount) {
+        return NextResponse.json({ message: 'Answer index out of range' }, { status: 400 })
+      }
+    }
+    if (parsed.data.flag) {
+      if (questionCount <= 0 || parsed.data.flag.index >= questionCount) {
+        return NextResponse.json({ message: 'Flag index out of range' }, { status: 400 })
+      }
+    }
+    if (
+      typeof parsed.data.currentQuestionIndex === 'number' &&
+      questionCount > 0 &&
+      parsed.data.currentQuestionIndex >= questionCount
+    ) {
+      return NextResponse.json(
+        { message: 'currentQuestionIndex out of range' },
+        { status: 400 },
+      )
+    }
+
+    if (parsed.data.status === 'completed') {
+      if (questionCount <= 0) {
+        return NextResponse.json(
+          { message: 'Cannot complete an interview with no questions' },
+          { status: 400 },
+        )
+      }
+      if (exists.status === 'created') {
+        return NextResponse.json(
+          { message: 'Start the interview before marking it completed' },
+          { status: 400 },
+        )
+      }
+    }
+
+    const wasCompleted = exists.status === 'completed'
     const baseSet: Record<string, unknown> = {}
     if (parsed.data.status) baseSet.status = parsed.data.status
     if (typeof parsed.data.currentQuestionIndex === 'number') {
@@ -90,7 +152,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     let updated: unknown = exists
 
     if (Object.keys(baseSet).length > 0) {
-      updated = await InterviewSessionModel.findOneAndUpdate(filter, { $set: baseSet }, { returnDocument: 'after' }).lean()
+      updated = await InterviewSessionModel.findOneAndUpdate(
+        filter,
+        { $set: baseSet },
+        { returnDocument: 'after' },
+      ).lean()
     }
 
     if (parsed.data.answer) {
@@ -138,6 +204,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       durationMinutes?: number | null
       interviewStartedAt?: Date | null
       status?: string
+      learningPathId?: string | null
+      learningStageId?: string | null
+      questions?: unknown[]
+      answers?: Array<{ index?: number; answer?: string }>
     }
     if (
       sessionDoc.durationMinutes &&
@@ -150,11 +220,28 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         { returnDocument: 'after' },
       ).lean()
       if (withStart) {
-        return NextResponse.json({ session: withStart })
+        updated = withStart
       }
     }
 
-    return NextResponse.json({ session: updated })
+    let pathProgress: { advanced: boolean; message?: string } | null = null
+    if (sessionDoc.status === 'completed' && !wasCompleted) {
+      pathProgress = await advancePathProgressForInterview({
+        userId: session.user.id,
+        learningPathId: sessionDoc.learningPathId,
+        learningStageId: sessionDoc.learningStageId,
+        score: completionScore(sessionDoc),
+        questionsAnswered: (sessionDoc.answers ?? []).filter(
+          (a) => typeof a.answer === 'string' && a.answer.trim().length > 0,
+        ).length,
+        remediationId: (sessionDoc as { pathRemediationId?: string | null }).pathRemediationId,
+      })
+    }
+
+    return NextResponse.json({
+      session: updated,
+      ...(pathProgress ? { pathProgress } : {}),
+    })
   } catch (error) {
     return NextResponse.json(
       { message: error instanceof Error ? error.message : 'Failed to update interview' },
@@ -175,7 +262,10 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
 
   try {
     await connectToDatabase()
-    const deleted = await InterviewSessionModel.findOneAndDelete({ _id: id, userId: session.user.id }).lean()
+    const deleted = await InterviewSessionModel.findOneAndDelete({
+      _id: id,
+      userId: session.user.id,
+    }).lean()
     if (!deleted) {
       return NextResponse.json({ message: 'Interview not found' }, { status: 404 })
     }

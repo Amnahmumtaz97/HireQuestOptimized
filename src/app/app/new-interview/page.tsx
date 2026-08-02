@@ -1,5 +1,6 @@
-import { CreateInterviewWizard } from '@/components/app/UserDashboard'
-import { DashboardPageHeader } from '@/components/app/dashboard/DashboardPageHeader'
+import { Suspense } from 'react'
+import { NewInterviewPageClient } from '@/components/app/interview/NewInterviewPageClient'
+import { BounceLoader } from '@/components/ui/bounce-loader'
 
 export const metadata = {
   title: 'New Interview — HireQuest',
@@ -7,12 +8,14 @@ export const metadata = {
 
 export default function NewInterviewPage() {
   return (
-    <>
-      <DashboardPageHeader
-        title="New Interview"
-        description="Select all options below to generate your interview session."
-      />
-      <CreateInterviewWizard />
-    </>
+    <Suspense
+      fallback={
+        <div className="flex min-h-[40vh] items-center justify-center">
+          <BounceLoader label="Loading" />
+        </div>
+      }
+    >
+      <NewInterviewPageClient />
+    </Suspense>
   )
 }

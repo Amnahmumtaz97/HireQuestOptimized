@@ -9,6 +9,12 @@ import { StartInterviewButton } from '@/components/app/StartInterviewButton'
 import { TopicSelector, type TopicMode } from '@/components/app/TopicSelector'
 import { IndustrySelector } from '@/components/app/IndustrySelector'
 import { RoleCategorySelector } from '@/components/app/RoleCategorySelector'
+import { ResumeUpload } from '@/components/app/ResumeUpload'
+import type { ResumeParseResult } from '@/lib/resume/schema'
+import { matchResumeToCatalog } from '@/lib/resume/match-catalog'
+import type { LearningStage } from '@/components/app/learning-paths/types'
+import { LearningPathsDashboardWidget } from '@/components/app/learning-paths/LearningPathsDashboardWidget'
+import { toSpecializationRef } from '@/lib/interview-catalog/resolve'
 import {
   MessageSquare, BarChart2, User,
   Plus, RotateCcw, Activity, CheckCircle2,
@@ -19,6 +25,7 @@ import {
 import { ProgressRing } from '@/components/dashboard/ProgressRing'
 import { AIAssistantCard } from '@/components/dashboard/AIAssistantCard'
 import { BounceLoader } from '@/components/ui/bounce-loader'
+import { ListPagination } from '@/components/ui/list-pagination'
 import { defaultMonthToDateRange } from '@/utils/dashboard/date'
 import { rowRevealDelay, useResponsiveColumns } from '@/hooks/use-reveal'
 import {
@@ -332,6 +339,8 @@ export function AppDashboardPanel() {
         </Card>
       </div>
 
+      <LearningPathsDashboardWidget />
+
       <Card className="p-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -632,15 +641,6 @@ export function InterviewsPanel() {
     return sorted.slice(start, start + pageSize)
   }, [safePage, sorted])
 
-  const pageNumbers = useMemo(() => {
-    const out: number[] = []
-    const radius = 2
-    const start = Math.max(1, safePage - radius)
-    const end = Math.min(totalPages, safePage + radius)
-    for (let p = start; p <= end; p++) out.push(p)
-    return out
-  }, [safePage, totalPages])
-
   const cardCols = useResponsiveColumns({ base: 1, sm: 2, xl: 3 })
 
   return (
@@ -873,61 +873,7 @@ export function InterviewsPanel() {
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="text-xs text-muted-foreground">
-              Page <strong className="text-foreground">{safePage}</strong> of{' '}
-              <strong className="text-foreground">{totalPages}</strong>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={safePage <= 1}
-                className="hq-panel-btn min-h-9 px-3 py-2 text-xs font-semibold disabled:pointer-events-none disabled:opacity-45"
-              >
-                Prev
-              </button>
-
-              {pageNumbers[0] && pageNumbers[0] > 1 ? (
-                <>
-                  <button type="button" onClick={() => setPage(1)} className="hq-panel-btn min-h-9 px-3 py-2 text-xs font-semibold">
-                    1
-                  </button>
-                  {pageNumbers[0] > 2 ? <span className="px-1 text-xs text-muted-foreground">…</span> : null}
-                </>
-              ) : null}
-
-              {pageNumbers.map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setPage(p)}
-                  className={['hq-panel-btn min-h-9 px-3 py-2 text-xs font-semibold', p === safePage ? 'hq-panel-btn--active' : ''].join(' ')}
-                >
-                  {p}
-                </button>
-              ))}
-
-              {pageNumbers[pageNumbers.length - 1] && pageNumbers[pageNumbers.length - 1] < totalPages ? (
-                <>
-                  {pageNumbers[pageNumbers.length - 1] < totalPages - 1 ? <span className="px-1 text-xs text-muted-foreground">…</span> : null}
-                  <button type="button" onClick={() => setPage(totalPages)} className="hq-panel-btn min-h-9 px-3 py-2 text-xs font-semibold">
-                    {totalPages}
-                  </button>
-                </>
-              ) : null}
-
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={safePage >= totalPages}
-                className="hq-panel-btn min-h-9 px-3 py-2 text-xs font-semibold disabled:pointer-events-none disabled:opacity-45"
-              >
-                Next
-              </button>
-            </div>
-          </div>
+          <ListPagination page={safePage} totalPages={totalPages} onPageChange={setPage} />
         </div>
       )}
 
@@ -943,7 +889,21 @@ export function InterviewsPanel() {
   )
 }
 
-export function CreateInterviewWizard() {
+export type CreateInterviewWizardProps = {
+  entryMode?: 'manual' | 'resume' | 'path'
+  learningPathId?: string | null
+  learningStageId?: string | null
+  stagePrefill?: LearningStage | null
+  hideResumeUpload?: boolean
+}
+
+export function CreateInterviewWizard({
+  entryMode = 'manual',
+  learningPathId: learningPathIdProp = null,
+  learningStageId: learningStageIdProp = null,
+  stagePrefill = null,
+  hideResumeUpload = false,
+}: CreateInterviewWizardProps = {}) {
   const router = useRouter()
   const toast = useToast()
   const [departments, setDepartments] = useState<DepartmentConfig[]>([])
@@ -992,6 +952,14 @@ export function CreateInterviewWizard() {
   const [wizardStep, setWizardStep] = useState<WizardStepKey>('interviewType')
   const [wizardError, setWizardError] = useState('')
   const [pastDifficulty, setPastDifficulty] = useState(false)
+  const [resumeContext, setResumeContext] = useState<ResumeParseResult | null>(null)
+  const [learningPathId, setLearningPathId] = useState<string | null>(learningPathIdProp)
+  const [learningStageId, setLearningStageId] = useState<string | null>(learningStageIdProp)
+
+  useEffect(() => {
+    setLearningPathId(learningPathIdProp)
+    setLearningStageId(learningStageIdProp)
+  }, [learningPathIdProp, learningStageIdProp])
 
   useEffect(() => {
     async function loadConfig() {
@@ -1230,14 +1198,31 @@ export function CreateInterviewWizard() {
       totalQuestions,
       technicalQuestionRatio: technicalQuestionRatioForApi,
       durationMinutes: isDurationEnabled ? Number(duration) || null : null,
+      entryMode,
+      learningPathId: learningPathId || null,
+      learningStageId: learningStageId || null,
+      resumeContext: resumeContext
+        ? {
+            name: resumeContext.name,
+            yearsExperience: resumeContext.yearsExperience,
+            seniorityLevel: resumeContext.seniorityLevel,
+            domain: resumeContext.domain,
+            skills: resumeContext.skills,
+            projects: resumeContext.projects,
+          }
+        : null,
     }),
     [
       departmentKey,
       difficulty,
       duration,
+      entryMode,
       interviewType,
       isDurationEnabled,
+      learningPathId,
+      learningStageId,
       resolvedSpecializationRefs,
+      resumeContext,
       selectAllSpecializations,
       selectAllTopics,
       selectedSpecializations,
@@ -1304,7 +1289,11 @@ export function CreateInterviewWizard() {
         return
       }
 
-      const genRes = await fetch(`/api/interviews/${sessionId}/generate-questions`, { method: 'POST' })
+      const genRes = await fetch(`/api/interviews/${sessionId}/generate-questions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
       const genData = await genRes.json()
       if (!genRes.ok) {
         const msg = genData.message ?? 'Interview saved, but question generation failed'
@@ -1381,7 +1370,63 @@ export function CreateInterviewWizard() {
     setWizardStep('interviewType')
     setWizardError('')
     setPastDifficulty(false)
+    setResumeContext(null)
   }, [])
+
+  const applyResumeSuggestions = useCallback(
+    (resume: ResumeParseResult) => {
+      setResumeContext(resume)
+      const match = matchResumeToCatalog(resume, departments)
+      if (match.departmentKey) {
+        setDepartmentKey(match.departmentKey)
+        if (match.specializationKeys.length > 0) {
+          setSpecializationRefs(
+            match.specializationKeys.map((k) =>
+              toSpecializationRef(match.departmentKey!, k),
+            ),
+          )
+          setSelectAllSpecializations(false)
+        } else {
+          setSpecializationRefs([])
+          setSelectAllSpecializations(false)
+        }
+        if (match.topics.length > 0) {
+          setTopics(match.topics)
+          setSelectAllTopics(false)
+        }
+      }
+      if (match.difficulty) setDifficulty(match.difficulty)
+      if (match.interviewType) setInterviewType(match.interviewType)
+    },
+    [departments],
+  )
+
+  useEffect(() => {
+    if (!stagePrefill || departments.length === 0) return
+    if (stagePrefill.departmentKey) {
+      setDepartmentKey(stagePrefill.departmentKey)
+      if (stagePrefill.specializationKeys?.length) {
+        setSpecializationRefs(
+          stagePrefill.specializationKeys.map((k) =>
+            toSpecializationRef(stagePrefill.departmentKey!, k),
+          ),
+        )
+        setSelectAllSpecializations(false)
+      }
+    }
+    if (stagePrefill.interviewType) setInterviewType(stagePrefill.interviewType)
+    if (stagePrefill.difficulty) setDifficulty(stagePrefill.difficulty)
+    if (stagePrefill.suggestedTopics?.length) {
+      setTopics(stagePrefill.suggestedTopics)
+      setSelectAllTopics(false)
+    }
+    if (typeof stagePrefill.totalQuestions === 'number') {
+      setTotalQuestions(stagePrefill.totalQuestions)
+    }
+    if (typeof stagePrefill.technicalQuestionRatio === 'number') {
+      setTechnicalRatio(stagePrefill.technicalQuestionRatio)
+    }
+  }, [stagePrefill, departments])
 
   const handleDepartmentChange = useCallback((nextKey: string | null) => {
     setDepartmentKey(nextKey)
@@ -1498,6 +1543,23 @@ export function CreateInterviewWizard() {
             {actionError ? <p className="text-sm text-destructive">{actionError}</p> : null}
             {actionMessage ? <p className="text-sm text-[var(--hq-green)]">{actionMessage}</p> : null}
             {wizardError ? <p className="text-sm text-[var(--hq-amber)]">{wizardError}</p> : null}
+
+            {(learningPathId || learningStageId) && (
+              <p className="text-xs text-muted-foreground">
+                Linked from a learning path
+                {stagePrefill?.title ? ` · ${stagePrefill.title}` : ''}
+                {learningPathId ? ` · path …${learningPathId.slice(-6)}` : ''}
+                . Path bindings and any attached resume will tailor generated questions.
+              </p>
+            )}
+
+            {!hideResumeUpload ? (
+              <ResumeUpload
+                value={resumeContext}
+                onParsed={applyResumeSuggestions}
+                onClear={() => setResumeContext(null)}
+              />
+            ) : null}
 
             <WizardStepper
               steps={wizardSteps}

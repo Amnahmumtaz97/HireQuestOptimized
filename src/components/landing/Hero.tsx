@@ -64,24 +64,24 @@ export function Hero() {
       ref={ref}
       className="relative isolate overflow-hidden pt-28 pb-20 sm:pt-32 sm:pb-24 lg:pt-36 lg:pb-28"
     >
-      {/* Hero-scoped background (contained within this section only) */}
+      {/* Hero-scoped background — extends under fixed nav; brain fills the plane */}
       <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden>
         <ConstellationBackground
           className="absolute inset-0 h-full w-full pointer-events-none opacity-70"
           intensity={0.4}
         />
-        <div className="absolute left-1/2 top-1/2 h-[90%] w-[90%] -translate-x-1/2 -translate-y-1/2">
+        <div className="absolute inset-0 hq-hero-brain">
           <Image
             src="/hero-ai-brain-removebg-preview.png"
             alt=""
             fill
             priority
-            sizes="(max-width: 1024px) 100vw, 70vw"
-            className="object-cover object-center"
+            sizes="100vw"
+            className="object-cover object-[center_20%] sm:object-center"
           />
         </div>
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,color-mix(in_oklab,var(--background)_88%,transparent)_0%,color-mix(in_oklab,var(--background)_55%,transparent)_48%,color-mix(in_oklab,var(--background)_72%,transparent)_100%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,color-mix(in_oklab,var(--background)_35%,transparent)_0%,transparent_28%,color-mix(in_oklab,var(--background)_40%,transparent)_100%)]" />
+        <div className="absolute inset-0 hq-hero-wash-x" />
+        <div className="absolute inset-0 hq-hero-wash-y" />
         <div className="absolute inset-0 bg-mesh opacity-40" />
       </div>
 
