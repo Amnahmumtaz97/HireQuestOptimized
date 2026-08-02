@@ -1,4 +1,4 @@
-import { PathSelector } from '@/components/app/learning-paths/PathSelector'
+import { CategoriesGrid } from '@/components/app/learning-paths/CategoriesGrid'
 import { LearningPathsProgressPanel } from '@/components/app/learning-paths/LearningPathsProgressPanel'
 import { DashboardPageHeader } from '@/components/app/dashboard/DashboardPageHeader'
 
@@ -11,12 +11,12 @@ export default function LearningPathsPage() {
     <>
       <DashboardPageHeader
         title="Learning Paths"
-        description="Interview-driven journeys with levels, adaptive focus practice, and progress tracking."
+        description="Pick a category to start — Top 30 Companies IT (Pakistan), DSA, roles, stacks, and more."
       />
       <div className="mb-6">
         <LearningPathsProgressPanel />
       </div>
-      <PathSelector />
+      <CategoriesGrid featuredFirst showCatalogLink />
     </>
   )
 }

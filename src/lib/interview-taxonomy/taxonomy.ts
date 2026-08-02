@@ -117,7 +117,7 @@ export const INTERVIEW_TAXONOMY: TaxonomyCategory[] = [
   },
   {
     key: 'hr',
-    label: 'HR',
+    label: 'Screening HR',
     track: 'non_technical',
     topics: ['HR'],
   },

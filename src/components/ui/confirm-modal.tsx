@@ -94,12 +94,12 @@ export function ConfirmModal({
           </p>
         ) : null}
 
-        <div className="mt-6 flex flex-wrap items-center justify-end gap-2">
+        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
           <button
             type="button"
             disabled={loading}
             onClick={() => onOpenChange(false)}
-            className="inline-flex h-10 items-center justify-center rounded-xl border border-border bg-input/30 px-4 text-sm font-semibold text-foreground hover:bg-input/50 disabled:opacity-50 btn-micro"
+            className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-border bg-input/30 px-4 text-sm font-semibold text-foreground hover:bg-input/50 disabled:opacity-50 btn-micro sm:h-10 sm:w-auto"
           >
             {cancelLabel}
           </button>
@@ -109,10 +109,10 @@ export function ConfirmModal({
             disabled={loading}
             onClick={() => void runConfirm()}
             className={[
-              'inline-flex h-10 min-w-[8rem] items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold text-white disabled:opacity-50 btn-micro',
+              'inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50 btn-micro sm:h-10 sm:w-auto sm:min-w-[8rem]',
               confirmVariant === 'danger'
-                ? 'bg-red-600 hover:bg-red-500 focus-visible:ring-2 focus-visible:ring-red-400'
-                : 'bg-primary hover:bg-[var(--primary-hover)]',
+                ? 'bg-destructive hover:bg-destructive/90 focus-visible:ring-2 focus-visible:ring-destructive/40'
+                : 'bg-primary hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring/40',
             ].join(' ')}
           >
             {loading ? <BounceLoader size="sm" label="Working" /> : null}

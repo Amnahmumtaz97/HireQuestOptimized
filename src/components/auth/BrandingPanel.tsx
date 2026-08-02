@@ -16,7 +16,7 @@ export function BrandingPanel({ mode }: Props) {
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            'radial-gradient(60% 45% at 50% 22%, rgba(79,110,247,0.22) 0%, transparent 70%), radial-gradient(60% 60% at 80% 100%, rgba(56,189,248,0.14) 0%, transparent 70%)',
+            'radial-gradient(60% 45% at 50% 22%, var(--glow-primary-mid) 0%, transparent 70%), radial-gradient(60% 60% at 80% 100%, color-mix(in oklab, var(--info) 18%, transparent) 0%, transparent 70%)',
         }}
       />
 
@@ -124,11 +124,11 @@ export function BrandingPanel({ mode }: Props) {
         >
           {isSignIn ? (
             <>
-              Level Up with <span className="text-[#8fb0ff]">AI Interviews</span>
+          Level Up with <span className="text-[color-mix(in_oklab,var(--primary)_55%,white)]">AI Interviews</span>
             </>
           ) : (
             <>
-              Join the Future of <span className="text-[#8fb0ff]">Smart Hiring</span>
+              Join the Future of <span className="text-[color-mix(in_oklab,var(--primary)_55%,white)]">Smart Hiring</span>
             </>
           )}
         </h1>
@@ -148,7 +148,7 @@ export function BrandingPanel({ mode }: Props) {
               key={label}
               className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-1.5 text-sm text-white/90"
             >
-              <Icon className="h-3.5 w-3.5 text-[#8fb0ff]" strokeWidth={1.8} />
+              <Icon className="h-3.5 w-3.5 text-[color-mix(in_oklab,var(--primary)_55%,white)]" strokeWidth={1.8} />
               {label}
             </div>
           ))}

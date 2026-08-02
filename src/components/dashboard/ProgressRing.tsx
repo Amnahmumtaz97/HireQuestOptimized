@@ -12,8 +12,8 @@ export function ProgressRing({ size = 84, progress = 0.62 }: { size?: number; pr
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
       <defs>
         <linearGradient id="g1" x1="0%" x2="100%">
-          <stop offset="0%" stopColor="#1d4ed8" />
-          <stop offset="100%" stopColor="#2563eb" />
+          <stop offset="0%" stopColor="var(--primary-active)" />
+          <stop offset="100%" stopColor="var(--primary)" />
         </linearGradient>
       </defs>
       <circle cx={size / 2} cy={size / 2} r={radius} strokeWidth={stroke} stroke="var(--border)" fill="none" />

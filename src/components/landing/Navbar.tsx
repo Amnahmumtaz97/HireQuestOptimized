@@ -64,13 +64,13 @@ export function Navbar() {
             </div>
           </div>
 
-          <div className="ml-auto flex items-center gap-3 sm:gap-5">
+          <div className="ml-auto flex items-center gap-2 sm:gap-4">
             <button
               type="button"
               aria-label="Toggle theme"
               onClick={toggleTheme}
               suppressHydrationWarning
-              className="hq-btn-icon hidden sm:inline-flex"
+              className="hq-btn-icon inline-flex"
             >
               {theme === 'light' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
@@ -81,15 +81,14 @@ export function Navbar() {
               </Link>
             ) : (
               <>
-                <Link href="/auth" className="hq-marketing-nav-login">
+                <Link href="/auth" className="hq-marketing-nav-login hidden sm:inline-flex">
                   Login
                 </Link>
                 <Link
                   href="/auth"
-                  className="hq-marketing-cta max-w-[9.5rem] truncate !rounded-[10px] !px-3 !pr-3 text-[13px] sm:max-w-none sm:!px-4 sm:!pr-4 sm:text-[15px]"
+                  className="hq-marketing-cta hidden max-w-[9.5rem] truncate !rounded-[10px] !px-3 !pr-3 text-[13px] sm:inline-flex sm:max-w-none sm:!px-4 sm:!pr-4 sm:text-[15px]"
                 >
-                  <span className="sm:hidden">Start free</span>
-                  <span className="hidden sm:inline">Start Practicing Free</span>
+                  <span>Start Practicing Free</span>
                 </Link>
               </>
             )}
@@ -135,12 +134,20 @@ export function Navbar() {
                   Get Started
                 </Link>
               ) : (
-                <Link
-                  href="/auth"
-                  className="rounded-xl px-4 py-3 text-sm font-semibold text-foreground hover:bg-[var(--secondary)]"
-                >
-                  Login
-                </Link>
+                <>
+                  <Link
+                    href="/auth"
+                    className="rounded-xl px-4 py-3 text-sm font-semibold text-foreground hover:bg-[var(--secondary)]"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/auth"
+                    className="rounded-xl bg-primary px-4 py-3 text-center text-sm font-semibold text-primary-foreground"
+                  >
+                    Start Practicing Free
+                  </Link>
+                </>
               )}
             </div>
           </div>

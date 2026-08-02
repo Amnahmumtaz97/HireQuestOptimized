@@ -1,5 +1,7 @@
 import { Schema, model, models, type Model, type Types } from 'mongoose'
 
+import type { StageInterviewType } from '@/models/Stage'
+
 export type UserPathStatus = 'in_progress' | 'completed' | 'abandoned'
 
 export type TopicStat = {
@@ -15,7 +17,7 @@ export type RemediationQueueItem = {
   topics: string[]
   departmentKey: string
   specializationKeys: string[]
-  interviewType: 'technical' | 'behavioral' | 'both' | 'hr' | null
+  interviewType: StageInterviewType | null
   difficulty: 'Easy' | 'Medium' | 'Hard' | 'Adaptive' | null
   totalQuestions: number
   technicalQuestionRatio: number

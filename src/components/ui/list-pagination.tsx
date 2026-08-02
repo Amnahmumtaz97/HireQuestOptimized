@@ -42,18 +42,18 @@ export function ListPagination({
           type="button"
           disabled={safePage <= 1}
           onClick={() => onPageChange(Math.max(1, safePage - 1))}
-          className="hq-panel-btn min-h-8 px-2 py-1 text-[10px] font-semibold disabled:opacity-45"
+          className="hq-panel-btn min-h-10 px-3 py-2 text-xs font-semibold disabled:opacity-45"
         >
           Prev
         </button>
-        <span className="text-[10px] text-muted-foreground">
+        <span className="text-xs text-muted-foreground">
           {safePage}/{safeTotal}
         </span>
         <button
           type="button"
           disabled={safePage >= safeTotal}
           onClick={() => onPageChange(Math.min(safeTotal, safePage + 1))}
-          className="hq-panel-btn min-h-8 px-2 py-1 text-[10px] font-semibold disabled:opacity-45"
+          className="hq-panel-btn min-h-10 px-3 py-2 text-xs font-semibold disabled:opacity-45"
         >
           Next
         </button>

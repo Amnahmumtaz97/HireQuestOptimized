@@ -14,7 +14,7 @@ export const TabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      "inline-flex h-10 items-center justify-center rounded-2xl border border-border bg-input/20 p-1 text-muted-foreground",
+      "flex h-11 w-full max-w-full items-center justify-start gap-1 overflow-x-auto rounded-2xl border border-border bg-input/20 p-1 text-muted-foreground [scrollbar-width:thin] sm:inline-flex sm:h-10 sm:w-auto sm:justify-center sm:overflow-visible",
       className,
     )}
     {...props}
@@ -29,9 +29,9 @@ export const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "inline-flex items-center justify-center whitespace-nowrap rounded-xl px-3 py-2 text-xs font-semibold transition-all",
+      "inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-xl px-3 py-2 text-xs font-semibold transition-all",
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-      "data-[state=active]:bg-primary data-[state=active]:text-white",
+      "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground",
       "data-[state=inactive]:hover:bg-input/30 data-[state=inactive]:hover:text-foreground",
       className,
     )}

@@ -290,9 +290,11 @@ export function LearningPathsAdmin() {
             type="button"
             loading={creating}
             onClick={() => void createPath()}
-            className="hq-btn-outline h-8 rounded-lg px-2 text-xs"
+            className="hq-btn-outline inline-flex h-10 min-h-10 min-w-10 items-center justify-center rounded-lg px-2.5 text-xs"
+            aria-label="Create learning path"
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">New</span>
           </LoadingButton>
         </div>
         <ul className="max-h-[70vh] space-y-1 overflow-y-auto">
@@ -575,9 +577,12 @@ export function LearningPathsAdmin() {
                         >
                           <option value="">Interview type…</option>
                           <option value="technical">technical</option>
+                          <option value="coding">coding</option>
+                          <option value="system_design">system_design</option>
                           <option value="behavioral">behavioral</option>
-                          <option value="both">both</option>
                           <option value="hr">hr</option>
+                          <option value="mixed">mixed</option>
+                          <option value="both">both (legacy)</option>
                         </select>
                         <select
                           value={stage.difficulty || ''}

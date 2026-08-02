@@ -62,7 +62,7 @@ export const SidebarNav: FC<SidebarNavProps> = ({
   const pathname = usePathname() ?? ''
 
   return (
-    <aside className="hq-app-sidebar relative flex h-full min-h-full w-full flex-col">
+    <aside className="hq-app-sidebar relative flex h-full min-h-0 w-full flex-col overflow-y-auto overscroll-contain">
       <TooltipProvider delayDuration={160}>
         <div className={['flex h-full flex-col p-3.5', collapsed ? 'items-center' : ''].join(' ')}>
           <div
@@ -72,7 +72,7 @@ export const SidebarNav: FC<SidebarNavProps> = ({
             ].join(' ')}
           >
             {!collapsed ? (
-              <Link href="/" className="flex min-w-0 items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+              <Link href="/" className="flex min-w-0 items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/40">
                 <span className="hq-app-sidebar-mark inline-flex h-10 min-w-[2.5rem] items-center justify-center rounded-[10px] px-1.5 text-[11px] font-extrabold tracking-[-0.04em]">
                   HQ
                 </span>
@@ -114,36 +114,38 @@ export const SidebarNav: FC<SidebarNavProps> = ({
               const Icon = item.icon
               const baseClasses = [
                 'group relative flex w-full min-w-0 items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/35',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/35',
                 collapsed ? 'justify-center px-1.5' : '',
               ].join(' ')
 
-                const selected = isActive && !item.primary
+              const selected = isActive && !item.primary
 
-                const link = (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => onNavigate?.()}
+              const link = (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => onNavigate?.()}
+                  className={[
+                    baseClasses,
+                    item.primary
+                      ? 'hq-app-sidebar-link hq-app-sidebar-link--primary mb-1.5'
+                      : selected
+                        ? 'hq-app-sidebar-link hq-app-sidebar-link--active'
+                        : 'hq-app-sidebar-link',
+                  ].join(' ')}
+                >
+                  <span
                     className={[
-                      baseClasses,
-                      item.primary
-                        ? 'hq-app-sidebar-link hq-app-sidebar-link--primary mb-1.5'
-                        : selected
-                          ? 'hq-app-sidebar-link hq-app-sidebar-link--active'
-                          : 'hq-app-sidebar-link',
-                    ].join(' ')}
+                      'hq-app-sidebar-link-icon relative inline-flex h-10 w-10 items-center justify-center rounded-xl transition-colors',
+                      item.primary ? 'is-primary' : '',
+                      selected ? 'is-active' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                    aria-hidden
                   >
-                    <span
-                      className={[
-                        'hq-app-sidebar-link-icon relative inline-flex h-10 w-10 items-center justify-center rounded-xl transition-colors',
-                        item.primary ? 'is-primary' : '',
-                        selected ? 'is-active' : '',
-                      ].filter(Boolean).join(' ')}
-                      aria-hidden
-                    >
-                      <Icon className="h-5 w-5" />
-                    </span>
+                    <Icon className="h-5 w-5" />
+                  </span>
 
                   {!collapsed ? <span className="relative min-w-0 truncate">{item.label}</span> : null}
                 </Link>

@@ -10,14 +10,60 @@ import { validatePathStageLinkage } from '@/lib/learning-paths/validate-link'
 import { toSpecializationRef } from '@/lib/interview-catalog/resolve'
 import { generateInterviewQuestions } from '@/lib/interview-questions/generate'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { SESSION_DIFFICULTIES } from '@/lib/interview-config/difficulty'
+import {
+  QUESTION_COUNT_MIN,
+  QUESTION_COUNT_MAX,
+} from '@/lib/interview-config/question-counts'
+import { DURATION_MIN, DURATION_MAX } from '@/lib/interview-config/durations'
+import {
+  NON_CATALOG_SCOPE,
+  preferredFormatForType,
+} from '@/lib/interview-config/type-config'
+import { normalizeStoredInterviewType } from '@/lib/interview-config/interview-types'
+import type { InterviewTypeKind } from '@/lib/interview-types'
+
+function resolvePathInterviewTypes(
+  rawType: string,
+): {
+  storedType: 'technical' | 'behavioral' | 'both' | 'hr' | 'coding' | 'system_design' | 'mixed'
+  interviewTypes: InterviewTypeKind[]
+  usesCatalog: boolean
+} {
+  const normalized = normalizeStoredInterviewType(rawType) ?? 'technical'
+  if (normalized === 'coding') {
+    return { storedType: 'coding', interviewTypes: ['coding'], usesCatalog: false }
+  }
+  if (normalized === 'system_design') {
+    return {
+      storedType: 'system_design',
+      interviewTypes: ['system_design'],
+      usesCatalog: false,
+    }
+  }
+  if (normalized === 'behavioral') {
+    return { storedType: 'behavioral', interviewTypes: ['behavioral'], usesCatalog: false }
+  }
+  if (normalized === 'hr') {
+    return { storedType: 'hr', interviewTypes: ['hr'], usesCatalog: false }
+  }
+  if (normalized === 'mixed' || rawType === 'both') {
+    return {
+      storedType: rawType === 'both' ? 'both' : 'mixed',
+      interviewTypes: ['technical', 'coding', 'behavioral', 'hr'],
+      usesCatalog: true,
+    }
+  }
+  return { storedType: 'technical', interviewTypes: ['technical'], usesCatalog: true }
+}
 
 const bodySchema = z.object({
   pathId: z.string().trim().min(1),
   stageId: z.string().trim().min(1),
   pathRemediationId: z.string().trim().min(1).nullable().optional(),
-  totalQuestions: z.number().int().min(5).max(40),
-  durationMinutes: z.number().int().min(5).max(180).nullable().optional(),
-  difficulty: z.enum(['Easy', 'Medium', 'Hard', 'Adaptive']).optional(),
+  totalQuestions: z.number().int().min(QUESTION_COUNT_MIN).max(QUESTION_COUNT_MAX),
+  durationMinutes: z.number().int().min(DURATION_MIN).max(DURATION_MAX).nullable().optional(),
+  difficulty: z.enum(SESSION_DIFFICULTIES).optional(),
 })
 
 export async function POST(request: Request) {
@@ -122,18 +168,28 @@ export async function POST(request: Request) {
     }
 
     const path = await LearningPathModel.findById(pathId).lean()
-    const specializationRefs = specializationKeys.map((k) =>
-      toSpecializationRef(departmentKey, k),
-    )
-    const primarySpec = specializationKeys[0]
-    const interviewTypes: Array<'technical' | 'behavioral' | 'hr'> =
-      interviewType === 'both'
-        ? ['technical', 'behavioral']
-        : interviewType === 'hr'
-          ? ['hr']
-          : interviewType === 'behavioral'
-            ? ['behavioral']
-            : ['technical']
+    const resolvedType = resolvePathInterviewTypes(String(interviewType))
+    const storedType = resolvedType.storedType
+    const interviewTypes = resolvedType.interviewTypes
+    const preferredQuestionFormat = preferredFormatForType(storedType)
+
+    // Non-catalog modalities use practice/general scope
+    if (!resolvedType.usesCatalog) {
+      departmentKey = NON_CATALOG_SCOPE.departmentKey
+      specializationKeys = [NON_CATALOG_SCOPE.specializationKey]
+    }
+
+    const specializationRefs = resolvedType.usesCatalog
+      ? specializationKeys.map((k) => toSpecializationRef(departmentKey, k))
+      : []
+    const primarySpec = specializationKeys[0] || NON_CATALOG_SCOPE.specializationKey
+
+    if (storedType === 'behavioral' || storedType === 'hr') {
+      technicalQuestionRatio = 0
+    } else if (storedType === 'coding' || storedType === 'system_design' || storedType === 'technical') {
+      technicalQuestionRatio =
+        typeof technicalQuestionRatio === 'number' ? technicalQuestionRatio : 100
+    }
 
     const created = await InterviewSessionModel.create({
       userId: session.user.id,
@@ -152,9 +208,12 @@ export async function POST(request: Request) {
       selectAllSpecializations: false,
       selectAllRoleCategories: false,
       selectAllTopics: false,
-      interviewType,
+      interviewType: storedType === 'both' ? 'mixed' : storedType,
       interviewTypes,
       topics,
+      codingCategories: storedType === 'coding' ? topics : undefined,
+      behavioralCompetencies: storedType === 'behavioral' ? topics : undefined,
+      systemDesignTopics: storedType === 'system_design' ? topics : undefined,
       difficulty,
       totalQuestions,
       technicalQuestionRatio,
@@ -165,6 +224,7 @@ export async function POST(request: Request) {
       learningStageId: stageId,
       pathRemediationId: pathRemediationId ?? null,
       resumeContext: null,
+      preferredQuestionFormat,
     })
     createdId = String(created._id)
 
@@ -175,16 +235,18 @@ export async function POST(request: Request) {
       roleCategoryKey: primarySpec,
       roleCategoryKeys: specializationKeys,
       roleCategoryLabels: specializationKeys.map((k) => k.replace(/_/g, ' ')),
-      interviewType,
+      interviewType: storedType === 'both' ? 'mixed' : storedType,
       interviewTypes,
       topics,
-      difficulty,
+      difficulty: difficulty as 'Easy' | 'Medium' | 'Hard' | 'Adaptive',
       totalQuestions,
       technicalQuestionRatio,
+      preferredQuestionFormat,
       resumeContext: null,
       learningPathTitle: path?.title || null,
       learningStageTitle: link.stage.title || null,
       learningStageType: link.stage.type || null,
+      // All interview types (including coding + system design) require Gemini.
       allowTemplateFallback: false,
     })
 

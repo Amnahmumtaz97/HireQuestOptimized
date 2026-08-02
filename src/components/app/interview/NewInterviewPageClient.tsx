@@ -3,8 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { CreateInterviewWizard } from '@/components/app/UserDashboard'
-import { NewInterviewEntryChooser } from '@/components/app/interview/NewInterviewEntryChooser'
-import { ResumeInterviewFlow } from '@/components/app/interview/ResumeInterviewFlow'
 import { PathInterviewCreate } from '@/components/app/interview/PathInterviewCreate'
 import type { LearningStage, UserPathProgress } from '@/components/app/learning-paths/types'
 
@@ -14,13 +12,14 @@ export function NewInterviewPageClient() {
   const pathId = sp.get('pathId')
   const stageId = sp.get('stageId')
   const remediationId = sp.get('remediationId')
+  const focusResume = mode === 'resume' || sp.get('focus') === 'resume'
 
   const [stagePrefill, setStagePrefill] = useState<LearningStage | null>(null)
   const [pathTitle, setPathTitle] = useState<string | null>(null)
-  const [loadingStage, setLoadingStage] = useState(Boolean(pathId && stageId))
+  const [loadingStage, setLoadingStage] = useState(Boolean(pathId && stageId && mode === 'path'))
 
   useEffect(() => {
-    if (!pathId || !stageId) {
+    if (mode !== 'path' || !pathId || !stageId) {
       setStagePrefill(null)
       setPathTitle(null)
       setLoadingStage(false)
@@ -69,19 +68,10 @@ export function NewInterviewPageClient() {
     return () => {
       cancelled = true
     }
-  }, [pathId, stageId, remediationId])
+  }, [mode, pathId, stageId, remediationId])
 
-  const effectiveMode = mode || (pathId && stageId ? 'path' : null)
-
-  if (!effectiveMode) {
-    return <NewInterviewEntryChooser pathId={pathId} stageId={stageId} />
-  }
-
-  if (loadingStage && (effectiveMode === 'path' || pathId)) {
-    return null
-  }
-
-  if (effectiveMode === 'path') {
+  if (mode === 'path') {
+    if (loadingStage) return null
     if (!pathId || !stageId || !stagePrefill) {
       return (
         <p className="text-sm text-red-400">
@@ -100,26 +90,14 @@ export function NewInterviewPageClient() {
     )
   }
 
-  if (effectiveMode === 'resume') {
-    return (
-      <ResumeInterviewFlow
-        pathId={pathId}
-        stageId={stageId}
-        stagePrefill={stagePrefill}
-        requireResume
-        entryMode="resume"
-        pathRemediationId={remediationId}
-      />
-    )
-  }
-
   return (
     <CreateInterviewWizard
-      entryMode="manual"
+      entryMode={focusResume ? 'resume' : 'manual'}
       learningPathId={pathId}
       learningStageId={stageId}
       stagePrefill={stagePrefill}
-      hideResumeUpload
+      focusResumeSection={focusResume}
     />
   )
 }
+

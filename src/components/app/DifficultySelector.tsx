@@ -1,8 +1,12 @@
 'use client'
 
 import React from 'react'
+import {
+  DIFFICULTY_UI_OPTIONS,
+  type SessionDifficulty,
+} from '@/lib/interview-config/difficulty'
 
-export type Difficulty = 'Easy' | 'Medium' | 'Hard' | 'Adaptive'
+export type Difficulty = SessionDifficulty
 
 export function DifficultySelector({
   value,
@@ -11,16 +15,9 @@ export function DifficultySelector({
   value: Difficulty | null
   onChange: (nextValue: Difficulty) => void
 }) {
-  const options: Array<{ key: Difficulty; subtitle: string }> = [
-    { key: 'Easy', subtitle: 'Fundamentals & basics' },
-    { key: 'Medium', subtitle: 'Application & analysis' },
-    { key: 'Hard', subtitle: 'Advanced & tricky' },
-    { key: 'Adaptive', subtitle: 'AI adjusts difficulty per question' },
-  ]
-
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      {options.map((option) => {
+      {DIFFICULTY_UI_OPTIONS.map((option) => {
         const selected = value === option.key
         const selectedClasses =
           option.key === 'Easy'
@@ -33,11 +30,11 @@ export function DifficultySelector({
 
         const titleClasses =
           option.key === 'Easy'
-            ? 'text-emerald-600 dark:text-emerald-400'
+            ? 'text-success'
             : option.key === 'Medium'
-              ? 'text-amber-600 dark:text-amber-400'
+              ? 'text-warning'
               : option.key === 'Hard'
-                ? 'text-red-600 dark:text-red-400'
+                ? 'text-destructive'
                 : 'text-primary'
         return (
           <button
@@ -51,11 +48,13 @@ export function DifficultySelector({
                 : 'border-border bg-input/30 hover:bg-input/50',
             ].join(' ')}
           >
-            <div className={[
-              'truncate text-sm font-semibold sm:text-base',
-              selected ? titleClasses : 'text-foreground',
-            ].join(' ')}>
-              {option.key === 'Adaptive' ? 'Adaptive AI' : option.key}
+            <div
+              className={[
+                'truncate text-sm font-semibold sm:text-base',
+                selected ? titleClasses : 'text-foreground',
+              ].join(' ')}
+            >
+              {option.label}
             </div>
             <div className="mt-1 text-xs text-muted-foreground">{option.subtitle}</div>
           </button>

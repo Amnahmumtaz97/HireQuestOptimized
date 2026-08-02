@@ -15,15 +15,15 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          'bg-primary text-primary-foreground border border-transparent shadow-[0_1px_2px_rgba(37,99,235,0.15)] hover:bg-[#1E4FCC] hover:-translate-y-px hover:shadow-[0_12px_28px_-16px_rgba(17,24,39,0.16)]',
+          'bg-primary text-primary-foreground border border-transparent shadow-sm hover:bg-primary-hover hover:-translate-y-px hover:shadow-card',
         secondary:
-          'border border-border bg-card text-foreground hover:bg-[var(--secondary)] hover:-translate-y-px hover:shadow-[0_12px_28px_-16px_rgba(17,24,39,0.12)]',
+          'border border-border bg-card text-foreground hover:bg-secondary hover:-translate-y-px hover:shadow-card',
         outline:
-          'border border-border bg-card text-foreground hover:bg-[var(--secondary)] hover:-translate-y-px hover:shadow-[0_12px_28px_-16px_rgba(17,24,39,0.12)]',
+          'border border-border bg-card text-foreground hover:bg-secondary hover:-translate-y-px hover:shadow-card',
         ghost:
-          'border border-border bg-card text-foreground hover:bg-[var(--secondary)] hover:-translate-y-px',
+          'border border-transparent bg-transparent text-foreground hover:bg-secondary hover:border-border',
         destructive:
-          'border border-red-500/30 bg-red-500/15 text-red-700 hover:bg-red-500/20',
+          'border border-destructive/30 bg-destructive-muted text-destructive hover:bg-destructive/20',
       },
       size: {
         sm: 'h-9 rounded-[10px] px-3 text-sm',

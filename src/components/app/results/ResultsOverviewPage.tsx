@@ -19,8 +19,9 @@ import {
 import { BarChart2, Download, Filter, Radar as RadarIcon } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useTheme } from '@/components/providers/ThemeProvider'
+import { chartTooltipStyle, getChartThemeColors } from '@/lib/theme/chart-colors'
 import type { InterviewConfig } from '@/components/app/dashboard/types'
-import { formatIndustryDisplay, formatRoleCategoryDisplay } from '@/utils/dashboard/interview-labels'
+import { formatIndustryDisplay, formatInterviewSessionTitle } from '@/utils/dashboard/interview-labels'
 import { BounceLoader } from '@/components/ui/bounce-loader'
 import { ListPagination } from '@/components/ui/list-pagination'
 import { useClientPagination } from '@/hooks/useClientPagination'
@@ -29,6 +30,12 @@ type InterviewSession = {
   _id: string
   roleCategoryKey: string
   industryKey: string
+  interviewType?: string
+  topics?: string[]
+  codingCategories?: string[]
+  behavioralCompetencies?: string[]
+  systemDesignTopics?: string[]
+  hrSections?: string[]
   status: 'created' | 'in_progress' | 'completed'
   difficulty: 'Easy' | 'Medium' | 'Hard'
   createdAt?: string
@@ -48,25 +55,11 @@ function clamp(n: number, min: number, max: number) {
 
 export function ResultsOverviewPage() {
   const { theme } = useTheme()
-  const isLight = theme === 'light'
-  const chartGrid = isLight ? 'rgba(15,17,23,0.08)' : 'rgba(255,255,255,0.06)'
-  const chartTick = isLight ? 'rgba(15,17,23,0.55)' : 'rgba(255,255,255,0.6)'
-  const chartPolar = isLight ? 'rgba(15,17,23,0.1)' : 'rgba(255,255,255,0.08)'
-  const tooltipStyle = isLight
-    ? {
-        background: 'rgba(255, 255, 255, 0.96)',
-        border: '1px solid rgba(15, 17, 23, 0.1)',
-        borderRadius: 14,
-        backdropFilter: 'blur(10px)',
-        color: '#1a1a1a',
-      }
-    : {
-        background: 'rgba(17, 24, 39, 0.85)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        borderRadius: 14,
-        backdropFilter: 'blur(10px)',
-        color: 'white',
-      }
+  const chart = useMemo(() => getChartThemeColors(), [theme])
+  const tooltipStyle = useMemo(() => chartTooltipStyle(chart), [chart])
+  const chartGrid = chart.grid
+  const chartTick = chart.tick
+  const chartPolar = chart.polar
 
   const [sessions, setSessions] = useState<InterviewSession[]>([])
   const [loading, setLoading] = useState(true)
@@ -200,8 +193,8 @@ export function ResultsOverviewPage() {
               <AreaChart data={scoreTimeline}>
                 <defs>
                   <linearGradient id="hqScore" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#0031b0" stopOpacity={0.45} />
-                    <stop offset="100%" stopColor="#1e5af3" stopOpacity={0.05} />
+                    <stop offset="0%" stopColor={chart.series1} stopOpacity={0.45} />
+                    <stop offset="100%" stopColor={chart.series2} stopOpacity={0.05} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid stroke={chartGrid} vertical={false} />
@@ -209,8 +202,8 @@ export function ResultsOverviewPage() {
                 <YAxis domain={[40, 100]} tick={{ fill: chartTick, fontSize: 11 }} axisLine={false} tickLine={false} />
                 <RechartsTooltip contentStyle={tooltipStyle} />
                 <Legend />
-                <Area type="monotone" dataKey="score" name="Score" stroke="#0031b0" fill="url(#hqScore)" strokeWidth={2} />
-                <Area type="monotone" dataKey="completion" name="Completion %" stroke="#1e5af3" fill="transparent" strokeWidth={2} />
+                <Area type="monotone" dataKey="score" name="Score" stroke={chart.series1} fill="url(#hqScore)" strokeWidth={2} />
+                <Area type="monotone" dataKey="completion" name="Completion %" stroke={chart.series2} fill="transparent" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -233,7 +226,7 @@ export function ResultsOverviewPage() {
                 <PolarGrid stroke={chartPolar} />
                 <PolarAngleAxis dataKey="skill" tick={{ fill: chartTick, fontSize: 11 }} />
                 <RechartsTooltip contentStyle={tooltipStyle} />
-                <Radar dataKey="value" stroke="#22d3ee" fill="rgba(34,211,238,0.18)" />
+                <Radar dataKey="value" stroke={chart.series3} fill={chart.seriesFill} />
               </RadarChart>
             </ResponsiveContainer>
           </div>
@@ -255,10 +248,16 @@ export function ResultsOverviewPage() {
 
         <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-            <TabsList>
-              <TabsTrigger value="completed">Completed</TabsTrigger>
-              <TabsTrigger value="in_progress">In progress</TabsTrigger>
-              <TabsTrigger value="all">All</TabsTrigger>
+            <TabsList className="w-full max-w-full sm:w-auto">
+              <TabsTrigger value="completed" className="flex-1 sm:flex-none">
+                Completed
+              </TabsTrigger>
+              <TabsTrigger value="in_progress" className="flex-1 sm:flex-none">
+                In progress
+              </TabsTrigger>
+              <TabsTrigger value="all" className="flex-1 sm:flex-none">
+                All
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -290,7 +289,7 @@ export function ResultsOverviewPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <div className="truncate text-sm font-semibold text-foreground">
-                            {formatRoleCategoryDisplay(s.industryKey, s.roleCategoryKey, interviewConfigs)}
+                            {formatInterviewSessionTitle(s, interviewConfigs)}
                           </div>
                           <div className="truncate text-xs text-muted-foreground">
                             {formatIndustryDisplay(s.industryKey, interviewConfigs)}

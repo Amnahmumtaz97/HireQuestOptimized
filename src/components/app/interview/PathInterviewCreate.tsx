@@ -7,6 +7,17 @@ import { ArrowLeft, ListChecks, Clock, Sparkles } from 'lucide-react'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { useToast } from '@/components/ui/toast'
 import type { LearningStage } from '@/components/app/learning-paths/types'
+import {
+  DIFFICULTY_UI_OPTIONS,
+  type SessionDifficulty,
+} from '@/lib/interview-config/difficulty'
+import {
+  QUESTION_COUNT_MIN,
+  QUESTION_COUNT_MAX,
+  QUESTION_COUNT_PATH_DEFAULT,
+} from '@/lib/interview-config/question-counts'
+import { DURATION_MIN, DURATION_MAX, DURATION_DEFAULT } from '@/lib/interview-config/durations'
+import { formatInterviewTypeKeyLabel } from '@/lib/interview-config/interview-types'
 
 type PathInterviewCreateProps = {
   pathId: string
@@ -26,12 +37,12 @@ export function PathInterviewCreate({
   const router = useRouter()
   const toast = useToast()
   const [totalQuestions, setTotalQuestions] = useState(
-    typeof stage.totalQuestions === 'number' ? stage.totalQuestions : 12,
+    typeof stage.totalQuestions === 'number' ? stage.totalQuestions : QUESTION_COUNT_PATH_DEFAULT,
   )
-  const [durationMinutes, setDurationMinutes] = useState(30)
-  const [difficulty, setDifficulty] = useState<
-    'Easy' | 'Medium' | 'Hard' | 'Adaptive'
-  >((stage.difficulty as 'Easy' | 'Medium' | 'Hard' | 'Adaptive') || 'Medium')
+  const [durationMinutes, setDurationMinutes] = useState(DURATION_DEFAULT)
+  const [difficulty, setDifficulty] = useState<SessionDifficulty>(
+    (stage.difficulty as SessionDifficulty) || 'Medium',
+  )
   const [creating, setCreating] = useState(false)
 
   const topics = useMemo(
@@ -71,7 +82,7 @@ export function PathInterviewCreate({
           ? `Ready — ${data.questionCount ?? totalQuestions} questions generated`
           : 'Interview created',
       )
-      router.push(`/app/interviews/${data.sessionId}`)
+      router.replace(`/app/interviews/${data.sessionId}`)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Could not generate interview')
     } finally {
@@ -84,7 +95,8 @@ export function PathInterviewCreate({
       <div className="flex items-center gap-3">
         <Link
           href={`/app/learning-paths/${pathId}`}
-          className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border px-3 text-xs text-muted-foreground hover:bg-input/30"
+          replace
+          className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border px-3 text-xs text-muted-foreground transition hover:border-primary/40 hover:bg-primary/5 hover:text-foreground"
         >
           <ArrowLeft className="h-3.5 w-3.5" /> Back to path
         </Link>
@@ -108,7 +120,7 @@ export function PathInterviewCreate({
           <div className="mt-0.5 text-sm font-medium text-foreground">{stage.title}</div>
           <div className="mt-1 text-xs capitalize text-muted-foreground">
             {stage.type.replace('_', ' ')}
-            {stage.interviewType ? ` · ${stage.interviewType}` : ''}
+            {stage.interviewType ? ` · ${formatInterviewTypeKeyLabel(stage.interviewType)}` : ''}
             {stage.departmentKey
               ? ` · ${stage.departmentKey.replace(/_/g, ' ')}`
               : ''}
@@ -145,10 +157,10 @@ export function PathInterviewCreate({
             </span>
             <input
               type="number"
-              min={5}
-              max={40}
+              min={QUESTION_COUNT_MIN}
+              max={QUESTION_COUNT_MAX}
               value={totalQuestions}
-              onChange={(e) => setTotalQuestions(Number(e.target.value) || 5)}
+              onChange={(e) => setTotalQuestions(Number(e.target.value) || QUESTION_COUNT_MIN)}
               className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
             />
           </label>
@@ -158,10 +170,10 @@ export function PathInterviewCreate({
             </span>
             <input
               type="number"
-              min={5}
-              max={180}
+              min={DURATION_MIN}
+              max={DURATION_MAX}
               value={durationMinutes}
-              onChange={(e) => setDurationMinutes(Number(e.target.value) || 30)}
+              onChange={(e) => setDurationMinutes(Number(e.target.value) || DURATION_DEFAULT)}
               className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
             />
           </label>
@@ -169,15 +181,14 @@ export function PathInterviewCreate({
             <span className="text-xs text-muted-foreground">Difficulty</span>
             <select
               value={difficulty}
-              onChange={(e) =>
-                setDifficulty(e.target.value as 'Easy' | 'Medium' | 'Hard' | 'Adaptive')
-              }
+              onChange={(e) => setDifficulty(e.target.value as SessionDifficulty)}
               className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
             >
-              <option value="Easy">Easy</option>
-              <option value="Medium">Medium</option>
-              <option value="Hard">Hard</option>
-              <option value="Adaptive">Adaptive</option>
+              {DIFFICULTY_UI_OPTIONS.map((opt) => (
+                <option key={opt.key} value={opt.key}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
           </label>
         </div>

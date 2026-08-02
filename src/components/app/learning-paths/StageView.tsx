@@ -96,7 +96,7 @@ export function StageView({ path, stage, progress, onProgressUpdated }: StageVie
   }
 
   return (
-    <div className="space-y-5 rounded-2xl border border-border bg-input/10 p-5 sm:p-6">
+    <div className="space-y-5 rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
       <div className="flex items-start gap-3">
         <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <Icon className="h-5 w-5" />
@@ -106,6 +106,7 @@ export function StageView({ path, stage, progress, onProgressUpdated }: StageVie
           <p className="mt-1 text-xs capitalize text-muted-foreground">
             {stage.type.replace('_', ' ')}
             {stage.levelLabel ? ` · ${stage.levelLabel}` : ''}
+            {stage.interviewType ? ` · ${stage.interviewType.replace('_', ' ')}` : ''}
             {alreadyDone ? ' · Completed' : ''}
           </p>
         </div>
@@ -165,7 +166,7 @@ export function StageView({ path, stage, progress, onProgressUpdated }: StageVie
       {isInterviewStage && !activeRemediation ? (
         <Link
           href={interviewHref}
-          className="hq-btn-primary inline-flex h-11 items-center gap-2 rounded-2xl px-5 text-xs font-semibold"
+          className="hq-btn-primary inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl px-5 text-xs font-semibold sm:w-auto"
         >
           Start path interview
           <ArrowRight className="h-3.5 w-3.5" />
@@ -181,7 +182,7 @@ export function StageView({ path, stage, progress, onProgressUpdated }: StageVie
       {stage.type === 'ai_feedback' ? (
         <Link
           href="/app/results"
-          className="hq-btn-outline-accent inline-flex h-11 items-center gap-2 rounded-2xl px-5 text-xs font-semibold"
+          className="hq-btn-outline-accent inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl px-5 text-xs font-semibold sm:w-auto"
         >
           View results
           <ArrowRight className="h-3.5 w-3.5" />
@@ -210,7 +211,7 @@ export function StageView({ path, stage, progress, onProgressUpdated }: StageVie
             loading={saving}
             loadingLabel="Saving..."
             onClick={() => void completeStage()}
-            className="hq-btn-primary h-10 rounded-full px-5 text-sm"
+            className="hq-btn-primary h-10 w-full rounded-full px-5 text-sm sm:w-auto"
           >
             Mark stage complete
           </LoadingButton>

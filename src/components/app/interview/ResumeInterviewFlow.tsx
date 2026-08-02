@@ -70,6 +70,11 @@ export function ResumeInterviewFlow({
       difficulty: (stagePrefill?.difficulty as InterviewSetupConfig['difficulty']) || null,
       interviewRoundType:
         stagePrefill?.type === 'mock_interview' ? 'technical_screen' : 'technical_screen',
+      interviewType: null,
+      codingCategories: [],
+      behavioralCompetencies: [],
+      hrSections: [],
+      systemDesignTopics: [],
       targetCompanyType: null,
       preferredQuestionFormat: null,
       interviewDuration: 30,

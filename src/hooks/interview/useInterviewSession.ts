@@ -7,6 +7,8 @@ export type InterviewSessionState = {
   status: 'created' | 'in_progress' | 'completed'
   durationMinutes?: number | null
   interviewStartedAt?: string | null
+  learningPathId?: string | null
+  learningStageId?: string | null
   questions?: Array<{
     question: string
     type: 'technical' | 'behavioral' | 'hr'
@@ -14,6 +16,12 @@ export type InterviewSessionState = {
     difficulty: 'Easy' | 'Medium' | 'Hard'
     illustrationDataUrl?: string | null
     illustrationRequired?: boolean
+    kind?: 'spoken' | 'coding'
+    language?: 'javascript' | 'python'
+    starterCode?: string
+    functionName?: string
+    publicTests?: Array<{ input: string; expected: string }>
+    hiddenTests?: Array<{ input: string; expected: string }>
   }>
   currentQuestionIndex?: number
   flaggedQuestionIndexes?: number[]

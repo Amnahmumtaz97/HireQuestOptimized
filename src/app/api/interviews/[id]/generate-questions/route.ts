@@ -165,74 +165,96 @@ export async function POST(
       )
     }
 
-    const departments = await loadInterviewCatalogDepartments()
-    const departmentKey =
-      doc.departmentKey?.trim() ||
-      doc.industryKey?.trim() ||
-      doc.departmentKeys?.[0]?.trim() ||
-      doc.industryKeys?.[0]?.trim() ||
-      ''
-    const departmentKeys = departmentKey ? [departmentKey] : []
-
-    const specializationRefs = normalizeSpecializationRefs(departments, {
-      departmentKeys,
-      selectAllDepartments: false,
-      specializationRefs: doc.specializationRefs,
-      roleRefs: doc.roleRefs,
-      specializationKeys: doc.specializationKeys,
-      roleCategoryKeys: doc.roleCategoryKeys,
-      specializationKey: doc.specializationKey,
-      roleCategoryKey: doc.roleCategoryKey,
-    })
-
-    const resolved = resolveTopicsForInterview(departments, {
-      selectAllDepartments: false,
-      departmentKeys,
-      interviewType: doc.interviewType,
-      interviewTypes: doc.interviewTypes,
-      selectAllSpecializations: Boolean(
-        doc.selectAllSpecializations ?? doc.selectAllRoleCategories,
-      ),
-      specializationRefs,
-      selectAllTopics: Boolean(doc.selectAllTopics),
-      topics: doc.topics ?? [],
-    })
-
-    const catalogTopicSet = new Set(resolved.topics.map((t) => t.trim()).filter(Boolean))
     const sessionTopics = (doc.topics ?? []).map((t) => t.trim()).filter(Boolean)
-    const mergedTopics = [
-      ...new Set([
-        ...(doc.selectAllTopics
-          ? resolved.topics
-          : sessionTopics.length
-            ? sessionTopics
-            : resolved.topics),
-        ...stageSuggestedTopics.filter(
-          (t) => catalogTopicSet.has(t) || resolved.topics.includes(t),
-        ),
-      ]),
-    ]
-    const topicBank =
-      mergedTopics.length > 0
-        ? mergedTopics.filter(
-            (t) =>
-              catalogTopicSet.size === 0 ||
-              catalogTopicSet.has(t) ||
-              resolved.topics.includes(t),
-          )
-        : resolved.topics
+    const isCatalogTechnical =
+      doc.interviewType === 'technical' &&
+      doc.departmentKey !== 'practice' &&
+      doc.industryKey !== 'practice'
 
-    const finalTopics = topicBank.length > 0 ? topicBank : resolved.topics
+    let finalTopics = sessionTopics
+    let industryLabels: string[] = []
+    let specializationLabels: string[] = []
+    let departmentKeys = [doc.departmentKey || doc.industryKey].filter(Boolean) as string[]
+    let specializationKeys = [doc.specializationKey || doc.roleCategoryKey].filter(Boolean)
+
+    if (isCatalogTechnical) {
+      const departments = await loadInterviewCatalogDepartments()
+      const departmentKey =
+        doc.departmentKey?.trim() ||
+        doc.industryKey?.trim() ||
+        doc.departmentKeys?.[0]?.trim() ||
+        doc.industryKeys?.[0]?.trim() ||
+        ''
+      departmentKeys = departmentKey ? [departmentKey] : []
+
+      const specializationRefs = normalizeSpecializationRefs(departments, {
+        departmentKeys,
+        selectAllDepartments: false,
+        specializationRefs: doc.specializationRefs,
+        roleRefs: doc.roleRefs,
+        specializationKeys: doc.specializationKeys,
+        roleCategoryKeys: doc.roleCategoryKeys,
+        specializationKey: doc.specializationKey,
+        roleCategoryKey: doc.roleCategoryKey,
+      })
+
+      const resolved = resolveTopicsForInterview(departments, {
+        selectAllDepartments: false,
+        departmentKeys,
+        interviewType: 'technical',
+        interviewTypes: ['technical'],
+        selectAllSpecializations: Boolean(
+          doc.selectAllSpecializations ?? doc.selectAllRoleCategories,
+        ),
+        specializationRefs,
+        selectAllTopics: Boolean(doc.selectAllTopics),
+        topics: doc.topics ?? [],
+      })
+
+      const catalogTopicSet = new Set(resolved.topics.map((t) => t.trim()).filter(Boolean))
+      const mergedTopics = [
+        ...new Set([
+          ...(doc.selectAllTopics
+            ? resolved.topics
+            : sessionTopics.length
+              ? sessionTopics
+              : resolved.topics),
+          ...stageSuggestedTopics.filter(
+            (t) => catalogTopicSet.has(t) || resolved.topics.includes(t),
+          ),
+        ]),
+      ]
+      const topicBank =
+        mergedTopics.length > 0
+          ? mergedTopics.filter(
+              (t) =>
+                catalogTopicSet.size === 0 ||
+                catalogTopicSet.has(t) ||
+                resolved.topics.includes(t),
+            )
+          : resolved.topics
+
+      finalTopics = topicBank.length > 0 ? topicBank : resolved.topics
+      industryLabels = resolved.departmentLabels
+      specializationLabels = resolved.specializationLabels
+      departmentKeys = resolved.departmentKeys
+      specializationKeys = resolved.specializationKeys
+    } else if (sessionTopics.length === 0) {
+      return NextResponse.json(
+        { message: 'No confirmed topics/categories on this interview' },
+        { status: 400 },
+      )
+    }
 
     const result = await generateInterviewQuestions({
-      industryKey: departmentKey || doc.industryKey,
-      industryKeys: resolved.departmentKeys,
-      industryLabels: resolved.departmentLabels,
-      roleCategoryKey: doc.roleCategoryKey,
-      roleCategoryKeys: resolved.specializationKeys,
-      roleCategoryLabels: resolved.specializationLabels,
-      interviewType: doc.interviewType,
-      interviewTypes: doc.interviewTypes,
+      industryKey: departmentKeys[0] || doc.industryKey,
+      industryKeys: departmentKeys,
+      industryLabels,
+      roleCategoryKey: specializationKeys[0] || doc.roleCategoryKey,
+      roleCategoryKeys: specializationKeys,
+      roleCategoryLabels: specializationLabels,
+      interviewType: doc.interviewType as InterviewGenerationParams['interviewType'],
+      interviewTypes: doc.interviewTypes as InterviewGenerationParams['interviewTypes'],
       topics: finalTopics,
       difficulty: doc.difficulty,
       totalQuestions: doc.totalQuestions,
@@ -241,6 +263,10 @@ export async function POST(
       learningPathTitle,
       learningStageTitle,
       learningStageType,
+      preferredQuestionFormat: doc.preferredQuestionFormat ?? null,
+      configPayload: (doc as { configPayload?: Record<string, unknown> | null }).configPayload ?? null,
+      // All interview types use Gemini when GEMINI_API_KEY is set.
+      allowTemplateFallback: false,
     })
 
     const updated = await InterviewSessionModel.findOneAndUpdate(

@@ -42,8 +42,7 @@ export const PATH_SUBCATEGORIES = [
   { key: 'game_dev', label: 'Game Development', category: 'technology' as PathCategory },
   { key: 'behavioral', label: 'Behavioral', category: 'skills' as PathCategory },
   { key: 'role_based', label: 'Role-Based', category: 'role' as PathCategory },
-  { key: 'pakistan', label: 'Pakistani Companies', category: 'company' as PathCategory, tag: 'pakistan' },
-  { key: 'international', label: 'International Companies', category: 'company' as PathCategory, tag: 'international' },
+  { key: 'pakistan', label: 'Top 30 Companies IT (Pakistan)', category: 'company' as PathCategory, tag: 'pakistan' },
   { key: 'dsa', label: 'DSA', category: 'dsa' as PathCategory },
   { key: 'project', label: 'Project Discussion', category: 'project' as PathCategory },
 ] as const

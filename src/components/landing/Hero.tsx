@@ -224,14 +224,8 @@ async function interview() {
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-2">
-                <span
-                  className="hidden items-center gap-1.5 rounded-full px-2.5 py-1 text-[10.5px] font-semibold min-[380px]:inline-flex"
-                  style={{
-                    background: 'color-mix(in oklab, #10b981 14%, transparent)',
-                    color: '#059669',
-                  }}
-                >
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+                <span className="hidden items-center gap-1.5 rounded-full bg-success-muted px-2.5 py-1 text-[10.5px] font-semibold text-success min-[380px]:inline-flex">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" />
                   AI Responding
                 </span>
                 <span

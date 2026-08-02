@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: ['selector', '[data-theme="dark"]'],
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -16,6 +17,62 @@ module.exports = {
         13: '3.25rem',
       },
       colors: {
+        background: 'var(--background)',
+        foreground: 'var(--foreground)',
+        card: {
+          DEFAULT: 'var(--card)',
+          foreground: 'var(--card-foreground)',
+        },
+        popover: {
+          DEFAULT: 'var(--popover)',
+          foreground: 'var(--popover-foreground)',
+        },
+        primary: {
+          DEFAULT: 'var(--primary)',
+          foreground: 'var(--primary-foreground)',
+          hover: 'var(--primary-hover)',
+          active: 'var(--primary-active)',
+          glow: 'var(--primary-glow)',
+        },
+        secondary: {
+          DEFAULT: 'var(--secondary)',
+          foreground: 'var(--secondary-foreground)',
+        },
+        muted: {
+          DEFAULT: 'var(--muted)',
+          foreground: 'var(--muted-foreground)',
+        },
+        accent: {
+          DEFAULT: 'var(--accent)',
+          foreground: 'var(--accent-foreground)',
+        },
+        destructive: {
+          DEFAULT: 'var(--destructive)',
+          foreground: 'var(--destructive-foreground)',
+        },
+        success: {
+          DEFAULT: 'var(--success)',
+          foreground: 'var(--success-foreground)',
+          muted: 'var(--success-muted)',
+        },
+        warning: {
+          DEFAULT: 'var(--warning)',
+          foreground: 'var(--warning-foreground)',
+          muted: 'var(--warning-muted)',
+        },
+        info: {
+          DEFAULT: 'var(--info)',
+          foreground: 'var(--info-foreground)',
+          muted: 'var(--info-muted)',
+        },
+        border: 'var(--border)',
+        input: 'var(--input)',
+        ring: 'var(--ring)',
+        hairline: 'var(--hairline)',
+        surface: {
+          DEFAULT: 'var(--surface)',
+          strong: 'var(--surface-strong)',
+        },
         'hq-purple': 'var(--hq-purple)',
         'hq-blue': 'var(--hq-blue)',
         'hq-cyan': 'var(--hq-cyan)',
@@ -34,6 +91,17 @@ module.exports = {
         'hq-text-faint': 'var(--hq-text-faint)',
         'hq-display-blue': 'var(--hq-display-blue)',
         'hq-accent2': 'var(--hq-accent2)',
+      },
+      ringOffsetColor: {
+        background: 'var(--background)',
+      },
+      boxShadow: {
+        card: 'var(--shadow-card)',
+        elegant: 'var(--shadow-elegant)',
+        modal: 'var(--shadow-modal)',
+        dropdown: 'var(--shadow-dropdown)',
+        glow: 'var(--shadow-glow)',
+        'glow-sm': 'var(--shadow-glow-sm)',
       },
       animation: {
         'fade-up': 'fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both',
@@ -92,10 +160,12 @@ module.exports = {
         },
         'brain-glow': {
           '0%, 100%': {
-            boxShadow: '0 0 40px rgba(59,130,246,0.4), 0 0 80px rgba(34,211,238,0.15)',
+            boxShadow:
+              '0 0 40px color-mix(in oklab, var(--primary) 40%, transparent), 0 0 80px color-mix(in oklab, var(--info) 15%, transparent)',
           },
           '50%': {
-            boxShadow: '0 0 60px rgba(59,130,246,0.6), 0 0 120px rgba(34,211,238,0.25)',
+            boxShadow:
+              '0 0 60px color-mix(in oklab, var(--primary) 55%, transparent), 0 0 120px color-mix(in oklab, var(--info) 25%, transparent)',
           },
         },
         'live-pulse': {
@@ -107,11 +177,13 @@ module.exports = {
           '100%': { transform: 'translateX(-50%)' },
         },
         'neon-glow': {
-          '0%, 100%': { 
-            textShadow: '0 0 10px rgba(124, 58, 237, 0.5), 0 0 20px rgba(79, 110, 247, 0.3)',
+          '0%, 100%': {
+            textShadow:
+              '0 0 10px color-mix(in oklab, var(--primary) 45%, transparent), 0 0 20px color-mix(in oklab, var(--primary) 25%, transparent)',
           },
-          '50%': { 
-            textShadow: '0 0 20px rgba(124, 58, 237, 0.8), 0 0 40px rgba(79, 110, 247, 0.5)',
+          '50%': {
+            textShadow:
+              '0 0 20px color-mix(in oklab, var(--primary) 70%, transparent), 0 0 40px color-mix(in oklab, var(--primary) 40%, transparent)',
           },
         },
         'pulse-soft': {
@@ -119,11 +191,13 @@ module.exports = {
           '50%': { opacity: '0.7' },
         },
         'glow-border': {
-          '0%, 100%': { 
-            boxShadow: '0 0 20px rgba(124, 58, 237, 0.3), inset 0 0 20px rgba(124, 58, 237, 0.1)',
+          '0%, 100%': {
+            boxShadow:
+              '0 0 20px color-mix(in oklab, var(--primary) 28%, transparent), inset 0 0 20px color-mix(in oklab, var(--primary) 8%, transparent)',
           },
-          '50%': { 
-            boxShadow: '0 0 40px rgba(124, 58, 237, 0.6), inset 0 0 30px rgba(124, 58, 237, 0.2)',
+          '50%': {
+            boxShadow:
+              '0 0 40px color-mix(in oklab, var(--primary) 48%, transparent), inset 0 0 30px color-mix(in oklab, var(--primary) 14%, transparent)',
           },
         },
       },

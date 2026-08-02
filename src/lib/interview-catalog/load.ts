@@ -92,9 +92,8 @@ function mergeDepartmentRoles(
 }
 
 /**
- * Ensures MongoDB contains every canonical department (CS, Finance, Healthcare, Law, …)
- * with all static specializations and topics. Adds missing entries and merges new topics
- * without removing admin customizations.
+ * Ensures MongoDB contains every canonical CS/tech department with static
+ * specializations and topics. Deactivates departments no longer in the catalog.
  */
 export async function syncCatalogFromStatic(): Promise<number> {
   await connectToDatabase()
@@ -102,6 +101,12 @@ export async function syncCatalogFromStatic(): Promise<number> {
 
   await InterviewConfigModel.updateMany(
     { industryKey: { $in: [...LEGACY_FLAT_INDUSTRY_KEYS] } },
+    { $set: { isActive: false, updatedAt: now } },
+  )
+
+  // Deactivate non-CS departments removed from the static catalog
+  await InterviewConfigModel.updateMany(
+    { industryKey: { $nin: [...CANONICAL_DEPARTMENT_KEYS] } },
     { $set: { isActive: false, updatedAt: now } },
   )
 

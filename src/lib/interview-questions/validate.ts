@@ -27,12 +27,32 @@ export function validateGeneratedQuestions(
   const hrOnly = allowedKinds.size === 1 && allowedKinds.has('hr')
   const allowsHr = allowedKinds.has('hr')
 
+  const coding =
+    params.interviewType === 'coding' ||
+    String(params.preferredQuestionFormat || params.interviewSetup?.preferredQuestionFormat || '')
+      .toLowerCase() === 'coding'
+
   for (let i = 0; i < questions.length; i++) {
     const q = questions[i]
 
+    if (coding) {
+      if (q.kind !== 'coding') {
+        issues.push({ level: 'error', index: i, message: 'Coding rounds require kind "coding".' })
+      }
+      if (!q.starterCode?.trim()) {
+        issues.push({ level: 'error', index: i, message: 'Coding question missing starterCode.' })
+      }
+      if (!q.publicTests?.length) {
+        issues.push({ level: 'warning', index: i, message: 'Coding question has no public tests.' })
+      }
+      if (q.type !== 'technical') {
+        issues.push({ level: 'error', index: i, message: 'Coding questions must be type technical.' })
+      }
+    }
+
     if (params.difficulty !== 'Adaptive' && q.difficulty !== params.difficulty) {
       issues.push({
-        level: 'error',
+        level: coding ? 'warning' : 'error',
         index: i,
         message: `Question difficulty must be "${params.difficulty}".`,
       })
@@ -47,10 +67,12 @@ export function validateGeneratedQuestions(
     }
 
     if (!allowsHr && q.type === 'hr') {
-      issues.push({ level: 'error', index: i, message: 'Question type "hr" is only valid when HR Interview is selected.' })
+      issues.push({ level: 'error', index: i, message: 'Question type "hr" is only valid when Screening HR is selected.' })
     }
 
-    if (allowedKinds.size > 0 && !allowedKinds.has(q.type)) {
+    if (coding) {
+      // coding rounds are always technical; skip spoken-type constraints
+    } else if (allowedKinds.size > 0 && !allowedKinds.has(q.type)) {
       issues.push({
         level: 'error',
         index: i,
@@ -77,7 +99,7 @@ export function validateGeneratedQuestions(
 
     if (topicSet.size > 0 && !topicSet.has(q.topic.trim())) {
       issues.push({
-        level: 'error',
+        level: coding ? 'warning' : 'error',
         index: i,
         message: `Topic "${q.topic}" is outside the resolved topic bank.`,
       })

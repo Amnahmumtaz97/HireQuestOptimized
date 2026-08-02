@@ -76,7 +76,7 @@ export const PRACTICE_MODES: Array<{
   },
   {
     icon: Users,
-    title: 'HR',
+    title: 'Screening HR',
     description: 'Motivation, culture-fit, and workplace scenario questions for HR-style rounds.',
   },
   {

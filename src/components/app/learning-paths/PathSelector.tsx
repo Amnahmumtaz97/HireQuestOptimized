@@ -2,6 +2,18 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import {
+  Briefcase,
+  Building2,
+  Code2,
+  FileText,
+  FolderKanban,
+  LayoutGrid,
+  Network,
+  Sparkles,
+  Users,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { PathCard } from '@/components/app/learning-paths/PathCard'
 import { PathSearchBar } from '@/components/app/learning-paths/PathSearchBar'
 import { PathSections } from '@/components/app/learning-paths/PathSections'
@@ -11,16 +23,20 @@ import { ListPagination } from '@/components/ui/list-pagination'
 
 const PAGE_SIZE = 8
 
-const CATEGORY_FILTERS: Array<{ key: 'all' | PathCategory; label: string }> = [
-  { key: 'all', label: 'All' },
-  { key: 'technology', label: PATH_CATEGORY_LABELS.technology },
-  { key: 'role', label: PATH_CATEGORY_LABELS.role },
-  { key: 'company', label: PATH_CATEGORY_LABELS.company },
-  { key: 'skills', label: PATH_CATEGORY_LABELS.skills },
-  { key: 'dsa', label: PATH_CATEGORY_LABELS.dsa },
-  { key: 'system_design', label: PATH_CATEGORY_LABELS.system_design },
-  { key: 'project', label: PATH_CATEGORY_LABELS.project },
-  { key: 'resume', label: PATH_CATEGORY_LABELS.resume },
+const CATEGORY_FILTERS: Array<{
+  key: 'all' | PathCategory
+  label: string
+  icon: LucideIcon
+}> = [
+  { key: 'all', label: 'All', icon: LayoutGrid },
+  { key: 'technology', label: PATH_CATEGORY_LABELS.technology, icon: Code2 },
+  { key: 'role', label: PATH_CATEGORY_LABELS.role, icon: Briefcase },
+  { key: 'company', label: PATH_CATEGORY_LABELS.company, icon: Building2 },
+  { key: 'skills', label: PATH_CATEGORY_LABELS.skills, icon: Users },
+  { key: 'dsa', label: PATH_CATEGORY_LABELS.dsa, icon: Sparkles },
+  { key: 'system_design', label: PATH_CATEGORY_LABELS.system_design, icon: Network },
+  { key: 'project', label: PATH_CATEGORY_LABELS.project, icon: FolderKanban },
+  { key: 'resume', label: PATH_CATEGORY_LABELS.resume, icon: FileText },
 ]
 
 type HomePayload = {
@@ -132,27 +148,32 @@ export function PathSelector({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
-          {CATEGORY_FILTERS.map((f) => (
-            <button
-              key={f.key}
-              type="button"
-              onClick={() => setCategory(f.key)}
-              className={[
-                'hq-panel-btn min-h-9 px-3 py-2 text-xs font-semibold',
-                category === f.key ? 'hq-panel-btn--active' : '',
-              ].join(' ')}
-            >
-              {f.label}
-            </button>
-          ))}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
+          {CATEGORY_FILTERS.map((f) => {
+            const Icon = f.icon
+            return (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => setCategory(f.key)}
+                className={[
+                  'hq-panel-btn inline-flex h-10 shrink-0 items-center gap-1.5 px-3 text-xs font-semibold',
+                  category === f.key ? 'hq-panel-btn--active' : '',
+                ].join(' ')}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {f.label}
+              </button>
+            )
+          })}
         </div>
         <Link
-          href="/app/learning-paths/categories"
-          className="hq-panel-btn min-h-9 px-3 py-2 text-xs font-semibold"
+          href="/app/learning-paths"
+          className="hq-panel-btn inline-flex h-10 w-full shrink-0 items-center justify-center gap-1.5 px-3 text-xs font-semibold sm:w-auto"
         >
-          Browse categories
+          <LayoutGrid className="h-3.5 w-3.5" />
+          Categories
         </Link>
       </div>
 

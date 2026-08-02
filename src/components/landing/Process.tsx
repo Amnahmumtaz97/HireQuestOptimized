@@ -91,9 +91,9 @@ const steps: Step[] = [
 function StepCard({ step }: { step: Step }) {
   const Icon = step.icon
   const active =
-    'group-hover/step:opacity-100 group-hover/step:scale-100 group-hover/step:translate-y-0 group-has-[.hq-core:hover]/orbit:opacity-100 group-has-[.hq-core:hover]/orbit:scale-100 group-has-[.hq-core:hover]/orbit:translate-y-0'
+    'group-hover/step:opacity-100 group-hover/step:scale-100 group-hover/step:translate-y-0 group-focus-within/step:opacity-100 group-focus-within/step:scale-100 group-focus-within/step:translate-y-0 group-has-[.hq-core:hover]/orbit:opacity-100 group-has-[.hq-core:hover]/orbit:scale-100 group-has-[.hq-core:hover]/orbit:translate-y-0'
   const inactive =
-    'group-hover/step:opacity-0 group-hover/step:scale-90 group-hover/step:-translate-y-1 group-has-[.hq-core:hover]/orbit:opacity-0 group-has-[.hq-core:hover]/orbit:scale-90 group-has-[.hq-core:hover]/orbit:-translate-y-1'
+    'group-hover/step:opacity-0 group-hover/step:scale-90 group-hover/step:-translate-y-1 group-focus-within/step:opacity-0 group-focus-within/step:scale-90 group-focus-within/step:-translate-y-1 group-has-[.hq-core:hover]/orbit:opacity-0 group-has-[.hq-core:hover]/orbit:scale-90 group-has-[.hq-core:hover]/orbit:-translate-y-1'
 
   return (
     <div
@@ -104,9 +104,11 @@ function StepCard({ step }: { step: Step }) {
     >
       <div className="-translate-x-1/2 -translate-y-1/2">
         <div className="group/step relative">
-          <div
-            className={`process-step-card reveal relative aspect-square w-[var(--step-size)] cursor-default overflow-hidden rounded-full border transition-all duration-300 ease-&lsqb;cubic-bezier(0.22,1,0.36,1)&rsqb; group-hover/step:z-20 group-hover/step:scale-[1.06] group-has-[.hq-core:hover]/orbit:z-20 group-has-[.hq-core:hover]/orbit:scale-[1.06] ${step.ringColor}`}
+          <button
+            type="button"
+            className={`process-step-card reveal relative aspect-square w-[var(--step-size)] cursor-pointer overflow-hidden rounded-full border transition-all duration-300 ease-&lsqb;cubic-bezier(0.22,1,0.36,1)&rsqb; group-hover/step:z-20 group-hover/step:scale-[1.06] group-focus-within/step:z-20 group-focus-within/step:scale-[1.06] group-has-[.hq-core:hover]/orbit:z-20 group-has-[.hq-core:hover]/orbit:scale-[1.06] ${step.ringColor}`}
             style={{ transitionDelay: '80ms' }}
+            aria-label={`${step.title}: ${step.description}`}
           >
             <div className="process-step-shine absolute inset-[3px] rounded-full" />
             <div
@@ -120,9 +122,9 @@ function StepCard({ step }: { step: Step }) {
               <span className={`text-[clamp(1.05rem,2.2vw,1.4rem)] font-black leading-none ${step.accent}`}>
                 {String(step.number).padStart(2, '0')}
               </span>
-              <h3 className="max-w-[88%] text-[clamp(0.55rem,1.2vw,0.75rem)] font-bold leading-tight text-foreground">
+              <span className="max-w-[88%] text-[clamp(0.7rem,1.35vw,0.8rem)] font-bold leading-tight text-foreground">
                 {step.title}
-              </h3>
+              </span>
             </div>
 
             {/* Back — icon + description */}
@@ -132,11 +134,11 @@ function StepCard({ step }: { step: Step }) {
               <div className={`grid h-8 w-8 place-items-center rounded-full border bg-current/10 ${step.accent} border-current/40`}>
                 <Icon className="h-4 w-4" strokeWidth={2.2} />
               </div>
-              <p className="text-[clamp(0.5rem,0.95vw,0.62rem)] font-medium leading-snug text-muted-foreground">
+              <p className="text-[clamp(0.62rem,1.05vw,0.7rem)] font-medium leading-snug text-muted-foreground">
                 {step.description}
               </p>
             </div>
-          </div>
+          </button>
         </div>
       </div>
     </div>
@@ -206,7 +208,7 @@ export function Process() {
         </div>
 
         {/* Desktop orbit */}
-        <div className="relative mx-auto mt-4 hidden w-full flex-1 overflow-x-clip px-6 pb-6 md:block lg:px-10">
+        <div className="relative mx-auto mt-4 hidden w-full flex-1 overflow-x-clip px-6 pb-6 lg:block lg:px-10">
           <div
             className="process-orbit group/orbit relative mx-auto aspect-square w-full max-w-[min(82vw,40rem)] overflow-x-clip"
             style={{
@@ -297,7 +299,7 @@ export function Process() {
         </div>
 
         {/* Mobile */}
-        <div className="mt-8 flex flex-1 flex-col items-center gap-6 pb-8 md:hidden">
+        <div className="mt-8 flex flex-1 flex-col items-center gap-6 pb-8 lg:hidden">
           <div className="process-core-card reveal grid aspect-square w-28 place-items-center rounded-full border-2 border-primary">
             <div className="flex flex-col items-center gap-1.5 text-center">
               <Boxes className="process-core-icon h-9 w-9" strokeWidth={1.6} />

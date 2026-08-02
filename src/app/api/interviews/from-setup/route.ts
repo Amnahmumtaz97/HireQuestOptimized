@@ -10,11 +10,14 @@ import {
   validateInterviewSetupForGenerate,
   effectiveTopics,
 } from '@/lib/interview-config/setup-types'
-import { getCategoryForTopic } from '@/lib/interview-taxonomy/taxonomy'
+import {
+  NON_CATALOG_SCOPE,
+  preferredFormatForType,
+} from '@/lib/interview-config/type-config'
+import { normalizeSessionDifficulty } from '@/lib/interview-config/difficulty'
 import { generateInterviewQuestions } from '@/lib/interview-questions/generate'
 import { validatePathStageLinkage } from '@/lib/learning-paths/validate-link'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { toSpecializationRef } from '@/lib/interview-catalog/resolve'
 
 const bodySchema = z.object({
   setup: interviewSetupConfigSchema,
@@ -23,20 +26,67 @@ const bodySchema = z.object({
   pathRemediationId: z.string().nullable().optional(),
 })
 
-function interviewTypeFromRound(
-  round: string | null | undefined,
-): 'technical' | 'behavioral' | 'both' | 'hr' {
-  if (round === 'behavioral' || round === 'managerial') return 'behavioral'
-  if (round === 'system_design' || round === 'technical_screen') return 'technical'
-  return 'technical'
+function resolveSetupInterviewType(setup: {
+  interviewType?: string | null
+  interviewRoundType?: string | null
+}): {
+  storedType: 'technical' | 'behavioral' | 'both' | 'hr' | 'coding' | 'system_design' | 'mixed'
+  interviewTypes: Array<'technical' | 'behavioral' | 'hr' | 'coding' | 'system_design'>
+  preferredQuestionFormat: 'coding' | 'scenario' | 'whiteboard' | 'mixed' | null
+  technicalQuestionRatio: number
+} {
+  let raw = setup.interviewType
+  if (!raw && setup.interviewRoundType === 'system_design') raw = 'system_design'
+  if (!raw && setup.interviewRoundType === 'behavioral') raw = 'behavioral'
+  if (!raw && setup.interviewRoundType === 'managerial') raw = 'hr'
+  if (!raw) raw = 'technical'
+  if (raw === 'both') raw = 'mixed'
+
+  if (raw === 'coding') {
+    return {
+      storedType: 'coding',
+      interviewTypes: ['coding'],
+      preferredQuestionFormat: 'coding',
+      technicalQuestionRatio: 100,
+    }
+  }
+  if (raw === 'system_design') {
+    return {
+      storedType: 'system_design',
+      interviewTypes: ['system_design'],
+      preferredQuestionFormat: null,
+      technicalQuestionRatio: 100,
+    }
+  }
+  if (raw === 'mixed') {
+    return {
+      storedType: 'mixed',
+      interviewTypes: ['technical', 'behavioral'],
+      preferredQuestionFormat: null,
+      technicalQuestionRatio: 70,
+    }
+  }
+  if (raw === 'technical' || raw === 'behavioral' || raw === 'hr') {
+    return {
+      storedType: raw,
+      interviewTypes: [raw],
+      preferredQuestionFormat: null,
+      technicalQuestionRatio:
+        raw === 'technical' ? 100 : 0,
+    }
+  }
+  return {
+    storedType: 'technical',
+    interviewTypes: ['technical'],
+    preferredQuestionFormat: null,
+    technicalQuestionRatio: 100,
+  }
 }
 
 function difficultyFromSetup(
-  d: 'Easy' | 'Medium' | 'Hard' | 'Mixed' | null | undefined,
+  d: 'Easy' | 'Medium' | 'Hard' | 'Mixed' | 'Adaptive' | null | undefined,
 ): 'Easy' | 'Medium' | 'Hard' | 'Adaptive' {
-  if (d === 'Mixed') return 'Adaptive'
-  if (d === 'Easy' || d === 'Medium' || d === 'Hard') return d
-  return 'Medium'
+  return normalizeSessionDifficulty(d, 'Medium')
 }
 
 export async function POST(request: Request) {
@@ -123,21 +173,15 @@ export async function POST(request: Request) {
     })
 
     // Persist as a normal InterviewSession so existing session UI works.
-    // Topics are taxonomy topics only — no admin-catalog defaults.
-    const interviewType = interviewTypeFromRound(setup.interviewRoundType)
+    const resolved = resolveSetupInterviewType(setup)
+    const interviewType = resolved.storedType
+    const interviewTypes = resolved.interviewTypes
+    const preferredQuestionFormat =
+      preferredFormatForType(interviewType) ??
+      (setup.preferredQuestionFormat === 'coding' ? 'coding' : null)
     const difficulty = difficultyFromSetup(setup.difficulty)
-    const departmentKey = 'software_engineering'
-    const specializationKey = 'full_stack'
-    const specializationRefs = [toSpecializationRef(departmentKey, specializationKey)]
-
-    const interviewTypes: Array<'technical' | 'behavioral' | 'hr'> =
-      interviewType === 'both'
-        ? ['technical', 'behavioral']
-        : interviewType === 'hr'
-          ? ['hr']
-          : interviewType === 'behavioral'
-            ? ['behavioral']
-            : ['technical']
+    const departmentKey = NON_CATALOG_SCOPE.departmentKey
+    const specializationKey = NON_CATALOG_SCOPE.specializationKey
 
     const created = await InterviewSessionModel.create({
       userId: session.user.id,
@@ -147,23 +191,35 @@ export async function POST(request: Request) {
       industryKeys: [departmentKey],
       roleCategoryKey: specializationKey,
       specializationKey,
-      specializationRefs,
-      roleRefs: specializationRefs,
+      specializationRefs: [],
+      roleRefs: [],
       specializationKeys: [specializationKey],
       roleCategoryKeys: [specializationKey],
       selectAllSpecializations: false,
       selectAllTopics: false,
       interviewType,
       interviewTypes,
+      preferredQuestionFormat,
       topics,
+      codingCategories: setup.codingCategories?.length ? setup.codingCategories : undefined,
+      behavioralCompetencies: setup.behavioralCompetencies?.length
+        ? setup.behavioralCompetencies
+        : undefined,
+      hrSections: setup.hrSections?.length ? setup.hrSections : undefined,
+      systemDesignTopics: setup.systemDesignTopics?.length
+        ? setup.systemDesignTopics
+        : undefined,
+      configPayload: {
+        type: interviewType,
+        topics,
+        codingCategories: setup.codingCategories,
+        behavioralCompetencies: setup.behavioralCompetencies,
+        hrSections: setup.hrSections,
+        systemDesignTopics: setup.systemDesignTopics,
+      },
       difficulty,
       totalQuestions: setup.numberOfQuestions ?? 12,
-      technicalQuestionRatio:
-        interviewType === 'technical'
-          ? 100
-          : interviewType === 'behavioral' || interviewType === 'hr'
-            ? 0
-            : 70,
+      technicalQuestionRatio: resolved.technicalQuestionRatio,
       durationMinutes: setup.interviewDuration ?? 30,
       status: 'created',
       entryMode: learningPathId ? 'path' : 'resume',
@@ -181,7 +237,7 @@ export async function POST(request: Request) {
         currentRole: setup.currentRole,
         categories: setup.categories,
         interviewRoundType: setup.interviewRoundType,
-        preferredQuestionFormat: setup.preferredQuestionFormat,
+        preferredQuestionFormat,
         targetCompanyType: setup.targetCompanyType,
         focusAreas: setup.focusAreas,
         language: setup.language,
@@ -193,21 +249,17 @@ export async function POST(request: Request) {
     const result = await generateInterviewQuestions({
       industryKey: departmentKey,
       industryKeys: [departmentKey],
-      industryLabels: [setup.domain || setup.targetRole || 'Software'],
+      industryLabels: [setup.domain || setup.targetRole || 'Practice'],
       roleCategoryKey: specializationKey,
       roleCategoryKeys: [specializationKey],
       roleCategoryLabels: [setup.targetRole || setup.currentRole || 'Candidate'],
       interviewType,
       interviewTypes,
+      preferredQuestionFormat,
       topics,
       difficulty,
       totalQuestions: setup.numberOfQuestions ?? 12,
-      technicalQuestionRatio:
-        interviewType === 'technical'
-          ? 100
-          : interviewType === 'behavioral' || interviewType === 'hr'
-            ? 0
-            : 70,
+      technicalQuestionRatio: resolved.technicalQuestionRatio,
       resumeContext: {
         name: null,
         yearsExperience: setup.yearsExperience,
@@ -222,12 +274,10 @@ export async function POST(request: Request) {
       interviewSetup: {
         categories: setup.categories,
         topics,
-        topicCategories: Object.fromEntries(
-          topics.map((t) => [t, getCategoryForTopic(t)?.label ?? t]),
-        ),
+        topicCategories: Object.fromEntries(topics.map((t) => [t, t])),
         difficulty: setup.difficulty,
         interviewRoundType: setup.interviewRoundType,
-        preferredQuestionFormat: setup.preferredQuestionFormat,
+        preferredQuestionFormat,
         targetCompanyType: setup.targetCompanyType,
         focusAreas: setup.focusAreas || [],
         language: setup.language || 'English',
@@ -236,6 +286,10 @@ export async function POST(request: Request) {
         achievements: setup.achievements,
       },
       allowTemplateFallback: false,
+      configPayload: {
+        type: interviewType,
+        topics,
+      },
     })
 
     await InterviewSessionModel.updateOne(

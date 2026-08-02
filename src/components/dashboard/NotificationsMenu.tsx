@@ -75,20 +75,20 @@ const SEED_NOTIFICATIONS: AppNotification[] = [
 function NotificationIcon({ type }: { type: NotificationType }) {
   if (type === 'good') {
     return (
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-success-muted text-success">
         <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2.4} />
       </span>
     )
   }
   if (type === 'warn') {
     return (
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-warning-muted text-warning">
         <AlertTriangle className="h-3.5 w-3.5" strokeWidth={2.4} />
       </span>
     )
   }
   return (
-    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-500/15 text-sky-600 dark:text-sky-300">
+    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-info-muted text-info">
       <Lightbulb className="h-3.5 w-3.5" strokeWidth={2.4} />
     </span>
   )

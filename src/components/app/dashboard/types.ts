@@ -46,9 +46,13 @@ export type InterviewSession = {
   selectAllSpecializations?: boolean
   selectAllRoleCategories?: boolean
   selectAllTopics?: boolean
-  interviewType: 'technical' | 'behavioral' | 'both' | 'hr'
-  interviewTypes?: Array<'technical' | 'behavioral' | 'hr'>
+  interviewType: 'technical' | 'behavioral' | 'both' | 'hr' | 'coding' | 'system_design' | 'mixed'
+  interviewTypes?: Array<'technical' | 'behavioral' | 'hr' | 'coding' | 'system_design'>
   topics: string[]
+  codingCategories?: string[]
+  behavioralCompetencies?: string[]
+  systemDesignTopics?: string[]
+  hrSections?: string[]
   difficulty: Difficulty
   totalQuestions: number
   durationMinutes?: number | null

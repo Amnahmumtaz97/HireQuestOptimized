@@ -112,7 +112,7 @@ function StatusBadge({ active }: { active: boolean }) {
       className={[
         'inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
         active
-          ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+          ? 'border-success/30 bg-success-muted text-success'
           : 'border-border bg-input/30 text-muted-foreground',
       ].join(' ')}
     >
@@ -609,7 +609,7 @@ export function TrackConfigManager() {
                       <button
                         type="button"
                         onClick={() => toggleDepartmentExpanded(department._id)}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-input/20"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-input/20"
                       >
                         {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                       </button>
@@ -636,7 +636,7 @@ export function TrackConfigManager() {
                           onClick={() => setDeleteTarget({ type: 'department', id: department._id, label: department.label })}
                           className="rounded-lg border border-border p-2 hover:bg-red-500/10"
                         >
-                          <Trash2 className="h-4 w-4 text-red-300" />
+                          <Trash2 className="h-4 w-4 text-destructive" />
                         </button>
                       </div>
                     </div>
@@ -656,7 +656,7 @@ export function TrackConfigManager() {
                                     <button
                                       type="button"
                                       onClick={() => toggleSpecializationExpanded(`${department._id}:${spec.key}`)}
-                                      className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border"
+                                      className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border"
                                     >
                                       {specExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                                     </button>
@@ -669,7 +669,7 @@ export function TrackConfigManager() {
                                         {spec.technicalTopics.length} technical · {spec.behavioralTopics.length} behavioral · {(spec.hrTopics ?? []).length} HR
                                       </div>
                                     </div>
-                                    <button type="button" onClick={() => openEditSpecialization(department._id, spec.key)} className="rounded-lg border border-border p-1.5">
+                                    <button type="button" onClick={() => openEditSpecialization(department._id, spec.key)} className="rounded-lg border border-border p-2.5">
                                       <Pencil className="h-3.5 w-3.5" />
                                     </button>
                                     <button
@@ -682,9 +682,9 @@ export function TrackConfigManager() {
                                           label: spec.label,
                                         })
                                       }
-                                      className="rounded-lg border border-border p-1.5 hover:bg-red-500/10"
+                                      className="rounded-lg border border-border p-2.5 hover:bg-red-500/10"
                                     >
-                                      <Trash2 className="h-3.5 w-3.5 text-red-300" />
+                                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
                                     </button>
                                   </div>
                                   {specExpanded ? (
@@ -743,7 +743,7 @@ export function TrackConfigManager() {
                         <td className="px-4 py-3 text-muted-foreground">{topicCount}</td>
                         <td className="px-4 py-3">
                           <div className="flex justify-end gap-2">
-                            <button type="button" onClick={() => openEditSpecialization(department._id, spec.key)} className="rounded-lg border border-border p-1.5">
+                            <button type="button" onClick={() => openEditSpecialization(department._id, spec.key)} className="rounded-lg border border-border p-2.5">
                               <Pencil className="h-3.5 w-3.5" />
                             </button>
                             <button
@@ -756,9 +756,9 @@ export function TrackConfigManager() {
                                   label: spec.label,
                                 })
                               }
-                              className="rounded-lg border border-border p-1.5"
+                              className="rounded-lg border border-border p-2.5"
                             >
-                              <Trash2 className="h-3.5 w-3.5 text-red-300" />
+                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
                             </button>
                           </div>
                         </td>
@@ -800,9 +800,9 @@ export function TrackConfigManager() {
                                 topic: row.topic,
                               })
                             }
-                            className="rounded-lg border border-border p-1.5"
+                            className="rounded-lg border border-border p-2.5"
                           >
-                            <Trash2 className="h-3.5 w-3.5 text-red-300" />
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
                           </button>
                         </div>
                       </td>
@@ -995,6 +995,10 @@ export function TrackConfigManager() {
               />
               <div className="space-y-2">
                 <span className="text-[11px] text-muted-foreground">Enabled interview types</span>
+                <p className="text-[11px] text-muted-foreground/90">
+                  <strong className="text-foreground">Coding</strong> unlocks Monaco editor rounds
+                  (JavaScript sandbox + tests) for this specialization.
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {DEFAULT_INTERVIEW_TYPES.map((type) => {
                     const enabled = editingSpecialization.form.interviewTypes.includes(type)

@@ -1,4 +1,6 @@
 export type QuestionDifficulty = 'Easy' | 'Medium' | 'Hard'
+/** Alias used by coding templates and generation. */
+export type Difficulty = QuestionDifficulty
 
 export function difficultyForQuestionIndex(
   sessionDifficulty: 'Easy' | 'Medium' | 'Hard' | 'Adaptive',

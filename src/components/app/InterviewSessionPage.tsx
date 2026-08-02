@@ -7,11 +7,13 @@ import Link from 'next/link'
 import { useInterviewSession } from '@/hooks/interview/useInterviewSession'
 import { InterviewActions } from '@/components/app/interview/InterviewActions'
 import { InterviewAnswerEditor } from '@/components/app/interview/InterviewAnswerEditor'
+import { CodingAnswerEditor } from '@/components/app/interview/CodingAnswerEditor'
 import { InterviewQuestionCard } from '@/components/app/interview/InterviewQuestionCard'
 import { InterviewQuestionHeader } from '@/components/app/interview/InterviewQuestionHeader'
 import { InterviewProgressBar } from '@/components/app/interview/InterviewProgressBar'
 import { InterviewSessionTimer } from '@/components/app/interview/InterviewSessionTimer'
 import { BounceLoader } from '@/components/ui/bounce-loader'
+import { interviewExitHref, interviewExitLabel } from '@/lib/learning-paths/interview-exit'
 
 export function InterviewSessionPage() {
   const params = useParams<{ id: string }>()
@@ -91,7 +93,7 @@ export function InterviewSessionPage() {
     if (!(await saveDraftIfAny())) return
     const next = await finishInterview()
     if (next && id) {
-      router.push(`/app/interviews/${id}/results`)
+      router.replace(`/app/interviews/${id}/results`)
     }
   }
 
@@ -108,12 +110,12 @@ export function InterviewSessionPage() {
   if (error && !session) {
     return (
       <div className="space-y-4">
-        <div className="text-sm font-medium text-red-600 dark:text-red-400">{error}</div>
+        <div className="text-sm font-medium text-destructive">{error}</div>
         <Link
-          href="/app/interviews"
+          href="/app/learning-paths"
           className="hq-btn-outline px-4 py-2 text-sm btn-micro"
         >
-          <ArrowLeft className="h-4 w-4" /> Back
+          <ArrowLeft className="h-4 w-4" /> Learning paths
         </Link>
       </div>
     )
@@ -122,6 +124,9 @@ export function InterviewSessionPage() {
   if (!session) {
     return <div className="text-sm text-muted-foreground">No interview found.</div>
   }
+
+  const exitHref = interviewExitHref(session)
+  const exitLabel = interviewExitLabel(session)
 
   if (session.status === 'completed') {
     return (
@@ -143,21 +148,33 @@ export function InterviewSessionPage() {
         >
           {busy ? 'Generating…' : 'Generate Questions'}
         </button>
+        <Link href={exitHref} className="hq-btn-outline inline-flex px-4 py-2 text-sm btn-micro">
+          <ArrowLeft className="h-4 w-4" /> {exitLabel}
+        </Link>
       </div>
     )
   }
 
+  const isCoding = current.kind === 'coding' && Boolean(id)
+
   return (
-    <div className="hq-interview-session flex min-h-[52vh] flex-col gap-8">
-      {error ? <div className="text-sm font-medium text-red-600 dark:text-red-400">{error}</div> : null}
+    <div
+      className={[
+        'hq-interview-session flex flex-col',
+        isCoding ? 'hq-interview-session--coding gap-4' : 'min-h-[52vh] gap-8',
+      ].join(' ')}
+    >
+      {error ? <div className="text-sm font-medium text-destructive">{error}</div> : null}
 
       <InterviewQuestionHeader
         key={headerKey}
         questionNumber={index + 1}
         totalQuestions={questions.length}
         topic={current.topic}
-        type={current.type}
+        type={isCoding ? 'coding' : current.type}
         difficulty={current.difficulty}
+        exitHref={exitHref}
+        exitLabel={exitLabel}
         extraActions={
           <InterviewSessionTimer
             durationMinutes={session.durationMinutes ?? null}
@@ -172,18 +189,47 @@ export function InterviewSessionPage() {
 
       <InterviewProgressBar current={index + 1} total={questions.length} />
 
-      <div className="flex flex-1 flex-col justify-center gap-6">
-        <InterviewQuestionCard
-          questionText={current.question}
-          illustrationDataUrl={current.illustrationDataUrl ?? undefined}
-          illustrationRequired={current.illustrationRequired}
-        />
-        <InterviewAnswerEditor
-          value={answerDraft}
-          onChange={setAnswerDraft}
-          disabled={busy}
-        />
-      </div>
+      {isCoding && id ? (
+        <div className="hq-coding-workspace">
+          <section className="hq-coding-workspace__problem" aria-label="Problem statement">
+            <InterviewQuestionCard
+              variant="coding"
+              questionText={current.question}
+              illustrationDataUrl={current.illustrationDataUrl ?? undefined}
+              illustrationRequired={current.illustrationRequired}
+              topic={current.topic}
+              difficulty={current.difficulty}
+              functionName={current.functionName || 'solve'}
+            />
+          </section>
+          <section className="hq-coding-workspace__editor" aria-label="Code editor">
+            <CodingAnswerEditor
+              fillHeight
+              interviewId={id}
+              questionIndex={index}
+              starterCode={current.starterCode || 'function solve() {\n  // your code\n}\n'}
+              functionName={current.functionName || 'solve'}
+              language={current.language || 'javascript'}
+              value={answerDraft}
+              onChange={setAnswerDraft}
+              disabled={busy}
+            />
+          </section>
+        </div>
+      ) : (
+        <div className="flex flex-1 flex-col justify-center gap-6">
+          <InterviewQuestionCard
+            questionText={current.question}
+            illustrationDataUrl={current.illustrationDataUrl ?? undefined}
+            illustrationRequired={current.illustrationRequired}
+          />
+          <InterviewAnswerEditor
+            value={answerDraft}
+            onChange={setAnswerDraft}
+            disabled={busy}
+          />
+        </div>
+      )}
 
       <InterviewActions
         isSaving={busy}

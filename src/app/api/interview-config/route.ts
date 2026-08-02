@@ -13,7 +13,7 @@ export async function GET() {
         roleCategories: department.specializations.map((specialization) => ({
           key: specialization.key,
           label: specialization.label,
-          interviewTypes: specialization.interviewTypes ?? ['Technical', 'Behavioral', 'HR Interview'],
+          interviewTypes: specialization.interviewTypes ?? ['Technical', 'Behavioral', 'Screening HR'],
           technicalTopics: specialization.technicalTopics,
           behavioralTopics: specialization.behavioralTopics,
           hrTopics: specialization.hrTopics ?? [],

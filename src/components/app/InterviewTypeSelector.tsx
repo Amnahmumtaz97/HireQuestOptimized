@@ -2,14 +2,35 @@
 
 import React from 'react'
 import { motion } from 'framer-motion'
-import { BrainCircuit, Check, MessageCircle, Sparkles } from 'lucide-react'
+import {
+  BrainCircuit,
+  Check,
+  Code2,
+  MessageCircle,
+  Network,
+  Sparkles,
+  Users,
+} from 'lucide-react'
+import {
+  INTERVIEW_TYPE_LABELS,
+  INTERVIEW_TYPE_UI_ORDER,
+  type InterviewTypeKey,
+} from '@/lib/interview-config/interview-types'
 
-export type InterviewType = 'technical' | 'behavioral' | 'both' | 'hr'
+export type InterviewType = InterviewTypeKey | 'both'
 
-const OPTIONS = [
+const ICON_BY_TYPE: Record<
+  InterviewTypeKey,
   {
-    key: 'technical' as const,
-    title: 'Technical',
+    icon: typeof BrainCircuit
+    accent: string
+    glow: string
+    ring: string
+    iconBg: string
+    blob: string
+  }
+> = {
+  technical: {
     icon: BrainCircuit,
     accent: 'interview-type-accent--tech',
     glow: 'interview-type-glow--tech',
@@ -17,9 +38,23 @@ const OPTIONS = [
     iconBg: 'interview-type-icon--tech',
     blob: 'interview-type-blob--tech',
   },
-  {
-    key: 'behavioral' as const,
-    title: 'Behavioral',
+  coding: {
+    icon: Code2,
+    accent: 'interview-type-accent--tech',
+    glow: 'interview-type-glow--tech',
+    ring: 'interview-type-ring--tech',
+    iconBg: 'interview-type-icon--tech',
+    blob: 'interview-type-blob--tech',
+  },
+  system_design: {
+    icon: Network,
+    accent: 'interview-type-accent--tech',
+    glow: 'interview-type-glow--tech',
+    ring: 'interview-type-ring--tech',
+    iconBg: 'interview-type-icon--tech',
+    blob: 'interview-type-blob--tech',
+  },
+  behavioral: {
     icon: MessageCircle,
     accent: 'interview-type-accent--beh',
     glow: 'interview-type-glow--beh',
@@ -27,9 +62,15 @@ const OPTIONS = [
     iconBg: 'interview-type-icon--beh',
     blob: 'interview-type-blob--beh',
   },
-  {
-    key: 'both' as const,
-    title: 'Both',
+  hr: {
+    icon: Users,
+    accent: 'interview-type-accent--beh',
+    glow: 'interview-type-glow--beh',
+    ring: 'interview-type-ring--beh',
+    iconBg: 'interview-type-icon--beh',
+    blob: 'interview-type-blob--beh',
+  },
+  mixed: {
     icon: Sparkles,
     accent: 'interview-type-accent--both',
     glow: 'interview-type-glow--both',
@@ -37,7 +78,13 @@ const OPTIONS = [
     iconBg: 'interview-type-icon--both',
     blob: 'interview-type-blob--both',
   },
-]
+}
+
+const OPTIONS = INTERVIEW_TYPE_UI_ORDER.map((key) => ({
+  key,
+  title: INTERVIEW_TYPE_LABELS[key],
+  ...ICON_BY_TYPE[key],
+}))
 
 export function InterviewTypeSelector({
   value,
@@ -49,13 +96,18 @@ export function InterviewTypeSelector({
   availableTypes?: InterviewType[]
 }) {
   const visibleOptions = availableTypes?.length
-    ? OPTIONS.filter((option) => availableTypes.includes(option.key))
+    ? OPTIONS.filter((option) => {
+        if (availableTypes.includes(option.key)) return true
+        if (option.key === 'mixed' && availableTypes.includes('both')) return true
+        return false
+      })
     : OPTIONS
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
       {visibleOptions.map((option) => {
-        const selected = value === option.key
+        const selected =
+          value === option.key || (option.key === 'mixed' && value === 'both')
         const Icon = option.icon
 
         return (
@@ -88,7 +140,9 @@ export function InterviewTypeSelector({
               className={[
                 'relative inline-flex h-9 w-9 items-center justify-center rounded-xl border transition-transform duration-200',
                 option.iconBg,
-                selected ? `scale-105 ${option.accent}` : 'text-muted-foreground group-hover:scale-105 group-hover:text-foreground',
+                selected
+                  ? `scale-105 ${option.accent}`
+                  : 'text-muted-foreground group-hover:scale-105 group-hover:text-foreground',
               ].join(' ')}
             >
               <Icon className="h-4 w-4" strokeWidth={2} />

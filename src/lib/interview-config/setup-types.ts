@@ -1,12 +1,22 @@
 import { z } from 'zod'
-import { TAXONOMY_TOPIC_SET } from '@/lib/interview-taxonomy/taxonomy'
+import {
+  BEHAVIORAL_COMPETENCY_SET,
+} from '@/lib/interview-config/banks/behavioral-competencies'
+import { CODING_CATEGORY_SET } from '@/lib/interview-config/banks/coding-categories'
+import { HR_SECTION_SET, hrSectionLabel } from '@/lib/interview-config/banks/hr-sections'
+import { SYSTEM_DESIGN_TOPIC_SET } from '@/lib/interview-config/banks/system-design-topics'
+import { STORED_INTERVIEW_TYPE_KEYS } from '@/lib/interview-config/interview-types'
+import { SETUP_DIFFICULTIES } from '@/lib/interview-config/difficulty'
+import { SENIORITY_LEVELS } from '@/lib/interview-config/experience'
+import { QUESTION_COUNT_MAX } from '@/lib/interview-config/question-counts'
+import { DURATION_MAX } from '@/lib/interview-config/durations'
 
 export const interviewSetupConfigSchema = z.object({
   // Resume information
   targetRole: z.string().trim().max(200).optional().nullable(),
   currentRole: z.string().trim().max(200).optional().nullable(),
   yearsExperience: z.number().min(0).max(60).nullable().optional(),
-  seniorityLevel: z.enum(['junior', 'mid', 'senior']).nullable().optional(),
+  seniorityLevel: z.enum(SENIORITY_LEVELS).nullable().optional(),
   domain: z.string().trim().max(120).nullable().optional(),
   education: z.string().trim().max(500).nullable().optional(),
   degree: z.string().trim().max(200).nullable().optional(),
@@ -43,10 +53,15 @@ export const interviewSetupConfigSchema = z.object({
     .default([]),
   achievements: z.array(z.string().max(300)).max(20).optional().default([]),
 
-  // User configuration (required for generate)
+  // User configuration
   categories: z.array(z.string().trim().min(1)).default([]),
   topics: z.array(z.string().trim().min(1)).default([]),
-  difficulty: z.enum(['Easy', 'Medium', 'Hard', 'Mixed']).nullable().optional(),
+  codingCategories: z.array(z.string().trim().min(1)).optional().default([]),
+  behavioralCompetencies: z.array(z.string().trim().min(1)).optional().default([]),
+  hrSections: z.array(z.string().trim().min(1)).optional().default([]),
+  systemDesignTopics: z.array(z.string().trim().min(1)).optional().default([]),
+  difficulty: z.enum(SETUP_DIFFICULTIES).nullable().optional(),
+  interviewType: z.enum(STORED_INTERVIEW_TYPE_KEYS).nullable().optional(),
   interviewRoundType: z
     .enum(['technical_screen', 'system_design', 'behavioral', 'managerial'])
     .nullable()
@@ -59,13 +74,18 @@ export const interviewSetupConfigSchema = z.object({
     .enum(['coding', 'scenario', 'whiteboard', 'mixed'])
     .nullable()
     .optional(),
-  interviewDuration: z.number().int().positive().max(180).nullable().optional(),
-  numberOfQuestions: z.number().int().min(3).max(40).optional().default(12),
+  interviewDuration: z.number().int().positive().max(DURATION_MAX).nullable().optional(),
+  numberOfQuestions: z
+    .number()
+    .int()
+    .min(3)
+    .max(QUESTION_COUNT_MAX)
+    .optional()
+    .default(12),
   language: z.string().trim().max(40).optional().default('English'),
   focusAreas: z.array(z.string().max(120)).max(15).optional().default([]),
   excludedTopics: z.array(z.string().max(120)).max(30).optional().default([]),
 
-  // Tracking
   resumeParsedFields: z.array(z.string()).optional().default([]),
   manuallyFilledFields: z.array(z.string()).optional().default([]),
 })
@@ -73,6 +93,33 @@ export const interviewSetupConfigSchema = z.object({
 export type InterviewSetupConfig = z.infer<typeof interviewSetupConfigSchema>
 
 export type ConfigValidationIssue = { field: string; message: string }
+
+export function resolveSetupSelection(config: InterviewSetupConfig): string[] {
+  const type = config.interviewType
+  const excluded = new Set(config.excludedTopics || [])
+  if (type === 'coding') {
+    return (config.codingCategories?.length ? config.codingCategories : config.topics).filter(
+      (t) => CODING_CATEGORY_SET.has(t) && !excluded.has(t),
+    )
+  }
+  if (type === 'behavioral') {
+    return (
+      config.behavioralCompetencies?.length ? config.behavioralCompetencies : config.topics
+    ).filter((t) => BEHAVIORAL_COMPETENCY_SET.has(t) && !excluded.has(t))
+  }
+  if (type === 'hr') {
+    return (config.hrSections ?? [])
+      .filter((k) => HR_SECTION_SET.has(k) && !excluded.has(k))
+      .map((k) => hrSectionLabel(k))
+  }
+  if (type === 'system_design') {
+    return (
+      config.systemDesignTopics?.length ? config.systemDesignTopics : config.topics
+    ).filter((t) => SYSTEM_DESIGN_TOPIC_SET.has(t) && !excluded.has(t))
+  }
+  // technical / mixed / legacy: use topics as confirmed labels
+  return config.topics.filter((t) => !excluded.has(t))
+}
 
 export function validateInterviewSetupForGenerate(
   config: InterviewSetupConfig,
@@ -85,33 +132,18 @@ export function validateInterviewSetupForGenerate(
   if (config.yearsExperience == null && !config.seniorityLevel) {
     issues.push({ field: 'yearsExperience', message: 'Experience or seniority is required' })
   }
-  if (!config.categories.length) {
-    issues.push({ field: 'categories', message: 'Select at least one category' })
-  }
-  if (config.topics.length < 3) {
-    issues.push({ field: 'topics', message: 'Select at least three topics' })
+  if (!config.interviewType && !config.interviewRoundType) {
+    issues.push({ field: 'interviewType', message: 'Select an interview type' })
   }
   if (!config.difficulty) {
     issues.push({ field: 'difficulty', message: 'Select a difficulty' })
   }
-  if (!config.interviewRoundType) {
-    issues.push({ field: 'interviewRoundType', message: 'Select an interview round' })
-  }
 
-  const invalidTopics = config.topics.filter((t) => !TAXONOMY_TOPIC_SET.has(t))
-  if (invalidTopics.length > 0) {
+  const selected = resolveSetupSelection(config)
+  if (selected.length < 1) {
     issues.push({
       field: 'topics',
-      message: `Topics outside taxonomy: ${invalidTopics.slice(0, 5).join(', ')}`,
-    })
-  }
-
-  const excluded = new Set(config.excludedTopics || [])
-  const effective = config.topics.filter((t) => !excluded.has(t))
-  if (effective.length < 3) {
-    issues.push({
-      field: 'excludedTopics',
-      message: 'After exclusions, at least three topics must remain',
+      message: 'Select at least one option for this interview type',
     })
   }
 
@@ -119,6 +151,5 @@ export function validateInterviewSetupForGenerate(
 }
 
 export function effectiveTopics(config: InterviewSetupConfig): string[] {
-  const excluded = new Set(config.excludedTopics || [])
-  return config.topics.filter((t) => TAXONOMY_TOPIC_SET.has(t) && !excluded.has(t))
+  return resolveSetupSelection(config)
 }

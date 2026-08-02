@@ -1,48 +1,33 @@
 import type { InterviewConfig } from '@/components/app/dashboard/types'
 import { INDUSTRY_ICONS, ROLE_ICONS } from '@/lib/icon-mapping'
 import { parseRoleRef } from '@/lib/interview-scope'
+import { formatInterviewTypeKeyLabel } from '@/lib/interview-config/interview-types'
+import { formatSessionDifficultyLabel } from '@/lib/interview-config/difficulty'
 
 /** Consistent Title Case labels for session metadata (match difficulty style). */
-
-const TYPE_LABELS: Record<string, string> = {
-  technical: 'Technical',
-  behavioral: 'Behavioral',
-  both: 'Both',
-  hr: 'HR Interview',
-}
-
-const DIFF_LABELS: Record<string, string> = {
-  easy: 'Easy',
-  medium: 'Medium',
-  hard: 'Hard',
-  adaptive: 'Adaptive AI',
-}
-
-export function formatInterviewTypeLabel(value: string | null | undefined): string {
-  if (value == null || value === '') return '—'
-  const k = value.trim().toLowerCase()
-  if (TYPE_LABELS[k]) return TYPE_LABELS[k]
-  return value.replace(/^\w/, (c) => c.toUpperCase())
-}
 
 const QUESTION_TYPE_LABELS: Record<string, string> = {
   technical: 'Technical',
   behavioral: 'Behavioral',
-  hr: 'HR',
+  hr: 'Screening HR',
+  coding: 'Coding',
+  system_design: 'System Design',
+}
+
+export function formatInterviewTypeLabel(value: string | null | undefined): string {
+  return formatInterviewTypeKeyLabel(value)
 }
 
 export function formatQuestionTypeLabel(value: string | null | undefined): string {
   if (value == null || value === '') return '—'
   const k = value.trim().toLowerCase()
   if (QUESTION_TYPE_LABELS[k]) return QUESTION_TYPE_LABELS[k]
-  return value.replace(/^\w/, (c) => c.toUpperCase())
+  return formatInterviewTypeKeyLabel(value)
 }
 
 export function formatDifficultyLabel(value: string | null | undefined): string {
   if (value == null || value === '') return '—'
-  const k = value.trim().toLowerCase()
-  if (DIFF_LABELS[k]) return DIFF_LABELS[k]
-  return value.replace(/^\w/, (c) => c.toUpperCase())
+  return formatSessionDifficultyLabel(value)
 }
 
 function humanizeSlugKey(key: string): string {
@@ -68,6 +53,8 @@ export function formatRoleCategoryDisplay(
 ): string {
   const rc = roleCategoryKey?.trim() ?? ''
   if (!rc) return '—'
+
+  if (rc === 'general') return 'General practice'
 
   const ind = industryKey?.trim() ?? ''
   const industry = configs?.find((c) => c.industryKey === ind)
@@ -177,6 +164,8 @@ export function formatIndustryDisplay(industryKey: string, configs?: InterviewCo
   const ik = industryKey?.trim() ?? ''
   if (!ik) return '—'
 
+  if (ik === 'practice') return 'Coding practice'
+
   const fromConfig = configs?.find((c) => c.industryKey === ik)?.industryLabel?.trim()
   if (fromConfig) return fromConfig
 
@@ -184,4 +173,67 @@ export function formatIndustryDisplay(industryKey: string, configs?: InterviewCo
   if (fromIcons) return fromIcons
 
   return humanizeSlugKey(ik)
+}
+
+/**
+ * Title line for interview list/cards. Coding / non-catalog sessions show type + categories
+ * instead of Practice · General placeholders.
+ */
+export function formatInterviewSessionTitle(session: {
+  interviewType?: string | null
+  industryKey?: string | null
+  roleCategoryKey?: string | null
+  topics?: string[] | null
+  codingCategories?: string[] | null
+  behavioralCompetencies?: string[] | null
+  systemDesignTopics?: string[] | null
+  hrSections?: string[] | null
+}, configs?: InterviewConfig[] | null): string {
+  const type = (session.interviewType || '').trim().toLowerCase()
+
+  if (type === 'coding') {
+    const cats = (session.codingCategories?.length
+      ? session.codingCategories
+      : session.topics) ?? []
+    const scope = formatTopicsDisplay(cats.filter(Boolean))
+    return scope === '—' ? 'Coding' : `Coding · ${scope}`
+  }
+
+  if (type === 'behavioral') {
+    const cats = (session.behavioralCompetencies?.length
+      ? session.behavioralCompetencies
+      : session.topics) ?? []
+    const scope = formatTopicsDisplay(cats.filter(Boolean))
+    return scope === '—' ? 'Behavioral' : `Behavioral · ${scope}`
+  }
+
+  if (type === 'hr') {
+    const cats = (session.hrSections?.length ? session.hrSections : session.topics) ?? []
+    const scope = formatTopicsDisplay(cats.filter(Boolean))
+    return scope === '—' ? 'Screening HR' : `Screening HR · ${scope}`
+  }
+
+  if (type === 'system_design') {
+    const cats = (session.systemDesignTopics?.length
+      ? session.systemDesignTopics
+      : session.topics) ?? []
+    const scope = formatTopicsDisplay(cats.filter(Boolean))
+    return scope === '—' ? 'System Design' : `System Design · ${scope}`
+  }
+
+  if (type === 'mixed' || type === 'both') {
+    const cats = session.topics ?? []
+    const scope = formatTopicsDisplay(cats.filter(Boolean))
+    return scope === '—' ? 'Mixed' : `Mixed · ${scope}`
+  }
+
+  const industry = session.industryKey || ''
+  const role = session.roleCategoryKey || ''
+  if (industry === 'practice' || role === 'general') {
+    const scope = formatTopicsDisplay((session.topics ?? []).filter(Boolean))
+    const typeLabel = formatInterviewTypeLabel(session.interviewType)
+    return scope === '—' ? typeLabel : `${typeLabel} · ${scope}`
+  }
+
+  return formatRoleCategoryDisplay(industry, role, configs)
 }

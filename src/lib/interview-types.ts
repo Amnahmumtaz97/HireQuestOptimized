@@ -1,15 +1,28 @@
-/** Selectable interview practice kinds (UI multi-select). */
-export type InterviewTypeKind = 'technical' | 'behavioral' | 'hr'
+/** Selectable interview practice kinds (legacy multi-select helpers). */
+import {
+  INTERVIEW_TYPE_LABELS,
+  INTERVIEW_TYPE_KEYS,
+  type InterviewTypeKey,
+} from '@/lib/interview-config/interview-types'
 
-/** Stored session/API value: a single kind, or `both` when multiple kinds are selected. */
-export type InterviewTypeStored = InterviewTypeKind | 'both'
+export type InterviewTypeKind = Exclude<InterviewTypeKey, 'mixed'>
 
-export const INTERVIEW_TYPE_KINDS: InterviewTypeKind[] = ['technical', 'behavioral', 'hr']
+/** Stored session/API value. */
+export type InterviewTypeStored =
+  | InterviewTypeKind
+  | 'both'
+  | 'mixed'
+
+export const INTERVIEW_TYPE_KINDS: InterviewTypeKind[] = INTERVIEW_TYPE_KEYS.filter(
+  (k): k is InterviewTypeKind => k !== 'mixed',
+)
 
 const KIND_LABELS: Record<InterviewTypeKind, string> = {
-  technical: 'Technical',
-  behavioral: 'Behavioral',
-  hr: 'HR Interview',
+  technical: INTERVIEW_TYPE_LABELS.technical,
+  behavioral: INTERVIEW_TYPE_LABELS.behavioral,
+  hr: INTERVIEW_TYPE_LABELS.hr,
+  coding: INTERVIEW_TYPE_LABELS.coding,
+  system_design: INTERVIEW_TYPE_LABELS.system_design,
 }
 
 export function normalizeInterviewTypeKinds(
@@ -22,24 +35,30 @@ export function normalizeInterviewTypeKinds(
   )
 }
 
-/** Encode UI selection for persistence (`both` = any multi-kind mix). */
+/** Encode UI selection for persistence (`both`/`mixed` = multi-kind mix). */
 export function encodeInterviewType(kinds: readonly InterviewTypeKind[]): InterviewTypeStored | null {
   const normalized = normalizeInterviewTypeKinds(kinds)
   if (normalized.length === 0) return null
   if (normalized.length === 1) return normalized[0]
-  return 'both'
+  return 'mixed'
 }
 
 /** Resolve concrete kinds from stored type + optional kinds array. */
 export function decodeInterviewTypeKinds(
-  interviewType: InterviewTypeStored | null | undefined,
+  interviewType: InterviewTypeStored | string | null | undefined,
   interviewTypes?: readonly InterviewTypeKind[] | null,
 ): InterviewTypeKind[] {
   const fromArray = normalizeInterviewTypeKinds(interviewTypes ?? undefined)
   if (fromArray.length > 0) return fromArray
   if (!interviewType) return []
-  if (interviewType === 'both') return ['technical', 'behavioral']
-  if (interviewType === 'technical' || interviewType === 'behavioral' || interviewType === 'hr') {
+  if (interviewType === 'both' || interviewType === 'mixed') return ['technical', 'behavioral']
+  if (
+    interviewType === 'technical' ||
+    interviewType === 'behavioral' ||
+    interviewType === 'hr' ||
+    interviewType === 'coding' ||
+    interviewType === 'system_design'
+  ) {
     return [interviewType]
   }
   return []
@@ -61,13 +80,17 @@ export function formatInterviewTypeStoredLabel(
     interviewType as InterviewTypeStored | null | undefined,
     interviewTypes,
   )
-  if (kinds.length > 0) return formatInterviewTypeKindsLabel(kinds)
+  if (kinds.length > 0 && interviewType !== 'coding' && interviewType !== 'system_design') {
+    if (interviewType === 'mixed' || interviewType === 'both') {
+      return formatInterviewTypeKindsLabel(kinds)
+    }
+  }
   if (interviewType == null || interviewType === '') return '—'
   const k = String(interviewType).trim().toLowerCase()
-  if (k === 'both') return 'Technical, Behavioral'
-  if (k === 'technical') return 'Technical'
-  if (k === 'behavioral') return 'Behavioral'
-  if (k === 'hr') return 'HR Interview'
+  if (k === 'both' || k === 'mixed') return INTERVIEW_TYPE_LABELS.mixed
+  if (k in INTERVIEW_TYPE_LABELS) {
+    return INTERVIEW_TYPE_LABELS[k as keyof typeof INTERVIEW_TYPE_LABELS]
+  }
   return String(interviewType).replace(/^\w/, (c) => c.toUpperCase())
 }
 

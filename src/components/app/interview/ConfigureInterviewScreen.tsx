@@ -2,24 +2,27 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import {
-  ArrowLeft,
-  Check,
-  ChevronDown,
-  ChevronRight,
-  AlertTriangle,
-  Search,
-  Sparkles,
-} from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowLeft, Check, AlertTriangle, Sparkles } from 'lucide-react'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { useToast } from '@/components/ui/toast'
 import {
-  categoriesForTrack,
-  type TaxonomyTrack,
-} from '@/lib/interview-taxonomy/taxonomy'
+  InterviewTypeSelector,
+  type InterviewType,
+} from '@/components/app/InterviewTypeSelector'
+import { ChipMultiSelect } from '@/components/app/ChipMultiSelect'
+import {
+  CODING_CATEGORIES,
+  BEHAVIORAL_COMPETENCIES,
+  HR_SECTIONS,
+  SYSTEM_DESIGN_TOPICS,
+} from '@/lib/interview-config/type-config'
 import type { InterviewSetupConfig } from '@/lib/interview-config/setup-types'
 import { validateInterviewSetupForGenerate } from '@/lib/interview-config/setup-types'
+import { CODING_CATEGORY_SET } from '@/lib/interview-config/banks/coding-categories'
+import { BEHAVIORAL_COMPETENCY_SET } from '@/lib/interview-config/banks/behavioral-competencies'
+import { SYSTEM_DESIGN_TOPIC_SET } from '@/lib/interview-config/banks/system-design-topics'
+import { SENIORITY_UI_OPTIONS } from '@/lib/interview-config/experience'
+import { DIFFICULTY_UI_OPTIONS } from '@/lib/interview-config/difficulty'
 
 type ConfigureInterviewScreenProps = {
   initial: InterviewSetupConfig
@@ -35,10 +38,24 @@ function FieldBadge({ fromResume }: { fromResume: boolean }) {
       <Check className="h-3 w-3" /> From Resume
     </span>
   ) : (
-    <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+    <span className="inline-flex items-center gap-1 rounded-full bg-warning-muted px-2 py-0.5 text-[10px] font-medium text-warning">
       <AlertTriangle className="h-3 w-3" /> Missing — Please Fill
     </span>
   )
+}
+
+function suggestFromSkills(skills: string[], bank: Set<string>): string[] {
+  const out: string[] = []
+  for (const skill of skills) {
+    const s = skill.trim()
+    if (bank.has(s)) out.push(s)
+    else {
+      for (const item of bank) {
+        if (item.toLowerCase() === s.toLowerCase()) out.push(item)
+      }
+    }
+  }
+  return [...new Set(out)]
 }
 
 export function ConfigureInterviewScreen({
@@ -51,171 +68,52 @@ export function ConfigureInterviewScreen({
   const router = useRouter()
   const toast = useToast()
   const [config, setConfig] = useState<InterviewSetupConfig>(initial)
-  const [topicSearch, setTopicSearch] = useState('')
-  const [openCats, setOpenCats] = useState<Record<string, boolean>>({})
   const [creating, setCreating] = useState(false)
   const [showErrors, setShowErrors] = useState(false)
+  const [filter, setFilter] = useState('')
 
   const issues = useMemo(() => validateInterviewSetupForGenerate(config), [config])
   const canGenerate = issues.length === 0
+  const interviewType = (config.interviewType ?? null) as InterviewType | null
 
   const fromResume = (field: string) =>
     (config.resumeParsedFields || []).includes(field) &&
     !(config.manuallyFilledFields || []).includes(field)
 
-  const markManual = (field: string) => {
+  const patch = <K extends keyof InterviewSetupConfig>(key: K, value: InterviewSetupConfig[K]) => {
     setConfig((prev) => ({
       ...prev,
-      manuallyFilledFields: [...new Set([...(prev.manuallyFilledFields || []), field])],
+      [key]: value,
+      manuallyFilledFields: [...new Set([...(prev.manuallyFilledFields || []), String(key)])],
     }))
   }
 
-  const patch = <K extends keyof InterviewSetupConfig>(key: K, value: InterviewSetupConfig[K]) => {
-    setConfig((prev) => ({ ...prev, [key]: value }))
-    markManual(String(key))
-  }
+  const handleInterviewTypeChange = (next: InterviewType) => {
+    const skills = config.extractedSkills || []
+    const codingSuggest = suggestFromSkills(skills, CODING_CATEGORY_SET)
+    const behSuggest = suggestFromSkills(skills, BEHAVIORAL_COMPETENCY_SET)
+    const sdSuggest = suggestFromSkills(skills, SYSTEM_DESIGN_TOPIC_SET)
 
-  const pathLocked = Boolean(pathId && stageId)
-  const lockedTopics = useMemo(
-    () => (pathLocked ? [...(initial.topics || [])] : []),
-    [pathLocked, initial.topics],
-  )
-
-  const toggleTopic = (topic: string, categoryKey: string) => {
-    if (pathLocked && lockedTopics.length > 0) {
-      // Path stage topics are fixed; only allow selecting within the stage set (no free add).
-      if (!lockedTopics.includes(topic)) {
-        toast.error('Path stage topics are locked for this interview')
-        return
-      }
-    }
-    setConfig((prev) => {
-      const has = prev.topics.includes(topic)
-      const topics = has ? prev.topics.filter((t) => t !== topic) : [...prev.topics, topic]
-      let categories = prev.categories
-      if (!has && !categories.includes(categoryKey)) {
-        categories = [...categories, categoryKey]
-      }
-      if (has) {
-        const cat = categoriesForTrack('technical')
-          .concat(categoriesForTrack('non_technical'))
-          .find((c) => c.key === categoryKey)
-        if (cat && !cat.topics.some((t) => topics.includes(t))) {
-          categories = categories.filter((k) => k !== categoryKey)
-        }
-      }
-      return {
-        ...prev,
-        topics,
-        categories,
-        manuallyFilledFields: [...new Set([...(prev.manuallyFilledFields || []), 'topics', 'categories'])],
-      }
-    })
-  }
-
-  const selectAllInCategory = (categoryKey: string, topics: string[], on: boolean) => {
-    setConfig((prev) => {
-      let nextTopics = prev.topics.filter((t) => !topics.includes(t))
-      let categories = prev.categories.filter((k) => k !== categoryKey)
-      if (on) {
-        nextTopics = [...new Set([...nextTopics, ...topics])]
-        categories = [...categories, categoryKey]
-      }
-      return {
-        ...prev,
-        topics: nextTopics,
-        categories,
-        manuallyFilledFields: [...new Set([...(prev.manuallyFilledFields || []), 'topics', 'categories'])],
-      }
-    })
-  }
-
-  const renderTrack = (track: TaxonomyTrack, title: string) => {
-    const cats = categoriesForTrack(track)
-    const q = topicSearch.trim().toLowerCase()
-    return (
-      <div className="space-y-3 rounded-2xl border border-border bg-input/10 p-4">
-        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-        <div className="space-y-2">
-          {cats.map((cat) => {
-            const topics = q
-              ? cat.topics.filter((t) => t.toLowerCase().includes(q))
-              : cat.topics
-            if (q && topics.length === 0) return null
-            const open = openCats[cat.key] ?? topics.some((t) => config.topics.includes(t))
-            const selectedCount = cat.topics.filter((t) => config.topics.includes(t)).length
-            return (
-              <div key={cat.key} className="rounded-xl border border-border/70 bg-background/40">
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm"
-                  onClick={() => setOpenCats((p) => ({ ...p, [cat.key]: !open }))}
-                >
-                  <span className="font-medium text-foreground">
-                    {cat.label}
-                    {selectedCount > 0 ? (
-                      <span className="ml-2 text-xs text-primary">({selectedCount})</span>
-                    ) : null}
-                  </span>
-                  {open ? (
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </button>
-                <AnimatePresence initial={false}>
-                  {open ? (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden border-t border-border/60 px-3 pb-3"
-                    >
-                      <div className="flex flex-wrap gap-2 py-2">
-                        <button
-                          type="button"
-                          className="text-[11px] text-primary underline-offset-2 hover:underline"
-                          onClick={() => selectAllInCategory(cat.key, cat.topics, true)}
-                        >
-                          Select all
-                        </button>
-                        <button
-                          type="button"
-                          className="text-[11px] text-muted-foreground underline-offset-2 hover:underline"
-                          onClick={() => selectAllInCategory(cat.key, cat.topics, false)}
-                        >
-                          Deselect all
-                        </button>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {topics.map((t) => {
-                          const on = config.topics.includes(t)
-                          return (
-                            <button
-                              key={t}
-                              type="button"
-                              onClick={() => toggleTopic(t, cat.key)}
-                              className={[
-                                'rounded-full border px-2.5 py-1 text-[11px] transition',
-                                on
-                                  ? 'border-primary bg-primary/15 text-primary'
-                                  : 'border-border text-muted-foreground hover:bg-input/40',
-                              ].join(' ')}
-                            >
-                              {t}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </motion.div>
-                  ) : null}
-                </AnimatePresence>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    )
+    setConfig((prev) => ({
+      ...prev,
+      interviewType: next === 'both' ? 'mixed' : next,
+      preferredQuestionFormat: next === 'coding' ? 'coding' : null,
+      codingCategories: next === 'coding' ? codingSuggest : prev.codingCategories,
+      behavioralCompetencies: next === 'behavioral' ? behSuggest : prev.behavioralCompetencies,
+      systemDesignTopics: next === 'system_design' ? sdSuggest : prev.systemDesignTopics,
+      topics:
+        next === 'coding'
+          ? codingSuggest
+          : next === 'behavioral'
+            ? behSuggest
+            : next === 'system_design'
+              ? sdSuggest
+              : prev.topics,
+      categories: next === 'hr' ? ['hr'] : prev.categories,
+      manuallyFilledFields: [
+        ...new Set([...(prev.manuallyFilledFields || []), 'interviewType', 'preferredQuestionFormat']),
+      ],
+    }))
   }
 
   const generate = async () => {
@@ -237,12 +135,10 @@ export function ConfigureInterviewScreen({
         }),
       })
       const data = await res.json()
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to generate interview')
-      }
+      if (!res.ok) throw new Error(data.message || 'Failed to generate interview')
       toast.success(
         data.source === 'gemini'
-          ? 'Interview ready — questions from your confirmed topics'
+          ? 'Interview ready — questions from your confirmed selections'
           : 'Interview created',
       )
       router.push(`/app/interviews/${data.sessionId}`)
@@ -266,14 +162,11 @@ export function ConfigureInterviewScreen({
         <div>
           <h1 className="text-xl font-semibold text-foreground">Configure Your Interview</h1>
           <p className="text-xs text-muted-foreground">
-            {pathLocked
-              ? 'Path stage topics are locked. Resume fields still only prefill — confirm before generate.'
-              : 'Review resume details, pick topics, then generate. No questions until you confirm.'}
+            Resume only prefills. Confirm type and selections before generate.
           </p>
         </div>
       </div>
 
-      {/* Section 1 */}
       <section className="space-y-4">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           1 · Resume information
@@ -288,7 +181,6 @@ export function ConfigureInterviewScreen({
               value={config.targetRole || config.currentRole || ''}
               onChange={(e) => patch('targetRole', e.target.value)}
               className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
-              placeholder="e.g. Full Stack Developer"
             />
           </label>
           <label className="space-y-1.5">
@@ -302,10 +194,7 @@ export function ConfigureInterviewScreen({
               max={60}
               value={config.yearsExperience ?? ''}
               onChange={(e) =>
-                patch(
-                  'yearsExperience',
-                  e.target.value === '' ? null : Number(e.target.value),
-                )
+                patch('yearsExperience', e.target.value === '' ? null : Number(e.target.value))
               }
               className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
             />
@@ -326,33 +215,12 @@ export function ConfigureInterviewScreen({
               className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
             >
               <option value="">Select…</option>
-              <option value="junior">Junior</option>
-              <option value="mid">Mid</option>
-              <option value="senior">Senior</option>
+              {SENIORITY_UI_OPTIONS.map((opt) => (
+                <option key={opt.key} value={opt.key}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
-          </label>
-          <label className="space-y-1.5">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs text-muted-foreground">Domain</span>
-              <FieldBadge fromResume={fromResume('domain')} />
-            </div>
-            <input
-              value={config.domain || ''}
-              onChange={(e) => patch('domain', e.target.value)}
-              className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
-            />
-          </label>
-          <label className="space-y-1.5 sm:col-span-2">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs text-muted-foreground">Education</span>
-              <FieldBadge fromResume={fromResume('education') || fromResume('degree')} />
-            </div>
-            <input
-              value={config.education || ''}
-              onChange={(e) => patch('education', e.target.value)}
-              className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
-              placeholder="Degree @ University"
-            />
           </label>
           <div className="space-y-1.5 sm:col-span-2">
             <div className="flex items-center justify-between gap-2">
@@ -362,10 +230,7 @@ export function ConfigureInterviewScreen({
             <div className="flex flex-wrap gap-1.5 rounded-xl border border-border bg-input/10 p-3">
               {(config.extractedSkills || []).length ? (
                 config.extractedSkills.map((s) => (
-                  <span
-                    key={s}
-                    className="rounded-full border border-border px-2 py-0.5 text-[11px]"
-                  >
+                  <span key={s} className="rounded-full border border-border px-2 py-0.5 text-[11px]">
                     {s}
                   </span>
                 ))
@@ -374,60 +239,93 @@ export function ConfigureInterviewScreen({
               )}
             </div>
           </div>
-          {(config.projects || []).length > 0 ? (
-            <div className="space-y-2 sm:col-span-2">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs text-muted-foreground">Projects</span>
-                <FieldBadge fromResume={fromResume('projects')} />
-              </div>
-              <ul className="space-y-2 text-sm">
-                {config.projects.map((p) => (
-                  <li
-                    key={p.name}
-                    className="rounded-xl border border-border bg-input/10 px-3 py-2"
-                  >
-                    <div className="font-medium">{p.name}</div>
-                    <p className="text-xs text-muted-foreground">{p.description}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
         </div>
       </section>
 
-      {/* Section 2 */}
-      <section className="space-y-4">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            2 · Category & topic selection
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            {config.topics.length} topic{config.topics.length === 1 ? '' : 's'} selected
-            {config.categories.length
-              ? ` · ${config.categories.length} categor${config.categories.length === 1 ? 'y' : 'ies'}`
-              : ''}
-          </p>
-        </div>
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={topicSearch}
-            onChange={(e) => setTopicSearch(e.target.value)}
-            placeholder="Search topics…"
-            className="h-10 w-full rounded-xl border border-border bg-input/30 pl-9 pr-3 text-sm"
-          />
-        </div>
-        <div className="grid gap-4 lg:grid-cols-2">
-          {renderTrack('technical', 'Technical')}
-          {renderTrack('non_technical', 'Non-Technical')}
-        </div>
-      </section>
-
-      {/* Section 3 */}
       <section className="space-y-4">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          3 · Interview parameters
+          2 · Interview type
+        </h2>
+        <InterviewTypeSelector value={interviewType} onChange={handleInterviewTypeChange} />
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          3 · Selections for this type
+        </h2>
+        {!interviewType ? (
+          <div className="rounded-2xl border border-border bg-input/20 p-4 text-sm text-muted-foreground">
+            Choose an interview type first.
+          </div>
+        ) : (
+          <>
+            <input
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              placeholder="Filter…"
+              className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
+            />
+            {interviewType === 'coding' ? (
+              <ChipMultiSelect
+                options={[...CODING_CATEGORIES]}
+                selected={config.codingCategories ?? []}
+                onChange={(next) => {
+                  patch('codingCategories', next)
+                  patch('topics', next)
+                  patch('categories', ['coding'])
+                }}
+                search={filter}
+              />
+            ) : interviewType === 'behavioral' ? (
+              <ChipMultiSelect
+                options={[...BEHAVIORAL_COMPETENCIES]}
+                selected={config.behavioralCompetencies ?? []}
+                onChange={(next) => {
+                  patch('behavioralCompetencies', next)
+                  patch('topics', next)
+                  patch('categories', ['behavioral'])
+                }}
+                search={filter}
+              />
+            ) : interviewType === 'hr' ? (
+              <ChipMultiSelect
+                options={HR_SECTIONS.map((s) => ({ key: s.key, label: s.label }))}
+                selected={config.hrSections ?? []}
+                onChange={(next) => {
+                  patch('hrSections', next)
+                  patch('categories', ['hr'])
+                }}
+                search={filter}
+              />
+            ) : interviewType === 'system_design' ? (
+              <ChipMultiSelect
+                options={[...SYSTEM_DESIGN_TOPICS]}
+                selected={config.systemDesignTopics ?? []}
+                onChange={(next) => {
+                  patch('systemDesignTopics', next)
+                  patch('topics', next)
+                  patch('categories', ['system_design'])
+                }}
+                search={filter}
+              />
+            ) : (
+              <ChipMultiSelect
+                options={[...SYSTEM_DESIGN_TOPICS, ...CODING_CATEGORIES]}
+                selected={config.topics}
+                onChange={(next) => {
+                  patch('topics', next)
+                  patch('categories', ['technical'])
+                }}
+                search={filter}
+              />
+            )}
+          </>
+        )}
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          4 · Interview parameters
         </h2>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="space-y-1.5">
@@ -440,67 +338,11 @@ export function ConfigureInterviewScreen({
               className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
             >
               <option value="">Select…</option>
-              <option value="Easy">Easy</option>
-              <option value="Medium">Medium</option>
-              <option value="Hard">Hard</option>
-              <option value="Mixed">Mixed</option>
-            </select>
-          </label>
-          <label className="space-y-1.5">
-            <span className="text-xs text-muted-foreground">Interview round</span>
-            <select
-              value={config.interviewRoundType || ''}
-              onChange={(e) =>
-                patch(
-                  'interviewRoundType',
-                  (e.target.value || null) as InterviewSetupConfig['interviewRoundType'],
-                )
-              }
-              className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
-            >
-              <option value="">Select…</option>
-              <option value="technical_screen">Technical Screen</option>
-              <option value="system_design">System Design</option>
-              <option value="behavioral">Behavioral</option>
-              <option value="managerial">Managerial</option>
-            </select>
-          </label>
-          <label className="space-y-1.5">
-            <span className="text-xs text-muted-foreground">Question format</span>
-            <select
-              value={config.preferredQuestionFormat || ''}
-              onChange={(e) =>
-                patch(
-                  'preferredQuestionFormat',
-                  (e.target.value || null) as InterviewSetupConfig['preferredQuestionFormat'],
-                )
-              }
-              className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
-            >
-              <option value="">Optional…</option>
-              <option value="coding">Coding</option>
-              <option value="scenario">Scenario</option>
-              <option value="whiteboard">Whiteboard</option>
-              <option value="mixed">Mixed</option>
-            </select>
-          </label>
-          <label className="space-y-1.5">
-            <span className="text-xs text-muted-foreground">Target company</span>
-            <select
-              value={config.targetCompanyType || ''}
-              onChange={(e) =>
-                patch(
-                  'targetCompanyType',
-                  (e.target.value || null) as InterviewSetupConfig['targetCompanyType'],
-                )
-              }
-              className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
-            >
-              <option value="">Optional…</option>
-              <option value="startup">Startup</option>
-              <option value="mid_size">Mid-size</option>
-              <option value="enterprise">Enterprise</option>
-              <option value="faang">FAANG</option>
+              {DIFFICULTY_UI_OPTIONS.map((opt) => (
+                <option key={opt.key} value={opt.key}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
           </label>
           <label className="space-y-1.5">
@@ -527,22 +369,6 @@ export function ConfigureInterviewScreen({
               className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
             />
           </label>
-          <label className="space-y-1.5 sm:col-span-2">
-            <span className="text-xs text-muted-foreground">Focus areas (optional, comma-separated)</span>
-            <input
-              value={(config.focusAreas || []).join(', ')}
-              onChange={(e) =>
-                patch(
-                  'focusAreas',
-                  e.target.value
-                    .split(',')
-                    .map((s) => s.trim())
-                    .filter(Boolean),
-                )
-              }
-              className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
-            />
-          </label>
         </div>
       </section>
 
@@ -560,7 +386,7 @@ export function ConfigureInterviewScreen({
         loadingLabel="Generating…"
         disabled={!canGenerate && showErrors}
         onClick={() => void generate()}
-        className="hq-btn-primary inline-flex h-12 items-center gap-2 rounded-2xl px-6 text-sm font-semibold disabled:opacity-50"
+        className="hq-btn-primary inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl px-6 text-sm font-semibold disabled:opacity-50 sm:w-auto"
       >
         <Sparkles className="h-4 w-4" />
         Generate Interview

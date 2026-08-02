@@ -2,6 +2,15 @@ import { Schema, model, models, type Model, type Types } from 'mongoose'
 
 export type StageType = 'concept' | 'practice' | 'mock_interview' | 'ai_feedback'
 
+export type StageInterviewType =
+  | 'technical'
+  | 'behavioral'
+  | 'both'
+  | 'hr'
+  | 'coding'
+  | 'system_design'
+  | 'mixed'
+
 export interface IStage {
   _id: Types.ObjectId
   pathId: Types.ObjectId
@@ -13,7 +22,7 @@ export interface IStage {
   level?: number | null
   departmentKey?: string
   specializationKeys?: string[]
-  interviewType?: 'technical' | 'behavioral' | 'both' | 'hr' | null
+  interviewType?: StageInterviewType | null
   difficulty?: 'Easy' | 'Medium' | 'Hard' | 'Adaptive' | null
   suggestedTopics?: string[]
   totalQuestions?: number | null
@@ -38,7 +47,7 @@ const stageSchema = new Schema<IStage>(
     specializationKeys: { type: [String], default: [] },
     interviewType: {
       type: String,
-      enum: ['technical', 'behavioral', 'both', 'hr'],
+      enum: ['technical', 'behavioral', 'both', 'hr', 'coding', 'system_design', 'mixed'],
       required: false,
     },
     difficulty: {

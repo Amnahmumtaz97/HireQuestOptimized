@@ -153,7 +153,7 @@ export function InvoicesPage() {
                 <div className="text-sm font-bold text-foreground">$9.99</div>
               </div>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-primary/10 to-transparent p-4 hover:from-primary/15 transition-colors">
+            <div className="rounded-2xl border border-border bg-gradient-to-br from-primary/10 to-transparent p-4 transition-colors hover:from-primary/15">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-foreground">Enterprise</div>

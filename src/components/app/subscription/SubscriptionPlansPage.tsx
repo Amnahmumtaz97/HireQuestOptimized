@@ -65,7 +65,7 @@ export function SubscriptionPlansPage() {
             <Switch checked={yearly} onCheckedChange={setYearly} />
             <span className={['text-xs font-semibold', yearly ? 'text-foreground' : 'text-muted-foreground'].join(' ')}>Yearly</span>
             {yearly ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-600/25 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-700 dark:border-emerald-500/30 dark:text-emerald-300 sm:ml-2">
+              <span className="inline-flex items-center gap-1 rounded-full border border-success/30 bg-success-muted px-2 py-1 text-[10px] font-semibold text-success sm:ml-2">
                 <Sparkles className="h-3 w-3" /> Save ~17%
               </span>
             ) : null}
@@ -118,7 +118,7 @@ export function SubscriptionPlansPage() {
                   className={[
                     'mt-6 inline-flex h-11 w-full items-center justify-center rounded-2xl text-xs font-semibold btn-micro',
                     p.highlight
-                      ? 'bg-primary text-white hover:bg-[var(--primary-hover)]'
+                      ? 'bg-primary text-primary-foreground hover:bg-primary-hover'
                       : 'border border-border bg-input/15 text-foreground hover:bg-input/25',
                   ].join(' ')}
                 >
@@ -158,7 +158,7 @@ export function SubscriptionPlansPage() {
                   {(['free', 'pro', 'enterprise'] as const).map((pid, idx) => (
                     <div key={pid} className="md:col-span-2 md:text-center">
                       <span className="font-semibold text-muted-foreground md:hidden">{['Free', 'Pro', 'Ent'][idx]}: </span>
-                      {has(pid) ? <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"><Check className="h-4 w-4" /></span> : <span className="text-muted-foreground/50">—</span>}
+                      {has(pid) ? <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-success-muted text-success"><Check className="h-4 w-4" /></span> : <span className="text-muted-foreground/50">—</span>}
                     </div>
                   ))}
                 </div>

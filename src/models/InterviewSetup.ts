@@ -46,9 +46,18 @@ const interviewSetupSchema = new Schema<IInterviewSetup>(
     topics: { type: [String], default: [] },
     difficulty: {
       type: String,
-      enum: ['Easy', 'Medium', 'Hard', 'Mixed'],
+      enum: ['Easy', 'Medium', 'Hard', 'Mixed', 'Adaptive'],
       required: false,
     },
+    interviewType: {
+      type: String,
+      enum: ['technical', 'behavioral', 'both', 'hr', 'coding', 'system_design', 'mixed'],
+      required: false,
+    },
+    codingCategories: { type: [String], default: [] },
+    behavioralCompetencies: { type: [String], default: [] },
+    hrSections: { type: [String], default: [] },
+    systemDesignTopics: { type: [String], default: [] },
     interviewRoundType: {
       type: String,
       enum: ['technical_screen', 'system_design', 'behavioral', 'managerial'],

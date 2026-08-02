@@ -1,0 +1,42 @@
+Audit the entire project for responsiveness issues and improve the UI across all screen sizes.
+
+Requirements:
+- Check every page, component, modal, navbar, sidebar, form, card, table, button, and section.
+- Test responsiveness for:
+  - Mobile (320px, 375px, 390px)
+  - Tablet (768px, 1024px)
+  - Laptop (1280px, 1440px)
+  - Large screens (1920px+)
+
+Fix:
+- Overflow issues (horizontal scrolling, clipped content)
+- Elements going outside the viewport
+- Incorrect spacing, padding, and margins
+- Text wrapping problems
+- Buttons becoming too small or overlapping
+- Images/cards not scaling properly
+- Navbar and sidebar behavior on smaller screens
+- Tables and complex layouts on mobile
+- Forms and input fields responsiveness
+- Modals/dialogs fitting properly on all devices
+
+Design improvements:
+- Do not just shrink desktop layouts; create proper mobile-first responsive layouts.
+- Maintain a premium, modern SaaS-style UI.
+- Add smooth responsive transitions and animations where appropriate.
+- Improve spacing hierarchy and visual balance.
+- Make layouts feel intentional on every screen size.
+- Use creative but consistent design patterns (subtle gradients, glass effects, background shapes, modern cards, micro-interactions) while keeping the existing brand identity.
+- Avoid generic responsive fixes; make the UI feel polished and unique.
+
+For each issue:
+1. Identify the component/page causing the problem.
+2. Explain the issue briefly.
+3. Apply the fix directly.
+4. Ensure no existing functionality breaks.
+
+After completing:
+- Run through all routes/pages.
+- Verify dark/light mode compatibility if available.
+- Verify accessibility (readable text sizes, touch-friendly buttons).
+- Summarize all responsiveness improvements made.

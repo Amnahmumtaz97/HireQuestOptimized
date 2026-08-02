@@ -19,8 +19,12 @@ export default function BillingPage() {
         <Tabs defaultValue="plan">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <TabsList className="w-full sm:w-auto">
-              <TabsTrigger value="plan">Subscription</TabsTrigger>
-              <TabsTrigger value="invoices">Invoices</TabsTrigger>
+              <TabsTrigger value="plan" className="flex-1 sm:flex-none">
+                Subscription
+              </TabsTrigger>
+              <TabsTrigger value="invoices" className="flex-1 sm:flex-none">
+                Invoices
+              </TabsTrigger>
             </TabsList>
             <div className="text-xs text-muted-foreground">
               Tip: invoices are generated after successful payments.

@@ -6,6 +6,8 @@ import { requireAdminSession } from '@/lib/admin-auth'
 import { LearningPathModel } from '@/models/LearningPath'
 import { StageModel } from '@/models/Stage'
 import { serializePath } from '@/lib/learning-paths/serialize'
+import { STORED_INTERVIEW_TYPE_KEYS } from '@/lib/interview-config/interview-types'
+import { SESSION_DIFFICULTIES } from '@/lib/interview-config/difficulty'
 
 const stageSchema = z.object({
   id: z.string().optional(),
@@ -17,11 +19,8 @@ const stageSchema = z.object({
   level: z.number().int().min(1).max(6).nullable().optional(),
   departmentKey: z.string().trim().optional().default(''),
   specializationKeys: z.array(z.string().trim()).optional().default([]),
-  interviewType: z
-    .enum(['technical', 'behavioral', 'both', 'hr'])
-    .nullable()
-    .optional(),
-  difficulty: z.enum(['Easy', 'Medium', 'Hard', 'Adaptive']).nullable().optional(),
+  interviewType: z.enum(STORED_INTERVIEW_TYPE_KEYS).nullable().optional(),
+  difficulty: z.enum(SESSION_DIFFICULTIES).nullable().optional(),
   suggestedTopics: z.array(z.string().trim()).optional().default([]),
   totalQuestions: z.number().int().positive().nullable().optional(),
   technicalQuestionRatio: z.number().int().min(0).max(100).nullable().optional(),

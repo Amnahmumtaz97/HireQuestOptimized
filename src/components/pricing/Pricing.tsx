@@ -123,7 +123,7 @@ function PricingCard({ plan, yearly, delay }: { plan: Plan; yearly: boolean; del
         ) : null}
       </div>
       {yearly && plan.yearlyPrice ? (
-        <div className="mt-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+        <div className="mt-1.5 text-[11px] font-semibold text-success">
           Save 17% with yearly billing
         </div>
       ) : null}
@@ -197,7 +197,7 @@ export function Pricing() {
               className={[
                 'rounded-lg px-5 py-2 text-sm font-semibold transition-all duration-200 btn-micro',
                 !yearly
-                  ? 'bg-primary text-white'
+                  ? 'bg-primary text-primary-foreground'
                   : 'bg-transparent text-muted-foreground hover:bg-secondary hover:text-foreground',
               ].join(' ')}
             >
@@ -209,12 +209,12 @@ export function Pricing() {
               className={[
                 'rounded-lg px-5 py-2 text-sm font-semibold transition-all duration-200 btn-micro flex items-center gap-2',
                 yearly
-                  ? 'bg-primary text-white'
+                  ? 'bg-primary text-primary-foreground'
                   : 'bg-transparent text-muted-foreground hover:bg-secondary hover:text-foreground',
               ].join(' ')}
             >
               Yearly
-              <span className="rounded-full border border-emerald-600/25 bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 dark:border-emerald-500/30 dark:text-emerald-400">
+              <span className="rounded-full border border-success/30 bg-success-muted px-1.5 py-0.5 text-[9px] font-bold text-success">
                 -17%
               </span>
             </button>

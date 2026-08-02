@@ -110,7 +110,7 @@ export const DashboardNavbar: FC<DashboardNavbarProps> = ({
               aria-label="Toggle theme"
               onClick={toggleTheme}
               suppressHydrationWarning
-              className="hq-btn-icon hidden sm:inline-flex rounded-full"
+              className="hq-btn-icon inline-flex rounded-full"
             >
               {!themeReady ? (
                 <Moon className="h-4 w-4" />

@@ -1,9 +1,14 @@
 /**
  * Extract plain text from a PDF buffer using pdf-parse v2.
+ * Worker + CanvasFactory must load before pdf-parse so Node gets DOMMatrix via @napi-rs/canvas.
  */
 export async function extractPdfText(buffer: Buffer): Promise<string> {
+  const { CanvasFactory } = await import('pdf-parse/worker')
   const { PDFParse } = await import('pdf-parse')
-  const parser = new PDFParse({ data: new Uint8Array(buffer) })
+  const parser = new PDFParse({
+    data: new Uint8Array(buffer),
+    CanvasFactory,
+  })
   try {
     const result = await parser.getText()
     const text = (result?.text || '').trim()

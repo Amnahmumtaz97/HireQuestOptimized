@@ -4,10 +4,11 @@ import { z } from 'zod'
 import { authOptions } from '@/lib/auth'
 import { connectToDatabase } from '@/lib/mongoose'
 import { UserModel } from '@/models/User'
+import { SESSION_DIFFICULTIES } from '@/lib/interview-config/difficulty'
 
 const preferencesSchema = z
   .object({
-    defaultDifficulty: z.enum(['Easy', 'Medium', 'Hard', 'Adaptive']).optional().nullable(),
+    defaultDifficulty: z.enum(SESSION_DIFFICULTIES).optional().nullable(),
     reduceMotion: z.boolean().optional(),
   })
   .optional()

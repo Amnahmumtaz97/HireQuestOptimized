@@ -46,7 +46,12 @@ export function DashboardDateCalendarButton({ id, label, value, onChange, minDat
   const display = useMemo(() => {
     if (!value) return 'Select date'
     try {
-      return parseLocal(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+      // Fixed locale so SSR and client always match (avoids hydration mismatch).
+      return parseLocal(value).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
     } catch {
       return value
     }
@@ -124,7 +129,7 @@ export function DashboardDateCalendarButton({ id, label, value, onChange, minDat
               <ChevronLeft className="h-4 w-4" aria-hidden />
             </button>
             <span className="min-w-0 truncate text-center text-sm font-semibold text-foreground">
-              {cursorMonth.toLocaleString(undefined, { month: 'long', year: 'numeric' })}
+              {cursorMonth.toLocaleString('en-US', { month: 'long', year: 'numeric' })}
             </span>
             <button
               type="button"
@@ -147,7 +152,7 @@ export function DashboardDateCalendarButton({ id, label, value, onChange, minDat
           <div className="mt-0.5 grid grid-cols-7 gap-0.5">
             {cells.map((day, i) => {
               if (day === null) {
-                return <span key={`e-${i}`} className="aspect-square min-h-[2rem]" />
+                return <span key={`e-${i}`} className="aspect-square min-h-10" />
               }
               const iso = localDateString(new Date(y, mon, day))
               const selected = iso === value
@@ -160,7 +165,7 @@ export function DashboardDateCalendarButton({ id, label, value, onChange, minDat
                   disabled={disabled}
                   onClick={() => pick(day)}
                   className={[
-                    'flex aspect-square min-h-[2rem] items-center justify-center rounded-lg text-xs font-medium transition-colors',
+                    'flex aspect-square min-h-10 items-center justify-center rounded-lg text-xs font-medium transition-colors',
                     disabled
                       ? 'cursor-not-allowed text-muted-foreground/35'
                       : 'text-foreground hover:bg-[var(--hq-row-elevated)]',

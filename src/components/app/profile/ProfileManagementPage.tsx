@@ -111,20 +111,20 @@ export function ProfileManagementPage() {
           <div className="absolute inset-0 grid-bg opacity-25" />
         </div>
         <div className="p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="flex items-start gap-4">
-              <div className="relative -mt-14 h-24 w-24 overflow-hidden rounded-3xl border border-white/10 bg-input/15 shadow-[var(--shadow-card)]">
+          <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+            <div className="flex min-w-0 items-start gap-4">
+              <div className="relative -mt-14 h-24 w-24 shrink-0 overflow-hidden rounded-3xl border border-border bg-input/15 shadow-card">
                 {avatarDataUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={avatarDataUrl} alt="Avatar" className="h-full w-full object-cover" />
                 ) : (
-                  <div className="grid h-full w-full place-items-center bg-primary text-white">
+                  <div className="grid h-full w-full place-items-center bg-primary text-primary-foreground">
                     <User className="h-7 w-7" />
                   </div>
                 )}
               </div>
-              <div className="min-w-0">
-                <div className="text-lg font-semibold text-foreground">{form.watch('name')}</div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-lg font-semibold text-foreground">{form.watch('name')}</div>
                 <div className="mt-1 text-xs text-muted-foreground">{form.watch('headline') || 'Add a headline'}</div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
@@ -172,7 +172,7 @@ export function ProfileManagementPage() {
             <button
               type="button"
               onClick={form.handleSubmit(onSubmit)}
-              className="hq-btn-primary h-11 gap-2 rounded-2xl px-5 text-xs"
+              className="hq-btn-primary h-11 w-full gap-2 rounded-2xl px-5 text-xs sm:w-auto"
               disabled={!form.formState.isValid}
             >
               <Save className="h-4 w-4" /> Save profile
@@ -190,7 +190,7 @@ export function ProfileManagementPage() {
             <label className="space-y-2">
               <span className="text-xs font-semibold text-muted-foreground">Name</span>
               <input className="h-11 w-full rounded-2xl border border-border bg-input/15 px-4 text-sm" {...form.register('name')} />
-              {form.formState.errors.name ? <div className="text-xs text-red-300">{form.formState.errors.name.message}</div> : null}
+              {form.formState.errors.name ? <div className="text-xs text-destructive">{form.formState.errors.name.message}</div> : null}
             </label>
 
             <label className="space-y-2">
@@ -263,7 +263,7 @@ export function ProfileManagementPage() {
                   <Globe className="h-4 w-4" /> Website
                 </span>
                 <input className="h-11 w-full rounded-2xl border border-border bg-input/15 px-4 text-sm" {...form.register('website')} />
-                {form.formState.errors.website ? <div className="text-xs text-red-300">{form.formState.errors.website.message}</div> : null}
+                {form.formState.errors.website ? <div className="text-xs text-destructive">{form.formState.errors.website.message}</div> : null}
               </label>
 
               <label className="block space-y-2">
@@ -271,7 +271,7 @@ export function ProfileManagementPage() {
                   <GitBranch className="h-4 w-4" /> GitHub
                 </span>
                 <input className="h-11 w-full rounded-2xl border border-border bg-input/15 px-4 text-sm" {...form.register('github')} />
-                {form.formState.errors.github ? <div className="text-xs text-red-300">{form.formState.errors.github.message}</div> : null}
+                {form.formState.errors.github ? <div className="text-xs text-destructive">{form.formState.errors.github.message}</div> : null}
               </label>
 
               <label className="block space-y-2">
@@ -279,7 +279,7 @@ export function ProfileManagementPage() {
                   <LinkIcon className="h-4 w-4" /> LinkedIn
                 </span>
                 <input className="h-11 w-full rounded-2xl border border-border bg-input/15 px-4 text-sm" {...form.register('linkedin')} />
-                {form.formState.errors.linkedin ? <div className="text-xs text-red-300">{form.formState.errors.linkedin.message}</div> : null}
+                {form.formState.errors.linkedin ? <div className="text-xs text-destructive">{form.formState.errors.linkedin.message}</div> : null}
               </label>
             </div>
 

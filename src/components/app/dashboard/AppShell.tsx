@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { DashboardNavbar } from '@/components/dashboard/DashboardNavbar'
 import { SidebarNav } from '@/components/app/dashboard/SidebarNav'
 import { OfflineBanner } from '@/components/ui/OfflineBanner'
@@ -12,8 +13,13 @@ type AppShellProps = {
 }
 
 export function AppShell({ children }: AppShellProps) {
+  const pathname = usePathname()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+
+  const isInterviewWorkspace =
+    Boolean(pathname?.match(/^\/app\/interviews\/[^/]+$/)) &&
+    !pathname?.endsWith('/results')
 
   useEffect(() => {
     try {
@@ -36,24 +42,31 @@ export function AppShell({ children }: AppShellProps) {
   const toggleCollapsed = useCallback(() => setCollapsed(!sidebarCollapsed), [setCollapsed, sidebarCollapsed])
 
   const shellGridCols = useMemo(() => {
-    if (sidebarCollapsed) return 'md:grid-cols-[72px_1fr]'
-    return 'md:grid-cols-[260px_1fr] lg:grid-cols-[272px_1fr]'
+    if (sidebarCollapsed) return 'md:grid-cols-[calc(72px+1.5rem)_1fr]'
+    return 'md:grid-cols-[calc(260px+1.5rem)_1fr] lg:grid-cols-[calc(272px+1.5rem)_1fr]'
   }, [sidebarCollapsed])
 
   return (
-    <main className="hq-app min-h-screen bg-[var(--background)] transition-colors duration-200">
+    <main className="hq-app min-h-dvh overflow-x-clip bg-[var(--background)] transition-colors duration-200">
       <div
         className={[
-          'grid min-h-screen grid-cols-1',
+          'grid min-h-dvh grid-cols-1',
           shellGridCols,
           'transition-[grid-template-columns] duration-300 ease-out',
         ].join(' ')}
       >
-        <div className="hidden min-h-full md:block">
-          <SidebarNav collapsed={sidebarCollapsed} onToggleCollapsed={toggleCollapsed} />
+        <div className="sticky top-0 z-30 hidden h-dvh p-3 md:block">
+          <div
+            className={[
+              'hq-app-sidebar-float h-full overflow-hidden transition-[width] duration-300 ease-out',
+              sidebarCollapsed ? 'w-[72px]' : 'w-[260px] lg:w-[272px]',
+            ].join(' ')}
+          >
+            <SidebarNav collapsed={sidebarCollapsed} onToggleCollapsed={toggleCollapsed} />
+          </div>
         </div>
 
-        <section className="min-w-0">
+        <section className="flex min-w-0 flex-col">
           <div className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-md">
             <div className="px-3 py-2 sm:px-4 sm:py-2.5">
               <DashboardNavbar
@@ -68,16 +81,34 @@ export function AppShell({ children }: AppShellProps) {
             </div>
           </div>
 
-          <div className="min-w-0 p-3 sm:p-6 lg:p-8">{children}</div>
+          <div
+            className={[
+              'mx-auto min-w-0 w-full flex-1',
+              isInterviewWorkspace
+                ? 'max-w-none p-2 sm:p-4 lg:p-5'
+                : 'max-w-[1600px] p-3 sm:p-6 lg:p-8',
+            ].join(' ')}
+          >
+            {children}
+          </div>
         </section>
       </div>
 
       <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
-        <SheetContent side="left" className="p-0">
+        <SheetContent
+          side="left"
+          className={[
+            'w-[min(92vw,360px)] gap-0 border-0 bg-transparent p-3 shadow-none',
+            'supports-[backdrop-filter]:bg-transparent overflow-visible sm:p-4',
+            '[&>button]:right-6 [&>button]:top-6 [&>button]:z-10',
+            '[&>button]:border-white/25 [&>button]:bg-white/15 [&>button]:text-white',
+            '[&>button]:hover:bg-white/25 [&>button]:hover:text-white',
+          ].join(' ')}
+        >
           <SheetHeader className="sr-only">
             <SheetTitle>Navigation</SheetTitle>
           </SheetHeader>
-          <div className="h-dvh overflow-y-auto overscroll-contain">
+          <div className="hq-app-sidebar-float h-[calc(100dvh-1.5rem)] overflow-hidden sm:h-[calc(100dvh-2rem)]">
             <SidebarNav
               collapsed={false}
               onToggleCollapsed={() => undefined}

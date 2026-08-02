@@ -141,7 +141,6 @@ export const authOptions: NextAuthOptions = {
         if (image && !existing.image) {
           updates.image = image
         }
-        // Link OAuth to existing credentials user; only change provider when OAuth-only.
         if (!existing.passwordHash && existing.authProvider !== account.provider) {
           updates.authProvider = account.provider
         }

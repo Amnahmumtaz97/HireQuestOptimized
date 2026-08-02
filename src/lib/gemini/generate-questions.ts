@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { InterviewGenerationParams } from '@/lib/interview-questions/prompt'
-import type { InterviewQuestionItem } from '@/lib/interview-questions/schema'
+import { interviewQuestionSchema, type InterviewQuestionItem } from '@/lib/interview-questions/schema'
 import { allocateKinds } from '@/lib/interview-questions/templates'
 import { decodeInterviewTypeKinds, formatInterviewTypeKindsLabel } from '@/lib/interview-types'
 import { assignTopicsEvenly } from '@/lib/interview-scope'
@@ -10,6 +10,7 @@ import { generateDiagramImageDataUrl, type DiagramKind } from '@/lib/gemini/gene
 import { isGeminiRateLimitError, resolveTextModelChain } from '@/lib/gemini/model-fallback'
 import { difficultyForQuestionIndex, difficultyPromptLabel } from '@/lib/interview-questions/difficulty'
 import { formatIndustryDisplay, formatRoleCategoryDisplay } from '@/utils/dashboard/interview-labels'
+import { assertConfirmedTopics } from '@/lib/interview-config/assert-selection'
 
 const DEFAULT_MODEL = 'gemini-2.0-flash'
 
@@ -71,18 +72,21 @@ function buildBatchPrompt(params: InterviewGenerationParams): string {
   const kinds = decodeInterviewTypeKinds(params.interviewType, params.interviewTypes)
   const typeLabel = formatInterviewTypeKindsLabel(kinds)
   const ratioHint =
-    kinds.length > 1 && kinds.includes('technical')
-      ? `Mix across: ${typeLabel}. About ${params.technicalQuestionRatio}% technical; split the rest across the other selected types.`
-      : kinds.length > 1
-        ? `Mix evenly across: ${typeLabel}.`
-        : kinds[0] === 'hr'
-          ? 'Focus: HR interview questions only (screening, culture fit, motivation, logistics, and common HR scenarios).'
-          : `Focus: ${kinds[0] ?? params.interviewType} questions only.`
+    params.interviewType === 'coding' || kinds[0] === 'coding'
+      ? 'Focus: live coding problems only. Each question is a coding challenge tied to one DSA category from the topic bank.'
+      : params.interviewType === 'system_design' || kinds[0] === 'system_design'
+        ? 'Focus: system design interview questions only (architecture, trade-offs, scalability). Use only topics from the topic bank.'
+        : kinds.length > 1 && kinds.includes('technical')
+          ? `Mix across: ${typeLabel}. About ${params.technicalQuestionRatio}% technical/coding/design; split the rest across the other selected types.`
+          : kinds.length > 1
+            ? `Mix evenly across: ${typeLabel}.`
+            : kinds[0] === 'hr'
+              ? 'Focus: HR screening questions only (introduction, motivation, logistics, salary, work preferences). Use only sections from the topic bank.'
+              : kinds[0] === 'behavioral'
+                ? 'Focus: behavioral / competency STAR questions only. Use only competencies from the topic bank.'
+                : `Focus: ${kinds[0] ?? params.interviewType} questions only.`
 
-  const topicBank = params.topics.map((t) => t.trim()).filter(Boolean)
-  if (topicBank.length === 0) {
-    throw new Error('No interview topics selected.')
-  }
+  const topicBank = assertConfirmedTopics(params.topics)
   const topicBankLine = topicBank.map((t) => `"${t}"`).join(', ')
   const setup = params.interviewSetup
   const hasDesignPatterns = topicBank.some((t) =>
@@ -191,6 +195,54 @@ ${projects ? `- Projects: ${projects}` : ''}
 `
 }
 
+function buildCodingBatchPrompt(params: InterviewGenerationParams): string {
+  const n = params.totalQuestions
+  const topicBank = assertConfirmedTopics(params.topics)
+  const topicBankLine = topicBank.map((t) => `"${t}"`).join(', ')
+  const projects =
+    params.resumeContext?.projects
+      ?.slice(0, 4)
+      .map((p) => `${p.name}: ${p.description}`)
+      .join('; ') || ''
+
+  return `You generate LeetCode-style CODING interview problems for a JavaScript Node sandbox (named function + JSON tests).
+
+Output ONLY valid JSON: an array of exactly ${n} objects. Each object MUST be:
+{"question":"<markdown problem statement>","topic":"<one of topic bank>","type":"technical","difficulty":"Easy"|"Medium"|"Hard","kind":"coding","language":"javascript","functionName":"<camelCaseName>","starterCode":"function name(args) {\\n  \\n}\\n","publicTests":[{"input":"<JSON array of arguments>","expected":"<JSON expected return>"}],"hiddenTests":[{"input":"...","expected":"..."}]}
+
+## Problem style (LeetCode)
+- Write problems like LeetCode: title heading, clear statement, Examples with Input/Output/Explanation, Constraints, optional Follow-up.
+- Prefer classic patterns: Two Sum, sliding window, binary search, stack parentheses, DP climbing stairs, graph BFS/DFS counts, etc. — adapted to the topic bank.
+- Each problem must be uniquely solvable with a single return value (number, boolean, string, or array). Avoid answers whose order is ambiguous unless you require a canonical sorted form in the statement.
+- Difficulty should match: ${difficultyPromptLabel(params.difficulty)}
+- Distribute topics across: [${topicBankLine}]
+
+## Sandbox / tests (critical)
+- language MUST be "javascript"
+- starterCode MUST define functionName; body can be empty for the candidate
+- publicTests: 2–4 cases; hiddenTests: 1–3 harder edge cases
+- "input" MUST be a JSON array of the function arguments, e.g. for twoSum(nums, target) use "[[2,7,11,15],9]"
+- "expected" MUST be JSON for the return value, e.g. "[0,1]" or "true" or "3"
+- Do NOT use stdin/stdout; the judge calls the function and compares JSON.stringify(result)
+
+## Quality
+- No placeholders like "implement a topic problem"
+- Include edge cases (empty where valid, single element, duplicates)
+${projects ? `- Optionally flavor names/examples using: ${projects}` : ''}
+- Role context: ${roleLabel(params)}
+${resumeContextBlock(params)}
+Return exactly ${n} coding problems as a JSON array.`
+}
+
+function wantsCodingRound(params: InterviewGenerationParams): boolean {
+  if (params.interviewType === 'coding') return true
+  const fmt =
+    params.preferredQuestionFormat ||
+    params.interviewSetup?.preferredQuestionFormat ||
+    ''
+  return String(fmt).toLowerCase() === 'coding'
+}
+
 export async function generateQuestionsWithGemini(
   params: InterviewGenerationParams,
 ): Promise<{ questions: InterviewQuestionItem[]; rawText: string }> {
@@ -206,7 +258,8 @@ export async function generateQuestionsWithGemini(
     process.env.GEMINI_MODEL_FALLBACK,
   )
 
-  const prompt = buildBatchPrompt(params)
+  const coding = wantsCodingRound(params)
+  const prompt = coding ? buildCodingBatchPrompt(params) : buildBatchPrompt(params)
   let rawText = ''
 
   for (let i = 0; i < modelChain.length; i++) {
@@ -228,6 +281,38 @@ export async function generateQuestionsWithGemini(
 
   if (parsed.length !== params.totalQuestions) {
     throw new Error(`Expected ${params.totalQuestions} questions, got ${parsed.length}`)
+  }
+
+  const confirmedTopics = assertConfirmedTopics(params.topics)
+  const assignedTopics = assignTopicsEvenly(params.totalQuestions, confirmedTopics)
+  const topicBank = new Set(confirmedTopics)
+
+  if (coding) {
+    const questions: InterviewQuestionItem[] = parsed.map((item, i) => {
+      const rawTopic = item.topic?.trim() || ''
+      const topic =
+        rawTopic && topicBank.has(rawTopic)
+          ? rawTopic
+          : assignedTopics[i] ?? confirmedTopics[i % confirmedTopics.length]
+      const functionName = (item.functionName || 'solve').replace(/[^\w$]/g, '') || 'solve'
+      const starterCode =
+        item.starterCode?.trim() ||
+        `function ${functionName}(/* args */) {\n  // your code\n}\n`
+      return interviewQuestionSchema.parse({
+        type: 'technical',
+        topic,
+        difficulty: difficultyForQuestionIndex(params.difficulty, i),
+        question: formatGeneratedQuestion(item.question),
+        kind: 'coding',
+        language: 'javascript',
+        functionName,
+        starterCode,
+        publicTests: Array.isArray(item.publicTests) ? item.publicTests : [],
+        hiddenTests: Array.isArray(item.hiddenTests) ? item.hiddenTests : [],
+        illustrationRequired: false,
+      })
+    })
+    return { questions, rawText }
   }
 
   const diagramBudget = Math.min(MAX_DIAGRAM_QUESTIONS, params.totalQuestions)
@@ -254,20 +339,19 @@ export async function generateQuestionsWithGemini(
     diagramFlags[i] = true
     spareDiagramSlots -= 1
   }
-  const assignedTopics = assignTopicsEvenly(params.totalQuestions, params.topics)
-  const topicBank = new Set(params.topics.map((t) => t.trim()).filter(Boolean))
 
   const questions: InterviewQuestionItem[] = parsed.map((item, i) => {
     const rawTopic = item.topic?.trim() || ''
     const topic =
       rawTopic && topicBank.has(rawTopic)
         ? rawTopic
-        : (assignedTopics[i] ?? 'General')
+        : assignedTopics[i] ?? confirmedTopics[i % confirmedTopics.length]
     return {
       type: kinds[i],
       topic,
       difficulty: difficultyForQuestionIndex(params.difficulty, i),
       question: formatGeneratedQuestion(item.question),
+      kind: 'spoken' as const,
       illustrationRequired: Boolean(item.requiresDiagram),
     }
   })
@@ -282,7 +366,6 @@ export async function generateQuestionsWithGemini(
     if (illustrationDataUrl) {
       questions[i] = { ...questions[i], illustrationDataUrl }
     } else {
-      // If a diagram was requested but couldn't be generated, avoid a broken UX.
       questions[i] = { ...questions[i], illustrationRequired: false }
     }
   }

@@ -87,7 +87,7 @@ function VoiceIllustration() {
         ))}
       </div>
 
-      <div className="relative mt-5 grid grid-cols-3 gap-1.5 sm:gap-2">
+      <div className="relative mt-5 grid grid-cols-1 gap-2 min-[380px]:grid-cols-3 sm:gap-2">
         {[
           { label: 'Pitch', value: '124 Hz' },
           { label: 'Pace', value: '148 wpm' },
@@ -95,7 +95,7 @@ function VoiceIllustration() {
         ].map((m) => (
           <div
             key={m.label}
-            className="rounded-lg border px-2 py-1.5 sm:px-3 sm:py-2"
+            className="rounded-lg border px-3 py-2"
             style={{
               borderColor: 'color-mix(in oklab, var(--primary) 18%, var(--border))',
               background: 'color-mix(in oklab, var(--background) 70%, transparent)',
@@ -104,7 +104,7 @@ function VoiceIllustration() {
             <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
               {m.label}
             </div>
-            <div className="mt-0.5 text-[11px] font-bold tabular-nums text-foreground sm:text-[13px]">{m.value}</div>
+            <div className="mt-0.5 text-[13px] font-bold tabular-nums text-foreground">{m.value}</div>
           </div>
         ))}
       </div>

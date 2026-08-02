@@ -27,44 +27,59 @@ export function InterviewActions({
   onNext,
   onFinish,
 }: InterviewActionsProps) {
+  const btn =
+    'btn-micro inline-flex h-11 min-h-[44px] items-center justify-center gap-1.5 rounded-xl px-3 text-sm font-semibold transition disabled:pointer-events-none disabled:opacity-45'
+
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
         <button
           type="button"
           onClick={onPrevious}
           disabled={isSaving || isFirstQuestion}
-          className="hq-btn-outline btn-micro h-10 w-full px-5 text-sm disabled:pointer-events-none disabled:opacity-45 sm:w-auto"
+          className={['hq-btn-outline', btn, 'sm:px-5'].join(' ')}
         >
-          <ArrowLeft className="h-4 w-4" /> Previous
+          <ArrowLeft className="h-4 w-4 shrink-0" />
+          <span className="truncate">Previous</span>
         </button>
         <button
           type="button"
           onClick={onSaveAnswer}
           disabled={isSaving}
-          className="hq-btn-primary btn-micro h-10 w-full px-5 text-sm disabled:pointer-events-none disabled:opacity-45 sm:w-auto"
+          className={['hq-btn-primary', btn, 'sm:px-5'].join(' ')}
         >
-          <Save className="h-4 w-4" /> {isSaving ? 'Saving…' : 'Save Answer'}
+          <Save className="h-4 w-4 shrink-0" />
+          <span className="truncate">{isSaving ? 'Saving…' : 'Save'}</span>
         </button>
         <button
           type="button"
           onClick={onToggleFlag}
           disabled={isSaving}
           className={[
-            'btn-micro h-10 w-full px-5 text-sm disabled:opacity-60 sm:w-auto',
+            btn,
+            'sm:px-5',
             isFlagged ? 'hq-btn-warning' : 'hq-btn-outline',
           ].join(' ')}
         >
-          <Flag className="h-4 w-4" />
-          {isFlagged ? 'Unflag' : <>Flag<span className="hidden sm:inline"> for review</span></>}
+          <Flag className="h-4 w-4 shrink-0" />
+          <span className="truncate">
+            {isFlagged ? 'Unflag' : (
+              <>
+                Flag<span className="hidden sm:inline"> for review</span>
+              </>
+            )}
+          </span>
         </button>
         <button
           type="button"
           onClick={onNext}
           disabled={isSaving || isLastQuestion}
-          className="hq-btn-outline btn-micro h-10 w-full px-5 text-sm disabled:pointer-events-none disabled:opacity-45 sm:w-auto"
+          className={['hq-btn-outline', btn, 'sm:px-5'].join(' ')}
         >
-          Next<span className="hidden sm:inline"> Question</span> <ArrowRight className="h-4 w-4" />
+          <span className="truncate">
+            Next<span className="hidden sm:inline"> Question</span>
+          </span>
+          <ArrowRight className="h-4 w-4 shrink-0" />
         </button>
       </div>
 
@@ -73,9 +88,9 @@ export function InterviewActions({
           type="button"
           onClick={onFinish}
           disabled={isSaving}
-          className="hq-btn-success h-10 px-5 text-sm btn-micro disabled:opacity-60"
+          className={['hq-btn-success w-full sm:w-auto sm:min-w-[12rem]', btn, 'px-5'].join(' ')}
         >
-          <CheckCircle2 className="h-4 w-4" /> Finish Interview
+          <CheckCircle2 className="h-4 w-4 shrink-0" /> Finish Interview
         </button>
       ) : null}
     </div>

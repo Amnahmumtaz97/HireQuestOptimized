@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useMemo } from 'react'
-import { BrainCircuit, Check, MessageCircle, Users, type LucideIcon } from 'lucide-react'
 import { SelectionChip } from '@/components/ui/selection-chip'
 
 export type TopicMode = 'all' | 'technical' | 'behavioral' | 'hr'
@@ -35,21 +34,6 @@ export function TopicSelector({
 }) {
   const normalizedSearch = search.trim().toLowerCase()
 
-  const filteredTechnical = useMemo(() => {
-    if (!normalizedSearch) return technicalTopics
-    return technicalTopics.filter((topic) => topic.toLowerCase().includes(normalizedSearch))
-  }, [normalizedSearch, technicalTopics])
-
-  const filteredBehavioral = useMemo(() => {
-    if (!normalizedSearch) return behavioralTopics
-    return behavioralTopics.filter((topic) => topic.toLowerCase().includes(normalizedSearch))
-  }, [normalizedSearch, behavioralTopics])
-
-  const filteredHr = useMemo(() => {
-    if (!normalizedSearch) return hrTopics
-    return hrTopics.filter((topic) => topic.toLowerCase().includes(normalizedSearch))
-  }, [hrTopics, normalizedSearch])
-
   const availableTopics = useMemo(() => {
     const list: string[] = []
     if (allowedKind === 'both' || allowedKind === 'technical') list.push(...technicalTopics)
@@ -57,6 +41,35 @@ export function TopicSelector({
     if (allowedKind === 'hr') list.push(...hrTopics)
     return [...new Set(list)]
   }, [allowedKind, behavioralTopics, hrTopics, technicalTopics])
+
+  const topicKind = useMemo(() => {
+    const map = new Map<string, 'technical' | 'behavioral' | 'hr'>()
+    for (const t of technicalTopics) map.set(t, 'technical')
+    for (const t of behavioralTopics) {
+      if (!map.has(t)) map.set(t, 'behavioral')
+    }
+    for (const t of hrTopics) {
+      if (!map.has(t)) map.set(t, 'hr')
+    }
+    return map
+  }, [behavioralTopics, hrTopics, technicalTopics])
+
+  const visibleTopics = useMemo(() => {
+    let pool = availableTopics
+    if (allowedKind === 'both') {
+      if (mode === 'technical') pool = technicalTopics
+      else if (mode === 'behavioral') pool = behavioralTopics
+    }
+    if (!normalizedSearch) return pool
+    return pool.filter((topic) => topic.toLowerCase().includes(normalizedSearch))
+  }, [
+    allowedKind,
+    availableTopics,
+    behavioralTopics,
+    mode,
+    normalizedSearch,
+    technicalTopics,
+  ])
 
   const selectedSet = useMemo(() => new Set(selectedTopics), [selectedTopics])
   const totalCount = availableTopics.length
@@ -85,10 +98,7 @@ export function TopicSelector({
     onChange([])
   }
 
-  const canShowTechnical = allowedKind === 'both' || allowedKind === 'technical'
-  const canShowBehavioral = allowedKind === 'both' || allowedKind === 'behavioral'
-  const canShowHr = allowedKind === 'hr'
-
+  const canShowModeFilters = allowedKind === 'both'
   const displaySelected = selectAll ? availableTopics : selectedTopics
 
   const modeLabel =
@@ -96,14 +106,22 @@ export function TopicSelector({
       ? 'Recommended technical topics'
       : allowedKind === 'behavioral'
         ? 'Recommended behavioral topics'
-        : 'Recommended HR topics'
+        : allowedKind === 'hr'
+          ? 'Recommended screening HR topics'
+          : 'Recommended topics'
+
+  const tintClass = (kind: 'technical' | 'behavioral' | 'hr' | undefined) => {
+    if (kind === 'behavioral') return 'border-sky-500/35 data-[active=true]:bg-sky-500/10'
+    if (kind === 'hr') return 'border-amber-500/35 data-[active=true]:bg-amber-500/10'
+    return 'border-cyan-500/35 data-[active=true]:bg-cyan-500/10'
+  }
 
   return (
     <div className="space-y-3">
       <input
         value={search}
         onChange={(event) => onSearchChange(event.target.value)}
-        className="h-11 w-full rounded-2xl border border-border bg-surface px-4 text-sm text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] outline-none transition-all duration-200 ease-out placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-[color-mix(in_oklab,var(--primary)_25%,transparent)] focus:shadow-[var(--shadow-card)] hover:border-primary/30 hover:bg-surface-strong"
+        className="h-11 w-full rounded-2xl border border-border bg-surface px-4 text-sm text-foreground shadow-inset-highlight outline-none transition-all duration-200 ease-out placeholder:text-muted-foreground focus:border-primary focus:shadow-card focus:ring-2 focus:ring-ring/30 hover:border-primary/30 hover:bg-surface-strong"
         placeholder="Search topics..."
       />
 
@@ -118,7 +136,7 @@ export function TopicSelector({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        {canShowTechnical && canShowBehavioral ? (
+        {canShowModeFilters ? (
           <>
             <ModeChip label="All topics" active={mode === 'all'} onClick={() => onModeChange('all')} />
             <ModeChip
@@ -137,42 +155,31 @@ export function TopicSelector({
         )}
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        {canShowTechnical && (mode === 'all' || mode === 'technical') ? (
-          <TopicGroup
-            title="Technical"
-            accentClass="text-cyan-300"
-            icon={BrainCircuit}
-            topics={filteredTechnical}
-            selectedSet={selectedSet}
-            selectAll={selectAll}
-            onToggle={toggleTopic}
-          />
-        ) : null}
-
-        {canShowBehavioral && (mode === 'all' || mode === 'behavioral') ? (
-          <TopicGroup
-            title="Behavioral"
-            accentClass="text-blue-300"
-            icon={MessageCircle}
-            topics={filteredBehavioral}
-            selectedSet={selectedSet}
-            selectAll={selectAll}
-            onToggle={toggleTopic}
-          />
-        ) : null}
-
-        {canShowHr ? (
-          <TopicGroup
-            title="HR"
-            accentClass="text-amber-300"
-            icon={Users}
-            topics={filteredHr}
-            selectedSet={selectedSet}
-            selectAll={selectAll}
-            onToggle={toggleTopic}
-          />
-        ) : null}
+      <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-surface/60 p-3 min-h-[7rem]">
+        {visibleTopics.length === 0 ? (
+          <p className="text-xs text-muted-foreground">No topics match your search.</p>
+        ) : (
+          visibleTopics.map((topic) => {
+            const selected = selectAll || selectedSet.has(topic)
+            const kind = topicKind.get(topic)
+            return (
+              <button
+                key={topic}
+                type="button"
+                data-active={selected}
+                onClick={() => toggleTopic(topic)}
+                className={[
+                  'rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+                  selected
+                    ? `text-foreground ${tintClass(kind)} bg-primary/10 border-primary/45`
+                    : 'border-border bg-input/15 text-muted-foreground hover:border-primary/30 hover:text-foreground',
+                ].join(' ')}
+              >
+                {topic}
+              </button>
+            )
+          })
+        )}
       </div>
 
       {displaySelected.length ? (
@@ -246,69 +253,5 @@ function ModeChip({
     <SelectionChip active={active} onClick={onClick}>
       {label}
     </SelectionChip>
-  )
-}
-
-function TopicGroup({
-  title,
-  topics,
-  selectedSet,
-  selectAll,
-  onToggle,
-  icon: Icon,
-  accentClass,
-}: {
-  title: string
-  topics: string[]
-  selectedSet: Set<string>
-  selectAll: boolean
-  onToggle: (topic: string) => void
-  icon: LucideIcon
-  accentClass: string
-}) {
-  return (
-    <div className="rounded-2xl border border-border bg-surface p-3 shadow-[0_1px_0_0_rgba(255,255,255,0.03)_inset]">
-      <div className="mb-2.5 flex items-center gap-2.5">
-        <span className="icon-card-icon-wrap !h-8 !w-8">
-          <Icon className={`icon-card-glyph h-4 w-4 ${accentClass}`} strokeWidth={1.85} />
-        </span>
-        <div className="text-xs font-semibold text-foreground">{title}</div>
-      </div>
-      <div className="flex flex-col gap-1.5">
-        {topics.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No topics in this category.</p>
-        ) : (
-          topics.map((topic) => {
-            const selected = selectAll || selectedSet.has(topic)
-            return (
-              <button
-                key={topic}
-                type="button"
-                onClick={() => onToggle(topic)}
-                className={[
-                  'flex w-full items-center gap-2.5 rounded-xl border px-3 py-2 text-left text-xs transition-colors',
-                  selected
-                    ? 'border-primary/50 bg-primary/10 text-foreground'
-                    : 'border-border bg-input/10 text-muted-foreground hover:border-primary/30 hover:bg-input/20 hover:text-foreground',
-                ].join(' ')}
-              >
-                <span
-                  className={[
-                    'grid h-4 w-4 shrink-0 place-items-center rounded border',
-                    selected
-                      ? 'border-primary bg-primary text-primary-foreground'
-                      : 'border-border bg-surface',
-                  ].join(' ')}
-                  aria-hidden
-                >
-                  {selected ? <Check className="h-2.5 w-2.5" /> : null}
-                </span>
-                <span className="min-w-0 flex-1">{topic}</span>
-              </button>
-            )
-          })
-        )}
-      </div>
-    </div>
   )
 }

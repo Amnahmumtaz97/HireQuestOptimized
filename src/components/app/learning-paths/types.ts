@@ -10,6 +10,15 @@ export type PathCategory =
   | 'project'
   | 'resume'
 
+export type StageInterviewType =
+  | 'technical'
+  | 'behavioral'
+  | 'both'
+  | 'hr'
+  | 'coding'
+  | 'system_design'
+  | 'mixed'
+
 export type LearningStage = {
   id: string
   pathId: string
@@ -22,7 +31,7 @@ export type LearningStage = {
   levelLabel?: string | null
   departmentKey?: string
   specializationKeys?: string[]
-  interviewType?: 'technical' | 'behavioral' | 'both' | 'hr' | null
+  interviewType?: StageInterviewType | null
   difficulty?: 'Easy' | 'Medium' | 'Hard' | 'Adaptive' | null
   suggestedTopics?: string[]
   totalQuestions?: number | null
@@ -61,7 +70,7 @@ export type RemediationQueueItem = {
   topics: string[]
   departmentKey: string
   specializationKeys: string[]
-  interviewType: 'technical' | 'behavioral' | 'both' | 'hr' | null
+  interviewType: StageInterviewType | null
   difficulty: 'Easy' | 'Medium' | 'Hard' | 'Adaptive' | null
   totalQuestions: number
   technicalQuestionRatio: number

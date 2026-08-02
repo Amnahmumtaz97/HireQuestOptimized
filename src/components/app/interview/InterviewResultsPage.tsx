@@ -7,9 +7,21 @@ import { ArrowLeft, Briefcase, ChevronDown, ChevronUp, Flag, ListChecks } from '
 import type { InterviewConfig } from '@/components/app/dashboard/types'
 import { DashboardPageHeader } from '@/components/app/dashboard/DashboardPageHeader'
 import { InterviewQuestionMarkdown } from '@/components/app/interview/InterviewQuestionMarkdown'
+import { PathResultsContinue } from '@/components/app/learning-paths/PathResultsContinue'
+import type {
+  LearningPath,
+  UserPathProgress,
+} from '@/components/app/learning-paths/types'
 import { formatGeneratedQuestion } from '@/lib/interview-questions/clean-question-text'
-import { formatDifficultyLabel, formatInterviewTypeLabel, formatIndustryDisplay, formatRoleCategoryDisplay, formatQuestionTypeLabel } from '@/utils/dashboard/interview-labels'
+import {
+  formatDifficultyLabel,
+  formatInterviewTypeLabel,
+  formatIndustryDisplay,
+  formatInterviewSessionTitle,
+  formatQuestionTypeLabel,
+} from '@/utils/dashboard/interview-labels'
 import { BounceLoader } from '@/components/ui/bounce-loader'
+import { interviewExitHref } from '@/lib/learning-paths/interview-exit'
 
 type ResultsSession = {
   _id: string
@@ -18,8 +30,15 @@ type ResultsSession = {
   roleCategoryKey: string
   interviewType: string
   interviewTypes?: Array<'technical' | 'behavioral' | 'hr'>
+  topics?: string[]
+  codingCategories?: string[]
+  behavioralCompetencies?: string[]
+  systemDesignTopics?: string[]
+  hrSections?: string[]
   difficulty: string
   totalQuestions: number
+  learningPathId?: string | null
+  learningStageId?: string | null
   questions?: Array<{
     question: string
     type: string
@@ -38,6 +57,9 @@ export function InterviewResultsPage() {
   const [error, setError] = useState('')
   const [showAnswers, setShowAnswers] = useState(false)
   const [interviewConfigs, setInterviewConfigs] = useState<InterviewConfig[]>([])
+  const [path, setPath] = useState<LearningPath | null>(null)
+  const [progress, setProgress] = useState<UserPathProgress | null>(null)
+  const [pathLoading, setPathLoading] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -82,13 +104,46 @@ export function InterviewResultsPage() {
     }
   }, [])
 
+  useEffect(() => {
+    const pathId = session?.learningPathId?.trim()
+    if (!pathId) {
+      setPath(null)
+      setProgress(null)
+      return
+    }
+    let cancelled = false
+    async function loadPath() {
+      setPathLoading(true)
+      try {
+        const res = await fetch(`/api/paths/${pathId}`)
+        const data = await res.json()
+        if (!res.ok) return
+        if (!cancelled) {
+          setPath((data.path ?? null) as LearningPath | null)
+          setProgress((data.progress ?? null) as UserPathProgress | null)
+        }
+      } catch {
+        /* ignore */
+      } finally {
+        if (!cancelled) setPathLoading(false)
+      }
+    }
+    void loadPath()
+    return () => {
+      cancelled = true
+    }
+  }, [session?.learningPathId])
+
   const answerByIndex = useMemo(() => {
     const map = new Map<number, string>()
     for (const a of session?.answers ?? []) map.set(a.index, a.answer)
     return map
   }, [session?.answers])
 
-  const flagged = useMemo(() => new Set(session?.flaggedQuestionIndexes ?? []), [session?.flaggedQuestionIndexes])
+  const flagged = useMemo(
+    () => new Set(session?.flaggedQuestionIndexes ?? []),
+    [session?.flaggedQuestionIndexes],
+  )
 
   const answeredCount = useMemo(() => {
     const n = session?.questions?.length ?? 0
@@ -110,34 +165,60 @@ export function InterviewResultsPage() {
   if (error || !session) {
     return (
       <div className="space-y-4">
-        <div className="text-sm font-medium text-red-600 dark:text-red-400">{error || 'Interview not found.'}</div>
+        <div className="text-sm font-medium text-destructive">
+          {error || 'Interview not found.'}
+        </div>
         <Link
-          href="/app/interviews"
+          href="/app/learning-paths"
           className="hq-btn-outline h-10 px-4 text-sm btn-micro"
         >
-          <ArrowLeft className="h-4 w-4" /> Back to interviews
+          <ArrowLeft className="h-4 w-4" /> Learning paths
         </Link>
       </div>
     )
   }
 
   const isCompleted = session.status === 'completed'
+  const isPathInterview = Boolean(session.learningPathId)
+  const exitHref = interviewExitHref(session)
 
   return (
     <>
       <DashboardPageHeader
         title="Interview Results"
-        description="Summary and stats below. Use Review answers when you want to see full questions and responses."
+        description={
+          isPathInterview
+            ? 'Review this session, then continue to the next stage on your learning path.'
+            : 'Summary and stats below. Use Review answers when you want to see full questions and responses.'
+        }
       />
 
       <div className="space-y-6 animate-fade-up">
         {!isCompleted ? (
-          <div className="rounded-2xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
+          <div className="rounded-2xl border border-warning/35 bg-warning-muted px-4 py-3 text-sm text-warning-foreground">
             This interview is not marked complete yet.{' '}
-            <Link href={`/app/interviews/${id}`} className="font-semibold text-primary underline-offset-2 hover:underline">
+            <Link
+              href={`/app/interviews/${id}`}
+              className="font-semibold text-primary underline-offset-2 hover:underline"
+            >
               Continue interview
             </Link>
           </div>
+        ) : null}
+
+        {isPathInterview && isCompleted ? (
+          pathLoading ? (
+            <div className="h-36 animate-pulse rounded-2xl border border-border bg-input/30" />
+          ) : path ? (
+            <PathResultsContinue path={path} progress={progress} />
+          ) : (
+            <Link
+              href={exitHref}
+              className="hq-btn-primary inline-flex h-11 items-center gap-2 rounded-full px-5 text-sm font-semibold"
+            >
+              Back to path
+            </Link>
+          )
         ) : null}
 
         <div className="dashboard-card p-6">
@@ -147,14 +228,17 @@ export function InterviewResultsPage() {
             </span>
             <div className="min-w-0 flex-1">
               <div className="truncate text-lg font-semibold text-foreground">
-                {formatRoleCategoryDisplay(session.industryKey, session.roleCategoryKey, interviewConfigs)}
+                {formatInterviewSessionTitle(session, interviewConfigs)}
               </div>
               <div className="text-xs text-muted-foreground">
-                {formatIndustryDisplay(session.industryKey, interviewConfigs)} · {formatInterviewTypeLabel(session.interviewType)} ·{' '}
+                {formatIndustryDisplay(session.industryKey, interviewConfigs)} ·{' '}
+                {formatInterviewTypeLabel(session.interviewType)} ·{' '}
                 {formatDifficultyLabel(session.difficulty)}
               </div>
             </div>
-            <span className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold badge-${session.status.replace('_', '-')}`}>
+            <span
+              className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold badge-${session.status.replace('_', '-')}`}
+            >
               {session.status.replace('_', ' ')}
             </span>
           </div>
@@ -187,15 +271,13 @@ export function InterviewResultsPage() {
         </div>
 
         <div className="dashboard-card p-6">
-          <h2 className="mb-4 text-base font-semibold text-foreground">
-            Feedback
-          </h2>
+          <h2 className="mb-4 text-base font-semibold text-foreground">Feedback</h2>
           <p className="text-sm text-muted-foreground">
             Personalized feedback and improvement tips will appear here once scoring is enabled.
           </p>
         </div>
 
-        <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-[var(--shadow-card)]">
+        <div className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)] sm:p-5">
           <button
             type="button"
             onClick={() => setShowAnswers((v) => !v)}
@@ -231,16 +313,22 @@ export function InterviewResultsPage() {
                         Q{i + 1} · {q.topic} · {formatQuestionTypeLabel(q.type)} · {q.difficulty}
                       </div>
                       {flagged.has(i) ? (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-800 dark:border-amber-500/35 dark:text-amber-200">
+                        <span className="inline-flex items-center gap-1 rounded-full border border-warning/40 bg-warning-muted px-2 py-0.5 text-[10px] font-semibold text-warning">
                           <Flag className="h-3 w-3" /> Flagged
                         </span>
                       ) : null}
                     </div>
                     <div className="mt-2 text-sm">
-                      <InterviewQuestionMarkdown markdown={formatGeneratedQuestion(q.question)} />
+                      <InterviewQuestionMarkdown
+                        markdown={formatGeneratedQuestion(q.question)}
+                      />
                     </div>
                     <div className="mt-3 rounded-xl border border-border bg-card p-3 text-sm text-foreground">
-                      {hasAnswer ? ans : <span className="text-muted-foreground">Not answered</span>}
+                      {hasAnswer ? (
+                        ans
+                      ) : (
+                        <span className="text-muted-foreground">Not answered</span>
+                      )}
                     </div>
                   </div>
                 )
@@ -249,14 +337,13 @@ export function InterviewResultsPage() {
           ) : null}
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href="/app/interviews"
-            className="hq-btn-outline h-10 px-4 text-sm btn-micro"
-          >
-            <ArrowLeft className="h-4 w-4" /> All interviews
-          </Link>
-        </div>
+        {!isPathInterview ? (
+          <div className="flex flex-wrap gap-2">
+            <Link href="/app/interviews" className="hq-btn-outline h-10 px-4 text-sm btn-micro">
+              <ArrowLeft className="h-4 w-4" /> Back to interviews
+            </Link>
+          </div>
+        ) : null}
       </div>
     </>
   )

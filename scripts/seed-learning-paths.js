@@ -6,9 +6,17 @@
  * Usage (local or after deploy): npm run seed:learning-paths
  */
 
+require('tsx/cjs/api').register()
+
 const fs = require('fs')
 const path = require('path')
 const { MongoClient, ObjectId } = require('mongodb')
+const {
+  PAKISTAN_TECH_TOP_30,
+} = require('../src/lib/learning-paths/pakistan-tech-companies.ts')
+const {
+  pakistanCompanyPathMeta,
+} = require('../src/lib/learning-paths/build-pakistan-company-path.ts')
 
 function loadEnvFile() {
   const envPath = path.resolve(process.cwd(), '.env')
@@ -871,9 +879,9 @@ const SEED = [
     description:
       'High-bar technical prep for FAANG-style screens: system design–heavy practice and a hard mock with a strict unlock score.',
     targetAudience: 'experienced',
-    category: 'company',
-    subcategory: 'international',
-    tags: ['faang', 'company', 'global', 'international', 'system-design'],
+    category: 'system_design',
+    subcategory: 'system_design',
+    tags: ['faang', 'system-design', 'advanced'],
     difficultyLabel: 'Advanced',
     isFeatured: true,
     stages: buildLevelStages({
@@ -1056,54 +1064,11 @@ const SEED = [
     { difficultyLabel: 'Intermediate' },
   ),
 
-  // —— Company Pakistan (existing regional + new) ——
-  ...[
-    ['systems-limited', 'Systems Limited'],
-    ['tkxel', 'Tkxel'],
-    ['arbisoft', 'Arbisoft'],
-    ['confiz', 'Confiz'],
-    ['devsinc', 'Devsinc'],
-    ['netsol', 'NetSol'],
-    ['10pearls', '10Pearls'],
-    ['venturedive', 'VentureDive'],
-    ['careem', 'Careem'],
-    ['curemd', 'CureMD'],
-    ['techlogix', 'Techlogix'],
-    ['contour-software', 'Contour Software'],
-    ['motive', 'Motive'],
-    ['afiniti', 'Afiniti'],
-    ['folio3', 'Folio3'],
-    ['sp-global-pakistan', 'S&P Global Pakistan'],
-    ['i2c', 'i2c'],
-    ['dubizzle-labs', 'Dubizzle Labs'],
-    ['bazaar-technologies', 'Bazaar Technologies'],
-    ['tajir', 'Tajir'],
-    ['postex', 'PostEx'],
-    ['creditbook', 'CreditBook'],
-  ].map(([slug, title]) => companyPath(slug, title, { pakistan: true, regional: true })),
-
-  // —— Company international (existing global + new) ——
-  ...[
-    ['microsoft', 'Microsoft'],
-    ['amazon', 'Amazon'],
-    ['google', 'Google'],
-    ['meta', 'Meta'],
-    ['apple', 'Apple'],
-    ['netflix', 'Netflix'],
-    ['tiktok', 'TikTok'],
-    ['bytedance', 'ByteDance'],
-    ['oracle', 'Oracle'],
-    ['ibm', 'IBM'],
-    ['nvidia', 'NVIDIA'],
-    ['adobe', 'Adobe'],
-    ['cisco', 'Cisco'],
-    ['atlassian', 'Atlassian'],
-    ['uber', 'Uber'],
-    ['airbnb', 'Airbnb'],
-    ['stripe', 'Stripe'],
-    ['shopify', 'Shopify'],
-    ['salesforce', 'Salesforce'],
-  ].map(([slug, title]) => companyPath(slug, title, { international: true, global: true })),
+  // —— Company Pakistan: Top 30 computer-tech employers ——
+  ...PAKISTAN_TECH_TOP_30.map((pack) => {
+    const meta = pakistanCompanyPathMeta(pack)
+    return pathMeta(meta)
+  }),
 
   // —— Skills ——
   skillsPath(
@@ -1301,6 +1266,49 @@ async function main() {
   const db = client.db()
   const pathsCol = db.collection('learningpaths')
   const stagesCol = db.collection('stages')
+
+  // Remove legacy international company paths (Keep Pakistan Top 30 only for company hub)
+  const intlSlugs = [
+    'microsoft',
+    'amazon',
+    'google',
+    'meta',
+    'apple',
+    'netflix',
+    'tiktok',
+    'bytedance',
+    'oracle',
+    'ibm',
+    'nvidia',
+    'adobe',
+    'cisco',
+    'atlassian',
+    'uber',
+    'airbnb',
+    'stripe',
+    'shopify',
+    'salesforce',
+  ]
+  const intlPaths = await pathsCol
+    .find({
+      $or: [
+        { slug: { $in: intlSlugs } },
+        { subcategory: 'international', category: 'company' },
+        { tags: 'international', category: 'company' },
+      ],
+    })
+    .project({ _id: 1, slug: 1, title: 1 })
+    .toArray()
+  if (intlPaths.length) {
+    const ids = intlPaths.map((p) => p._id)
+    await stagesCol.deleteMany({ pathId: { $in: ids } })
+    await pathsCol.deleteMany({ _id: { $in: ids } })
+    console.log(
+      `Removed ${intlPaths.length} international company path(s): ${intlPaths
+        .map((p) => p.slug || p.title)
+        .join(', ')}`,
+    )
+  }
 
   for (const seed of SEED) {
     const now = new Date()

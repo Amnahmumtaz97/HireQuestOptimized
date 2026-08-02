@@ -65,29 +65,29 @@ type CardTheme = {
 }
 
 const beforeTheme: CardTheme = {
-  card: 'linear-gradient(180deg, color-mix(in oklab, #fecaca 32%, var(--card)) 0%, color-mix(in oklab, #fecaca 14%, var(--card)) 100%)',
-  border: 'color-mix(in oklab, #ef4444 28%, var(--border))',
-  iconTileBg: 'color-mix(in oklab, #ef4444 14%, transparent)',
-  iconColor: '#dc2626',
-  badgeBorder: '#f87171',
+  card: 'linear-gradient(180deg, color-mix(in oklab, var(--destructive) 18%, var(--card)) 0%, color-mix(in oklab, var(--destructive) 8%, var(--card)) 100%)',
+  border: 'color-mix(in oklab, var(--destructive) 32%, var(--border))',
+  iconTileBg: 'var(--destructive-muted)',
+  iconColor: 'var(--destructive)',
+  badgeBorder: 'color-mix(in oklab, var(--destructive) 55%, transparent)',
   badgeBg: 'var(--card)',
-  badgeIcon: '#dc2626',
-  pillBg: 'color-mix(in oklab, #ef4444 14%, transparent)',
-  pillText: '#dc2626',
-  pillBorder: 'color-mix(in oklab, #ef4444 32%, transparent)',
+  badgeIcon: 'var(--destructive)',
+  pillBg: 'var(--destructive-muted)',
+  pillText: 'var(--destructive)',
+  pillBorder: 'color-mix(in oklab, var(--destructive) 35%, transparent)',
 }
 
 const afterTheme: CardTheme = {
-  card: 'linear-gradient(180deg, color-mix(in oklab, #86efac 34%, var(--card)) 0%, color-mix(in oklab, #86efac 14%, var(--card)) 100%)',
-  border: 'color-mix(in oklab, #10b981 32%, var(--border))',
-  iconTileBg: 'color-mix(in oklab, #10b981 16%, transparent)',
-  iconColor: '#059669',
-  badgeBorder: '#34d399',
+  card: 'linear-gradient(180deg, color-mix(in oklab, var(--success) 22%, var(--card)) 0%, color-mix(in oklab, var(--success) 8%, var(--card)) 100%)',
+  border: 'color-mix(in oklab, var(--success) 34%, var(--border))',
+  iconTileBg: 'var(--success-muted)',
+  iconColor: 'var(--success)',
+  badgeBorder: 'color-mix(in oklab, var(--success) 55%, transparent)',
   badgeBg: 'var(--card)',
-  badgeIcon: '#059669',
-  pillBg: 'color-mix(in oklab, #10b981 16%, transparent)',
-  pillText: '#059669',
-  pillBorder: 'color-mix(in oklab, #10b981 34%, transparent)',
+  badgeIcon: 'var(--success)',
+  pillBg: 'var(--success-muted)',
+  pillText: 'var(--success)',
+  pillBorder: 'color-mix(in oklab, var(--success) 35%, transparent)',
 }
 
 function CompareCard({

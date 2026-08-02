@@ -45,10 +45,15 @@ export type InterviewGenerationParams = {
   /** Confirmed InterviewSetup — when set, generation must use ONLY these topics. */
   interviewSetup?: InterviewSetupGenerationContext | null
   /**
-   * When false, never substitute generic template questions if Gemini fails.
-   * Resume/configure flow must set this to false.
+   * When true, curated coding / system-design / generic banks may be used if Gemini
+   * fails or GEMINI_API_KEY is missing. Production routes leave this unset/false so
+   * every interview type requires Gemini (`questionSource: "gemini"`).
    */
   allowTemplateFallback?: boolean
+  /** Top-level coding preference (also mirrored on interviewSetup.preferredQuestionFormat). */
+  preferredQuestionFormat?: string | null
+  /** Typed config snapshot from session (coding categories, HR sections, mixed weights, …). */
+  configPayload?: Record<string, unknown> | null
 }
 
 // Shared generation params; Gemini prompts live in lib/gemini.

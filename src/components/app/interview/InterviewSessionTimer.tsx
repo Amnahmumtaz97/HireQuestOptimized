@@ -70,10 +70,10 @@ export function InterviewSessionTimer({
   return (
     <div
       className={[
-        'inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm tabular-nums',
+        'inline-flex w-full max-w-full items-center gap-2 rounded-xl border px-2.5 py-2 text-sm tabular-nums sm:w-auto sm:px-3',
         isExpired
-          ? 'border-red-500/40 bg-red-500/10 text-red-700 dark:border-red-500/50 dark:bg-red-600/15 dark:text-red-200'
-          : 'border-border bg-card text-foreground shadow-[var(--shadow-card)]',
+          ? 'border-destructive/40 bg-destructive-muted text-destructive'
+          : 'border-border bg-card text-foreground shadow-card',
       ].join(' ')}
       role="timer"
       aria-live="polite"
@@ -84,16 +84,16 @@ export function InterviewSessionTimer({
       }
     >
       <AlarmClock
-        className={`h-4 w-4 shrink-0 ${isExpired ? 'text-red-600 dark:text-red-300' : 'text-muted-foreground'}`}
+        className={`h-4 w-4 shrink-0 ${isExpired ? 'text-destructive' : 'text-muted-foreground'}`}
       />
-      <div className="flex min-w-[5.5rem] flex-col leading-tight">
+      <div className="flex min-w-0 flex-col leading-tight">
         <span
-          className={`text-base font-semibold tracking-tight ${isExpired ? 'text-red-700 dark:text-red-100' : 'text-foreground'}`}
+          className={`text-base font-semibold tracking-tight ${isExpired ? 'text-destructive' : 'text-foreground'}`}
         >
           {formatMmSs(displaySeconds)}
         </span>
-        <span className="text-[10px] font-medium text-muted-foreground">
-          {isExpired ? "Time's up" : hasStarted ? 'Remaining' : 'Starts when you begin'}
+        <span className="truncate text-[10px] font-medium text-muted-foreground">
+          {isExpired ? "Time's up" : hasStarted ? 'Remaining' : 'Not started'}
         </span>
       </div>
     </div>

@@ -121,12 +121,11 @@ export function ChatbotWidget() {
             {/* Live indicator dot */}
             <span
               aria-hidden
-              className="absolute right-2 top-2 grid h-3 w-3 place-items-center rounded-full"
-              style={{ background: '#22c55e', boxShadow: '0 0 0 3px rgba(34,197,94,0.18)' }}
+              className="absolute right-2 top-2 grid h-3 w-3 place-items-center rounded-full bg-success shadow-[0_0_0_3px_var(--success-muted)]"
             >
               <span
-                className="h-1 w-1 rounded-full"
-                style={{ background: '#ffffff', animation: 'chatbot-pulse 1.6s ease-in-out infinite' }}
+                className="h-1 w-1 rounded-full bg-primary-foreground"
+                style={{ animation: 'chatbot-pulse 1.6s ease-in-out infinite' }}
               />
             </span>
           </div>
@@ -141,7 +140,7 @@ export function ChatbotWidget() {
         aria-hidden={!open}
         className={[
           'fixed z-[59] bottom-24 right-4 sm:right-6',
-          'w-[calc(100vw-2rem)] sm:w-[380px]',
+          'w-[min(100%,calc(100vw-2rem))] max-w-[380px] sm:w-[380px]',
           'origin-bottom-right transition-all duration-250 ease-[cubic-bezier(0.22,1,0.36,1)]',
           open
             ? minimized
@@ -153,10 +152,10 @@ export function ChatbotWidget() {
         <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_28px_64px_-20px_rgba(17,24,39,0.32)]">
           {/* Header */}
           <div
-            className="relative flex items-center justify-between gap-3 px-4 py-3.5 text-white"
+            className="relative flex items-center justify-between gap-3 bg-primary px-4 py-3.5 text-primary-foreground"
             style={{
               background:
-                'linear-gradient(135deg, #1e3a8a 0%, #2563eb 55%, #1d4ed8 100%)',
+                'linear-gradient(135deg, var(--primary-active) 0%, var(--primary) 55%, var(--primary-hover) 100%)',
             }}
           >
             <div className="flex items-center gap-3 min-w-0">
@@ -169,19 +168,15 @@ export function ChatbotWidget() {
                 />
                 <span
                   aria-hidden
-                  className="absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full ring-2 ring-[#2563eb]"
-                  style={{ background: '#22c55e' }}
+                  className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-success ring-2 ring-primary"
                 />
               </div>
               <div className="min-w-0">
-                <div className="text-[14.5px] font-bold tracking-[-0.01em] truncate">
+                <div className="truncate text-[14.5px] font-bold tracking-[-0.01em]">
                   HireQuest AI
                 </div>
-                <div className="flex items-center gap-1.5 text-[11.5px] text-white/80">
-                  <span
-                    className="h-1.5 w-1.5 rounded-full"
-                    style={{ background: '#22c55e' }}
-                  />
+                <div className="flex items-center gap-1.5 text-[11.5px] text-primary-foreground/80">
+                  <span className="h-1.5 w-1.5 rounded-full bg-success" />
                   Online · Replies in seconds
                 </div>
               </div>
@@ -192,7 +187,7 @@ export function ChatbotWidget() {
                 type="button"
                 aria-label={minimized ? 'Expand chat' : 'Minimize chat'}
                 onClick={() => setMinimized((m) => !m)}
-                className="grid h-8 w-8 place-items-center rounded-md text-white/85 hover:text-white hover:bg-white/10 transition-colors"
+                className="grid h-10 w-10 place-items-center rounded-lg text-primary-foreground/85 transition-colors hover:bg-primary-foreground/10 hover:text-primary-foreground"
               >
                 <Minimize2 className="h-4 w-4" strokeWidth={1.8} />
               </button>
@@ -200,7 +195,7 @@ export function ChatbotWidget() {
                 type="button"
                 aria-label="Close chat"
                 onClick={() => setOpen(false)}
-                className="grid h-8 w-8 place-items-center rounded-md text-white/85 hover:text-white hover:bg-white/10 transition-colors"
+                className="grid h-10 w-10 place-items-center rounded-lg text-primary-foreground/85 transition-colors hover:bg-primary-foreground/10 hover:text-primary-foreground"
               >
                 <X className="h-4 w-4" strokeWidth={1.8} />
               </button>
@@ -212,7 +207,7 @@ export function ChatbotWidget() {
             <>
               <div
                 ref={scrollRef}
-                className="max-h-[62vh] min-h-[280px] overflow-y-auto px-4 py-4 space-y-3.5 bg-[var(--secondary)]"
+                className="max-h-[min(62vh,calc(100dvh-11rem))] min-h-0 overflow-y-auto overscroll-contain px-4 py-4 space-y-3.5 bg-[var(--secondary)] sm:min-h-[240px]"
               >
                 {messages.map((m) => (
                   <MessageBubble key={m.id} msg={m} />
@@ -259,7 +254,7 @@ export function ChatbotWidget() {
                     className={[
                       'grid h-9 w-9 shrink-0 place-items-center rounded-lg transition-all',
                       input.trim()
-                        ? 'bg-primary text-white shadow-[0_6px_16px_-8px_rgba(37,99,235,0.6)] hover:bg-[#1e4fcc]'
+                        ? 'bg-primary text-primary-foreground shadow-[0_6px_16px_-8px_color-mix(in_oklab,var(--primary)_60%,transparent)] hover:bg-primary-hover'
                         : 'bg-border text-muted-foreground cursor-not-allowed',
                     ].join(' ')}
                   >
@@ -271,7 +266,9 @@ export function ChatbotWidget() {
                     <Sparkles className="h-3 w-3 text-primary" strokeWidth={1.8} />
                     Powered by HireQuest AI
                   </span>
-                  <span>Press <kbd className="rounded border border-border bg-card px-1 font-sans">Enter</kbd> to send</span>
+                  <span className="hidden sm:inline">
+                    Press <kbd className="rounded border border-border bg-card px-1 font-sans">Enter</kbd> to send
+                  </span>
                 </div>
               </div>
             </>
@@ -307,22 +304,22 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
         className={[
           'max-w-[78%] rounded-2xl px-3.5 py-2.5 text-[13.5px] leading-[1.55]',
           isUser
-            ? 'bg-primary text-white rounded-br-md shadow-[0_4px_12px_-6px_rgba(37,99,235,0.4)]'
-            : 'bg-card text-foreground border border-border rounded-bl-md',
+            ? 'rounded-br-md bg-primary text-primary-foreground shadow-[0_4px_12px_-6px_color-mix(in_oklab,var(--primary)_40%,transparent)]'
+            : 'rounded-bl-md border border-border bg-card text-foreground',
         ].join(' ')}
       >
         <p>{msg.content}</p>
         <div
           className={[
             'mt-1 text-[10.5px]',
-            isUser ? 'text-white/70' : 'text-muted-foreground',
+            isUser ? 'text-primary-foreground/70' : 'text-muted-foreground',
           ].join(' ')}
         >
           {msg.time}
         </div>
       </div>
       {isUser && (
-        <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-white text-[11px] font-bold">
+        <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
           You
         </div>
       )}

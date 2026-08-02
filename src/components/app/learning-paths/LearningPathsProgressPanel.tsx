@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Trophy, Flame, Sparkles } from 'lucide-react'
+import { Trophy, Flame, Sparkles, Route } from 'lucide-react'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { ListPagination } from '@/components/ui/list-pagination'
 import { useToast } from '@/components/ui/toast'
@@ -145,6 +145,18 @@ function AchievementsBlock({
             </div>
           </div>
         </div>
+        <div className="dashboard-card flex items-center gap-3 p-4">
+          <Route className="h-5 w-5 text-primary" />
+          <div>
+            <div className="text-[11px] uppercase text-muted-foreground">Paths</div>
+            <div className="text-lg font-semibold">
+              {a.pathsEnrolled}
+              <span className="ml-1 text-xs font-normal text-muted-foreground">
+                · {a.pathsCompleted} done
+              </span>
+            </div>
+          </div>
+        </div>
         <div className="dashboard-card p-4">
           <div className="text-[11px] uppercase text-muted-foreground">Practice</div>
           <div className="mt-1 text-sm text-foreground">
@@ -153,12 +165,6 @@ function AchievementsBlock({
           <div className="text-xs text-muted-foreground">
             ~{a.timeSpentMinutes} min · confidence{' '}
             {a.interviewConfidenceScore != null ? `${a.interviewConfidenceScore}%` : '—'}
-          </div>
-        </div>
-        <div className="dashboard-card p-4">
-          <div className="text-[11px] uppercase text-muted-foreground">Paths</div>
-          <div className="mt-1 text-sm text-foreground">
-            {a.pathsEnrolled} enrolled · {a.pathsCompleted} completed
           </div>
           <LoadingButton
             type="button"

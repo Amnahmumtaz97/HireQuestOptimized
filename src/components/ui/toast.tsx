@@ -62,7 +62,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={value}>
       {children}
       <div
-        className="fixed bottom-4 right-4 z-[250] flex max-w-[min(24rem,calc(100vw-2rem))] flex-col gap-2 pointer-events-none"
+        className="fixed bottom-28 right-4 z-[250] flex max-w-[min(24rem,calc(100vw-2rem))] flex-col gap-2 pointer-events-none sm:bottom-32"
         aria-live="polite"
       >
         {items.map((t) => (
@@ -70,12 +70,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={t.id}
             role="status"
             className={[
-              'pointer-events-auto flex items-start gap-3 rounded-xl border px-4 py-3 text-sm shadow-[0_12px_40px_-12px_rgba(0,0,0,0.45)] animate-fade-in',
+              'pointer-events-auto flex items-start gap-3 rounded-xl border px-4 py-3 text-sm shadow-modal animate-fade-in',
               t.variant === 'success'
-                ? 'border-emerald-500/35 bg-emerald-500/15 text-emerald-100'
+                ? 'border-success/35 bg-success-muted text-success'
                 : t.variant === 'error'
-                  ? 'border-red-500/40 bg-red-500/15 text-red-100'
-                  : 'border-border bg-[var(--hq-row-elevated)] text-foreground',
+                  ? 'border-destructive/40 bg-destructive-muted text-destructive'
+                  : 'border-border bg-card text-foreground',
             ].join(' ')}
           >
             {t.variant === 'success' ? (
