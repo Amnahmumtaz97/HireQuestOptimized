@@ -81,10 +81,7 @@ export function Navbar() {
               </Link>
             ) : (
               <>
-                <Link
-                  href="/auth"
-                  className="hidden sm:inline-flex min-h-10 items-center px-2 text-[15px] font-semibold text-foreground transition-colors hover:text-primary"
-                >
+                <Link href="/auth" className="hq-marketing-nav-login">
                   Login
                 </Link>
                 <Link
