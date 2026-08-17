@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { ArrowLeft, Briefcase, ChevronDown, ChevronUp, Flag, ListChecks } from 'lucide-react'
+import { AlertBanner } from '@/components/ui/alert-banner'
 import type { InterviewConfig } from '@/components/app/dashboard/types'
 import { DashboardPageHeader } from '@/components/app/dashboard/DashboardPageHeader'
 import { InterviewQuestionMarkdown } from '@/components/app/interview/InterviewQuestionMarkdown'
@@ -195,15 +196,15 @@ export function InterviewResultsPage() {
 
       <div className="space-y-6 animate-fade-up">
         {!isCompleted ? (
-          <div className="rounded-2xl border border-warning/35 bg-warning-muted px-4 py-3 text-sm text-warning-foreground">
+          <AlertBanner variant="warning">
             This interview is not marked complete yet.{' '}
             <Link
               href={`/app/interviews/${id}`}
-              className="font-semibold text-primary underline-offset-2 hover:underline"
+              className="font-semibold underline underline-offset-2"
             >
-              Continue interview
+              Continue interview →
             </Link>
-          </div>
+          </AlertBanner>
         ) : null}
 
         {isPathInterview && isCompleted ? (

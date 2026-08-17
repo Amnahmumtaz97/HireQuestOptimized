@@ -16,6 +16,8 @@ import { useTheme } from '@/components/providers/ThemeProvider'
 import { useToast } from '@/components/ui/toast'
 import { Switch } from '@/components/ui/switch'
 import { LoadingButton } from '@/components/ui/loading-button'
+import { AlertBanner } from '@/components/ui/alert-banner'
+import { ThemeSwitch } from '@/components/ui/theme-switch'
 import { BounceLoader } from '@/components/ui/bounce-loader'
 import {
   validateChangePassword,
@@ -239,7 +241,7 @@ function SecurityPanel({
             <p className="text-xs text-red-400">{fieldErrors.confirmPassword}</p>
           ) : null}
         </label>
-        {error ? <p className="text-sm text-red-400">{error}</p> : null}
+        {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
         <LoadingButton
           type="submit"
           loading={isSaving}
@@ -498,7 +500,7 @@ export function SettingsModulePage() {
                   <BounceLoader label="Loading security" />
                 </div>
               ) : metaError ? (
-                <p className="text-sm text-red-400">{metaError}</p>
+                <AlertBanner variant="error">{metaError}</AlertBanner>
               ) : meta ? (
                 <SecurityPanel
                   authProvider={meta.authProvider}
@@ -516,35 +518,14 @@ export function SettingsModulePage() {
                   </p>
                 </div>
                 <div className="rounded-2xl border border-border bg-input/10 p-5">
-                  <div className="text-sm font-semibold text-foreground">Theme</div>
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    Currently: {appearanceLabel}
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setTheme('dark')}
-                      className={cn(
-                        'inline-flex h-11 items-center justify-center rounded-2xl border px-5 text-xs font-semibold btn-micro',
-                        theme === 'dark'
-                          ? 'border-primary bg-primary/15 text-foreground'
-                          : 'border-border bg-input/10 text-foreground hover:bg-input/20',
-                      )}
-                    >
-                      Dark
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTheme('light')}
-                      className={cn(
-                        'inline-flex h-11 items-center justify-center rounded-2xl border px-5 text-xs font-semibold btn-micro',
-                        theme === 'light'
-                          ? 'border-primary bg-primary/15 text-foreground'
-                          : 'border-border bg-input/10 text-foreground hover:bg-input/20',
-                      )}
-                    >
-                      Light
-                    </button>
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <div className="text-sm font-semibold text-foreground">Theme</div>
+                      <div className="mt-0.5 text-xs text-muted-foreground">
+                        Currently: {appearanceLabel}
+                      </div>
+                    </div>
+                    <ThemeSwitch showLabel />
                   </div>
                 </div>
                 <ComingSoonPanel
@@ -560,7 +541,7 @@ export function SettingsModulePage() {
                   <BounceLoader label="Loading preferences" />
                 </div>
               ) : metaError ? (
-                <p className="text-sm text-red-400">{metaError}</p>
+                <AlertBanner variant="error">{metaError}</AlertBanner>
               ) : meta ? (
                 <PreferencesPanel
                   initial={meta.preferences}

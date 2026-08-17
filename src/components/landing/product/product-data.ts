@@ -1,25 +1,19 @@
 import {
+  Award,
   BarChart3,
-  Brain,
   ClipboardList,
-  Code2,
   FileBarChart,
   LayoutDashboard,
-  LineChart,
   MessageSquare,
-  MonitorSmartphone,
-  Network,
-  Palette,
+  Mic,
   PlusCircle,
-  Server,
-  Shield,
+  Route,
   Sparkles,
-  UserRound,
   Users,
   type LucideIcon,
 } from 'lucide-react'
 
-/** Real app surfaces — not landing “toolkit” marketing bullets. */
+/** Real app surfaces — matches the signed-in sidebar. */
 export const PRODUCT_SURFACES: Array<{
   icon: LucideIcon
   title: string
@@ -27,39 +21,40 @@ export const PRODUCT_SURFACES: Array<{
   description: string
 }> = [
   {
-    icon: PlusCircle,
-    title: 'New Interview wizard',
-    href: '/app/new-interview',
-    description:
-      'Configure interview type, one department, specializations, topics, difficulty, and question count before you start.',
+    icon: LayoutDashboard,
+    title: 'Dashboard',
+    href: '/app/dashboard',
+    description: 'Activity snapshot, upcoming interviews, and learning-path progress in one place.',
   },
   {
-    icon: MessageSquare,
-    title: 'Live session runner',
+    icon: PlusCircle,
+    title: 'New interview',
+    href: '/app/new-interview',
+    description: 'Configure type, department, topics, and difficulty, then start a timed session.',
+  },
+  {
+    icon: Mic,
+    title: 'My interviews',
     href: '/app/interviews',
-    description:
-      'Work through generated questions in-session with timers, flags, and answer capture.',
+    description: 'Resume, review results, or delete sessions from a single interview list.',
+  },
+  {
+    icon: Route,
+    title: 'Learning paths',
+    href: '/app/learning-paths',
+    description: 'Browse overview, categories, and catalog tracks that match the role you want.',
+  },
+  {
+    icon: Award,
+    title: 'Certifications',
+    href: '/app/learning-paths/certifications',
+    description: 'Explore 70+ certs and jump into practice aligned to the exam you are targeting.',
   },
   {
     icon: FileBarChart,
-    title: 'Results report',
-    href: '/app/results',
-    description:
-      'Open a scored report with dimension breakdowns, strengths, and improvement notes after a session.',
-  },
-  {
-    icon: LineChart,
-    title: 'Analytics & progress',
+    title: 'Results & analytics',
     href: '/app/analytics',
-    description:
-      'Review completed interviews, average scores, and skill trends across practice history.',
-  },
-  {
-    icon: UserRound,
-    title: 'Account dashboard',
-    href: '/app/dashboard',
-    description:
-      'Jump back into recent sessions, profile settings, and billing from your private workspace.',
+    description: 'Scored reports plus trends across communication, accuracy, confidence, and problem solving.',
   },
 ]
 
@@ -88,7 +83,6 @@ export const PRACTICE_MODES: Array<{
     icon: LayoutDashboard,
     title: 'System Design',
     description: 'Architecture walkthroughs for senior and backend-focused tracks.',
-    badge: 'Coming soon',
   },
   {
     icon: Sparkles,
@@ -117,39 +111,23 @@ export const WEEK_BARS = [42, 58, 51, 67, 74, 70, 82]
 
 export const PRODUCT_FAQS = [
   {
-    q: 'Which dimensions appear on a results report?',
-    a: 'Sample and live reports break scores into communication, technical accuracy, confidence, and problem solving, plus an overall score with strengths and improvement notes.',
+    q: 'What do I see after I sign in?',
+    a: 'Your dashboard shows an activity snapshot and upcoming interviews. From there you open My Interviews, Learning Paths, Certifications, Results, Analytics, and Bookmarks—the same structure as the app sidebar.',
   },
   {
     q: 'How do departments and specializations work in the wizard?',
     a: 'You select exactly one department, then one or more specializations and topics from that department’s catalog before generating questions.',
   },
   {
-    q: 'Can I open and retake a past session?',
-    a: 'Yes. Saved interviews stay in your Interviews list so you can reopen results and run another attempt with a fresh configuration when you want more practice.',
+    q: 'Can I reopen a past session?',
+    a: 'Yes. Saved interviews stay in My Interviews so you can resume in-progress work, open results, or start a fresh configuration.',
   },
   {
-    q: 'What limits apply on free access?',
-    a: 'You can create an account and start practicing without a credit card. Higher session limits and deeper analytics unlock on paid plans when you need them.',
+    q: 'How do certifications connect to practice?',
+    a: 'The certifications catalog maps exams to learning paths and interview topics so you can practice what the cert actually tests.',
   },
   {
     q: 'Where do weekly activity and skill charts live?',
-    a: 'Analytics and dashboard views summarize completed interviews, average scores, weekly activity, and skill breakdowns from your saved sessions.',
+    a: 'Analytics and the dashboard summarize completed interviews, average scores, weekly activity, and skill breakdowns from your saved sessions.',
   },
-]
-
-export const HIGHLIGHT_TRACKS: Array<{
-  label: string
-  subtitle: string
-  icon: LucideIcon
-}> = [
-  { label: 'Software Engineering', subtitle: 'Department', icon: Code2 },
-  { label: 'Frontend Development', subtitle: 'Specialization', icon: MonitorSmartphone },
-  { label: 'Backend Development', subtitle: 'Specialization', icon: Server },
-  { label: 'Full Stack Development', subtitle: 'Specialization', icon: Network },
-  { label: 'Data Science', subtitle: 'Department', icon: BarChart3 },
-  { label: 'AI & Machine Learning', subtitle: 'Department', icon: Brain },
-  { label: 'Cyber Security', subtitle: 'Track', icon: Shield },
-  { label: 'DevOps', subtitle: 'Specialization', icon: LayoutDashboard },
-  { label: 'UI/UX Design', subtitle: 'Related track', icon: Palette },
 ]

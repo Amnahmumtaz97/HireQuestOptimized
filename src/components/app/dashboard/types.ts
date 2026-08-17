@@ -61,6 +61,7 @@ export type InterviewSession = {
   questions?: InterviewQuestion[]
   questionSource?: 'gemini' | 'template'
   flaggedQuestionIndexes?: number[]
+  answers?: Array<{ index: number; answer: string; updatedAt?: string }>
 }
 
 export type WizardStepKey =

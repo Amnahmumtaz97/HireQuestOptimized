@@ -65,3 +65,46 @@ export function thisMonthRange(): { start: string; end: string } {
   return { start: localDateString(start), end: localDateString(now) }
 }
 
+export function parseLocalDate(iso: string): Date {
+  const [y, m, d] = iso.split('-').map(Number)
+  return new Date(y, (m || 1) - 1, d || 1)
+}
+
+export function sessionLocalDate(session: InterviewSession): string | null {
+  if (!session.createdAt) return null
+  const t = new Date(session.createdAt)
+  if (!Number.isFinite(t.getTime())) return null
+  return localDateString(t)
+}
+
+/** Sunday–Saturday week that contains `iso` (local). */
+export function weekDaysSundayStart(iso: string): Array<{ iso: string; date: Date }> {
+  const d = parseLocalDate(iso)
+  const start = new Date(d.getFullYear(), d.getMonth(), d.getDate() - d.getDay())
+  return Array.from({ length: 7 }, (_, i) => {
+    const day = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i)
+    return { iso: localDateString(day), date: day }
+  })
+}
+
+/** Jump by `delta` months. Lands on today if that month is the current month, else the 1st. */
+export function shiftMonthAnchor(iso: string, delta: number): string {
+  const d = parseLocalDate(iso)
+  const today = new Date()
+  const next = new Date(d.getFullYear(), d.getMonth() + delta, 1)
+  if (next.getFullYear() === today.getFullYear() && next.getMonth() === today.getMonth()) {
+    return localDateString(today)
+  }
+  return localDateString(next)
+}
+
+export function countSessionsByLocalDate(sessions: InterviewSession[]): Map<string, number> {
+  const map = new Map<string, number>()
+  for (const s of sessions) {
+    const key = sessionLocalDate(s)
+    if (!key) continue
+    map.set(key, (map.get(key) ?? 0) + 1)
+  }
+  return map
+}
+

@@ -1,9 +1,11 @@
 import {
+  Award,
   Briefcase,
   GraduationCap,
   LineChart,
   MessageSquare,
   RefreshCw,
+  Route,
   Target,
   type LucideIcon,
 } from 'lucide-react'
@@ -21,7 +23,7 @@ export const AUDIENCE_PLAYBOOKS: Array<{
     situation:
       'You are preparing for internships or first full-time loops and need structured reps before campus or virtual onsites.',
     practice:
-      'Run department-scoped technical and behavioral sessions, then review dimension scores after each attempt.',
+      'Start on the dashboard, run department-scoped technical and behavioral sessions, and follow a learning path that matches your target role.',
     outcome:
       'Walk into screening rounds with practiced answers and a clear sense of which topics still need work.',
   },
@@ -31,7 +33,7 @@ export const AUDIENCE_PLAYBOOKS: Array<{
     situation:
       'You are changing fields and must prove both credibility and technical depth without a linear resume story.',
     practice:
-      'Combine behavioral sessions for narrative clarity with technical or mixed modes tied to your target department.',
+      'Combine behavioral sessions for narrative clarity with technical or mixed modes, then bookmark the certs and paths for the domain you are entering.',
     outcome:
       'Build a coherent story and a growing score trail that shows progress in the domain you are entering.',
   },
@@ -41,7 +43,7 @@ export const AUDIENCE_PLAYBOOKS: Array<{
     situation:
       'You already have experience and are leveling up for a new company, senior bar, or role change.',
     practice:
-      'Focus analytics on weak dimensions, retake sessions in your specialty, and track weekly activity while you prep.',
+      'Use analytics on weak dimensions, resume interviews from My Interviews, and track weekly activity while you prep.',
     outcome:
       'Enter the next loop with targeted practice history instead of scattered last-minute review.',
   },
@@ -64,7 +66,7 @@ export const PATH_BY_GOAL: Array<{
   {
     icon: MessageSquare,
     title: 'Pass a behavioral loop',
-    detail: 'Configure behavioral sessions and study strengths/improvement notes on each report.',
+    detail: 'Configure behavioral sessions and study strengths and improvement notes on each report.',
     href: '/product#modes',
     linkLabel: 'See interview types',
   },
@@ -76,10 +78,24 @@ export const PATH_BY_GOAL: Array<{
     linkLabel: 'See technical mode',
   },
   {
+    icon: Award,
+    title: 'Prep a certification',
+    detail: 'Open the cert catalog, match it to a learning path, then practice the topics the exam actually tests.',
+    href: '/product#categories',
+    linkLabel: 'See certifications',
+  },
+  {
     icon: LineChart,
     title: 'Track weekly readiness',
-    detail: 'Use analytics widgets for activity streaks and skill breakdowns across saved interviews.',
+    detail: 'Use the dashboard and analytics for activity, completion rate, and skill breakdowns.',
     href: '/product#progress',
     linkLabel: 'View analytics preview',
+  },
+  {
+    icon: Route,
+    title: 'Follow a learning path',
+    detail: 'Start from path overview, drill into a category, then launch interviews from that track.',
+    href: '/product',
+    linkLabel: 'See product surfaces',
   },
 ]

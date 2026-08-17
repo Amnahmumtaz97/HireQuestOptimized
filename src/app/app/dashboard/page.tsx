@@ -1,5 +1,5 @@
 import { AppDashboardPanel } from '@/components/app/UserDashboard'
-import { DashboardPageHeader } from '@/components/app/dashboard/DashboardPageHeader'
+import { DashboardWelcomeHeader } from '@/components/app/dashboard/DashboardWelcomeHeader'
 import { DashboardRobotLottie } from '@/components/app/dashboard/DashboardRobotLottie'
 
 export const metadata = {
@@ -9,16 +9,11 @@ export const metadata = {
 export default function AppDashboardRoute() {
   return (
     <>
-      <div className="flex items-start justify-between gap-4">
+      <div className="mb-7 flex items-center justify-between gap-4 sm:gap-6">
         <div className="min-w-0 flex-1">
-          <DashboardPageHeader
-            title="Dashboard"
-            description="Activity snapshot, upcoming interviews & progress."
-            titleHighlight="accent"
-            variant="dashboard"
-          />
+          <DashboardWelcomeHeader />
         </div>
-        <DashboardRobotLottie className="-mt-2" />
+        <DashboardRobotLottie />
       </div>
       <AppDashboardPanel />
     </>

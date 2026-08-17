@@ -71,6 +71,7 @@ function buildProviders(): NextAuthOptions['providers'] {
           email: user.email,
           role: user.role,
           image: user.image || undefined,
+          firstName: user.firstName?.trim() || splitName(fullNameFromFields).firstName,
         }
       },
     }),
@@ -107,9 +108,7 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/auth',
   },
-  get providers() {
-    return buildProviders()
-  },
+  providers: buildProviders(),
   callbacks: {
     async signIn({ user, account }) {
       if (!account || account.provider === 'credentials') {
@@ -171,6 +170,14 @@ export const authOptions: NextAuthOptions = {
         if (user.id) {
           token.sub = user.id
         }
+        if (user.name) {
+          token.name = user.name
+        }
+        if (user.firstName) {
+          token.firstName = user.firstName
+        } else if (user.name) {
+          token.firstName = splitName(user.name).firstName
+        }
       }
 
       if (account && (account.provider === 'google' || account.provider === 'github')) {
@@ -189,7 +196,24 @@ export const authOptions: NextAuthOptions = {
           if (dbUser) {
             token.sub = dbUser._id.toString()
             token.role = dbUser.role
+            if (dbUser.firstName) {
+              token.firstName = dbUser.firstName
+              token.name = [dbUser.firstName, dbUser.lastName].filter(Boolean).join(' ')
+            }
           }
+        }
+      }
+
+      if (token.sub && !token.firstName) {
+        const [{ connectToDatabase }, { UserModel }] = await Promise.all([
+          import('@/lib/mongoose'),
+          import('@/models/User'),
+        ])
+        await connectToDatabase()
+        const dbUser = await UserModel.findById(token.sub).select('firstName lastName').lean()
+        if (dbUser?.firstName) {
+          token.firstName = dbUser.firstName
+          token.name = [dbUser.firstName, dbUser.lastName].filter(Boolean).join(' ')
         }
       }
 
@@ -202,6 +226,14 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.sub ?? ''
         session.user.role = (token.role as 'user' | 'admin' | undefined) ?? 'user'
+        if (typeof token.name === 'string' && token.name) {
+          session.user.name = token.name
+        }
+        if (typeof token.firstName === 'string' && token.firstName) {
+          session.user.firstName = token.firstName
+        } else if (session.user.name) {
+          session.user.firstName = splitName(session.user.name).firstName
+        }
       }
       return session
     },

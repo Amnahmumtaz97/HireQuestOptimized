@@ -12,6 +12,7 @@ import {
 import { PathCard } from '@/components/app/learning-paths/PathCard'
 import { ListPagination } from '@/components/ui/list-pagination'
 import { useClientPagination } from '@/hooks/useClientPagination'
+import { usePathBookmarks } from '@/hooks/usePathBookmarks'
 import type { LearningPath, UserPathProgress } from '@/components/app/learning-paths/types'
 
 const SECTION_PAGE_SIZE = 4
@@ -43,6 +44,7 @@ function Section({
   icon: LucideIcon
 }) {
   const { page, setPage, pageItems, totalPages } = useClientPagination(items, SECTION_PAGE_SIZE)
+  const { isSaved, toggle } = usePathBookmarks()
 
   if (items.length === 0) return null
   return (
@@ -66,6 +68,8 @@ function Section({
             progress={item.progress}
             reason={item.reason}
             badge={item.badge}
+            saved={isSaved(item.path.id)}
+            onToggleSave={toggle}
           />
         ))}
       </div>

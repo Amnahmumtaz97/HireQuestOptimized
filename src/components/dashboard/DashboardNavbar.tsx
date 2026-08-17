@@ -6,14 +6,12 @@ import {
   CreditCard,
   LogOut,
   Menu,
-  Moon,
   Settings,
-  Sun,
   User,
 } from 'lucide-react'
 import Link from 'next/link'
 import { signOut, useSession } from 'next-auth/react'
-import { useTheme } from '@/components/providers/ThemeProvider'
+import { ThemeSwitch } from '@/components/ui/theme-switch'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,9 +35,7 @@ export const DashboardNavbar: FC<DashboardNavbarProps> = ({
   variant = 'fixed',
 }) => {
   const [scrolled, setScrolled] = useState(false)
-  const [themeReady, setThemeReady] = useState(false)
   const { data: session } = useSession()
-  const { theme, toggleTheme } = useTheme()
 
   const userName = session?.user?.name?.trim() || 'there'
   const isAdmin = session?.user?.role === 'admin'
@@ -58,10 +54,6 @@ export const DashboardNavbar: FC<DashboardNavbarProps> = ({
     window.addEventListener('scroll', onScroll, { passive: true })
 
     return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
-  useEffect(() => {
-    setThemeReady(true)
   }, [])
 
   const isFixed = variant === 'fixed'
@@ -105,21 +97,7 @@ export const DashboardNavbar: FC<DashboardNavbarProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              aria-label="Toggle theme"
-              onClick={toggleTheme}
-              suppressHydrationWarning
-              className="hq-btn-icon inline-flex rounded-full"
-            >
-              {!themeReady ? (
-                <Moon className="h-4 w-4" />
-              ) : theme === 'light' ? (
-                <Sun className="h-4 w-4" />
-              ) : (
-                <Moon className="h-4 w-4" />
-              )}
-            </button>
+            <ThemeSwitch />
 
             <NotificationsMenu />
 

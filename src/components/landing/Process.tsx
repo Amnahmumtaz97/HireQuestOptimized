@@ -11,6 +11,7 @@ import {
   Boxes,
 } from 'lucide-react'
 import { useReveal } from '@/hooks/use-reveal'
+import { StarfieldBackground } from '@/components/landing/StarfieldBackground'
 
 type Step = {
   icon: LucideIcon
@@ -182,18 +183,9 @@ export function Process() {
     <section
       ref={ref}
       id="solutions"
-      className="relative min-h-[100svh] overflow-hidden scroll-mt-24 py-24 sm:scroll-mt-28 sm:py-28"
+      className="relative isolate min-h-[100svh] overflow-hidden scroll-mt-24 py-24 sm:scroll-mt-28 sm:py-28"
     >
-      <div
-        className="pointer-events-none absolute -top-20 left-1/2 h-[340px] w-[72%] -translate-x-1/2 rounded-full"
-        style={{
-          background:
-            'radial-gradient(ellipse at center, rgba(37, 99, 235, 0.3), transparent 65%)',
-          filter: 'blur(95px)',
-          zIndex: 0,
-        }}
-        aria-hidden
-      />
+      <StarfieldBackground section />
       <div className="relative z-[1] mx-auto flex min-h-[100svh] max-w-7xl flex-col px-4 sm:px-6">
         <div className="reveal z-30 mx-auto max-w-[720px] shrink-0 pb-10 pt-0 text-center sm:pb-12 md:pb-14">
           <div className="text-[13px] font-semibold uppercase tracking-[0.12em] text-primary mb-4">

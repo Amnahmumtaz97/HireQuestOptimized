@@ -1,6 +1,7 @@
 import { CategoriesGrid } from '@/components/app/learning-paths/CategoriesGrid'
 import { LearningPathsProgressPanel } from '@/components/app/learning-paths/LearningPathsProgressPanel'
 import { DashboardPageHeader } from '@/components/app/dashboard/DashboardPageHeader'
+import { CertificationsHubCard } from '@/components/app/certifications/CertificationsHubCard'
 
 export const metadata = {
   title: 'Learning Paths — HireQuest',
@@ -15,6 +16,9 @@ export default function LearningPathsPage() {
       />
       <div className="mb-6">
         <LearningPathsProgressPanel />
+      </div>
+      <div className="mb-6">
+        <CertificationsHubCard />
       </div>
       <CategoriesGrid featuredFirst showCatalogLink />
     </>

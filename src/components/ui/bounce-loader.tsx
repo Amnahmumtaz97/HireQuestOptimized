@@ -5,23 +5,26 @@ type BounceLoaderProps = {
   label?: string
 }
 
-const sizeClass = {
-  sm: 'h-1.5 w-1.5',
-  md: 'h-4 w-4',
-} as const
-
 export function BounceLoader({ className = '', size = 'md', label = 'Loading' }: BounceLoaderProps) {
-  const dot = sizeClass[size]
+  const isSmall = size === 'sm'
   return (
     <div
-      className={['inline-flex flex-row items-center justify-center gap-2', className].join(' ')}
+      className={['flex items-center', isSmall ? 'gap-2' : 'gap-3', className].join(' ')}
       role="status"
       aria-label={label}
     >
-      <span className={`${dot} rounded-full bg-blue-700 animate-bounce [animation-delay:.7s]`} />
-      <span className={`${dot} rounded-full bg-blue-700 animate-bounce [animation-delay:.3s]`} />
-      <span className={`${dot} rounded-full bg-blue-700 animate-bounce [animation-delay:.7s]`} />
-      <span className="sr-only">{label}</span>
+      <span
+        className={['hq-loader', isSmall ? 'hq-loader--sm' : 'hq-loader--md'].join(' ')}
+        aria-hidden
+      >
+        <span className="hq-loader-ring" />
+        <span className="hq-loader-mark">{isSmall ? '' : 'HQ'}</span>
+      </span>
+      {isSmall ? (
+        <span className="sr-only">{label}</span>
+      ) : (
+        <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      )}
     </div>
   )
 }

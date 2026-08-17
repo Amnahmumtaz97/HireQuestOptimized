@@ -1,17 +1,18 @@
 'use client'
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { DifficultySelector, type Difficulty } from '@/components/app/DifficultySelector'
 import { InterviewTypeSelector, type InterviewType } from '@/components/app/InterviewTypeSelector'
 import { StartInterviewButton } from '@/components/app/StartInterviewButton'
-import { TopicSelector, type TopicMode } from '@/components/app/TopicSelector'
+import type { TopicMode } from '@/components/app/TopicSelector'
 import { IndustrySelector } from '@/components/app/IndustrySelector'
 import { RoleCategorySelector } from '@/components/app/RoleCategorySelector'
 import { ResumeUpload } from '@/components/app/ResumeUpload'
 import type { ResumeParseResult } from '@/lib/resume/schema'
 import { matchResumeToCatalog } from '@/lib/resume/match-catalog'
+import { getSavedProfileResume } from '@/lib/profile/storage'
 import type { LearningStage } from '@/components/app/learning-paths/types'
 import { LearningPathsDashboardWidget } from '@/components/app/learning-paths/LearningPathsDashboardWidget'
 import { toSpecializationRef } from '@/lib/interview-catalog/resolve'
@@ -20,7 +21,7 @@ import {
   Plus, RotateCcw, Activity, CheckCircle2,
   Clock, Sparkles, CreditCard,
   Briefcase, Tag, AlarmClock, ArrowLeft, ArrowRight,
-  Trash2, Lightbulb, ListChecks, Check, ChevronDown, Leaf, Mountain,
+  Trash2, Lightbulb, ListChecks, Check, ChevronDown, ChevronRight, Leaf, Mountain, FileText,
 } from 'lucide-react'
 import { ProgressRing } from '@/components/dashboard/ProgressRing'
 import { AIAssistantCard } from '@/components/dashboard/AIAssistantCard'
@@ -28,7 +29,8 @@ import { BounceLoader } from '@/components/ui/bounce-loader'
 import { Card } from '@/components/ui/card'
 import { ListPagination } from '@/components/ui/list-pagination'
 import { defaultMonthToDateRange } from '@/utils/dashboard/date'
-import { rowRevealDelay, useResponsiveColumns } from '@/hooks/use-reveal'
+import { InterviewListRow } from '@/components/app/interview/InterviewListRow'
+import { useToast } from '@/components/ui/toast'
 import {
   formatDifficultyLabel,
   formatInterviewTypeLabel,
@@ -38,7 +40,6 @@ import {
   formatIndustryDisplay,
 } from '@/utils/dashboard/interview-labels'
 import {
-  anyRoleHasDuration,
   averageTechnicalRatio,
   buildScopedRoleOptions,
   filterDepartmentsBySearch,
@@ -55,17 +56,21 @@ import type {
   InterviewSession,
 } from '@/components/app/dashboard/types'
 import type { DepartmentConfig } from '@/lib/interview-catalog/types'
-import { useToast } from '@/components/ui/toast'
 import { IconCard, IconGrid } from '@/components/ui/icon-card'
+import { AlertBanner } from '@/components/ui/alert-banner'
 import { ChipMultiSelect } from '@/components/app/ChipMultiSelect'
+import { TopicBundleSelector, DynamicTopicGrid } from '@/components/app/TopicBundleSelector'
 import {
   CODING_CATEGORIES,
   BEHAVIORAL_COMPETENCIES,
   HR_SECTIONS,
+  HR_SECTION_KEYS,
   SYSTEM_DESIGN_TOPICS,
 } from '@/lib/interview-config/type-config'
+import { hrSectionLabel } from '@/lib/interview-config/banks/hr-sections'
 import { INTERVIEW_TYPE_UI_ORDER, DEFAULT_MIX_WEIGHTS, interviewTypeNeedsCatalog } from '@/lib/interview-config/interview-types'
 import { QUESTION_COUNT_PRESETS } from '@/lib/interview-config/question-counts'
+import { DURATION_OPTIONS_DEFAULT } from '@/lib/interview-config/durations'
 import type { MixKind } from '@/lib/interview-config/type-config'
 
 // Types moved to `src/components/app/dashboard/types.ts`.
@@ -87,6 +92,17 @@ const WIZARD_STEP_ORDER: WizardStepKey[] = [
   'generate',
 ]
 
+/** Steps whose action verb is not simply "Choose <label>". */
+const WIZARD_STEP_ACTIONS: Partial<Record<WizardStepKey, string>> = {
+  interviewType: 'Choose Type',
+  difficulty: 'Set Difficulty',
+  generate: 'Generate',
+}
+
+function wizardStepAction(key: WizardStepKey, label: string) {
+  return WIZARD_STEP_ACTIONS[key] ?? `Choose ${label}`
+}
+
 function WizardStepper({
   steps,
   active,
@@ -100,56 +116,84 @@ function WizardStepper({
   maxVisibleIndex: number
 }) {
   const visibleSteps = steps.slice(0, Math.max(1, maxVisibleIndex + 1))
+  const activeIndex = Math.max(
+    0,
+    visibleSteps.findIndex((s) => s.key === active),
+  )
+  const activeStep = visibleSteps[activeIndex]
 
   return (
-    <div className="hq-wiz-stepper w-full rounded-2xl border border-border px-3 py-4 sm:px-5 sm:py-5">
-      <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 [scrollbar-width:thin] sm:flex-wrap sm:justify-start sm:overflow-visible sm:pb-0">
+    <nav
+      aria-label="Interview setup steps"
+      className="hq-wiz-stepper w-full rounded-2xl border border-border px-3.5 py-3 sm:px-5 sm:py-4"
+    >
+      <div className="mb-3 flex items-baseline gap-2">
+        <span className="text-[13px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          Step {activeIndex + 1} of {steps.length}
+        </span>
+        <span className="min-w-0 truncate text-[15px] font-bold tracking-[-0.015em] text-foreground">
+          {activeStep ? wizardStepAction(activeStep.key, activeStep.label) : ''}
+        </span>
+      </div>
+
+      <ol className="-mx-1 flex flex-nowrap items-center overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {visibleSteps.map((s, idx) => {
           const isActive = s.key === active
           const isComplete = s.isComplete
           const isLast = idx === visibleSteps.length - 1
+
           return (
-            <button
-              key={s.key}
-              type="button"
-              onClick={() => onSelect(s.key)}
-              className={[
-                'group relative flex min-w-[4rem] shrink-0 flex-col items-center gap-2 text-center transition-colors sm:min-w-[4.5rem]',
-                !isLast
-                  ? 'sm:after:absolute sm:after:left-[calc(50%+22px)] sm:after:top-[18px] sm:after:h-px sm:after:w-[calc(1.5rem+24px)] sm:after:bg-border/70'
-                  : '',
-              ].join(' ')}
-            >
-              <span
+            <li key={s.key} className="flex shrink-0 items-center">
+              <button
+                type="button"
+                onClick={() => onSelect(s.key)}
+                aria-current={isActive ? 'step' : undefined}
                 className={[
-                  'flex h-9 w-9 items-center justify-center rounded-full border text-xs font-semibold transition-all sm:h-8 sm:w-8',
+                  'group inline-flex items-center gap-2 rounded-full border px-2.5 py-1.5 transition-colors',
                   isActive
-                    ? 'hq-wiz-step-num--active'
-                    : isComplete
-                      ? 'hq-wiz-step-num--done'
-                      : 'hq-wiz-step-num--todo',
-                ].join(' ')}
-                aria-hidden
-              >
-                {isComplete ? <CheckCircle2 className="h-3.5 w-3.5" /> : idx + 1}
-              </span>
-              <span
-                className={[
-                  'block max-w-full text-[10px] font-semibold uppercase tracking-[0.14em] sm:text-[11px]',
-                  isActive
-                    ? 'hq-wiz-step-label--active'
-                    : isComplete
-                      ? 'hq-wiz-step-label--done'
-                      : 'hq-wiz-step-label--todo',
+                    ? 'border-transparent bg-primary/12'
+                    : 'border-transparent hover:bg-input/30',
                 ].join(' ')}
               >
-                {s.label}
-              </span>
-            </button>
+                <span
+                  className={[
+                    'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-bold',
+                    isActive
+                      ? 'hq-wiz-step-num--active'
+                      : isComplete
+                        ? 'hq-wiz-step-num--done'
+                        : 'hq-wiz-step-num--todo',
+                  ].join(' ')}
+                  aria-hidden
+                >
+                  {isComplete && !isActive ? <Check className="h-3.5 w-3.5" /> : idx + 1}
+                </span>
+                <span
+                  className={[
+                    'whitespace-nowrap text-[12.5px] tracking-[-0.01em]',
+                    isActive
+                      ? 'font-bold hq-wiz-step-label--active'
+                      : isComplete
+                        ? 'font-medium hq-wiz-step-label--done'
+                        : 'font-medium hq-wiz-step-label--todo',
+                  ].join(' ')}
+                >
+                  {s.label}
+                </span>
+              </button>
+
+              {!isLast ? (
+                <ChevronRight
+                  className="mx-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/45"
+                  strokeWidth={2.5}
+                  aria-hidden
+                />
+              ) : null}
+            </li>
           )
         })}
-      </div>
-    </div>
+      </ol>
+    </nav>
   )
 }
 
@@ -240,7 +284,7 @@ export function AppDashboardPanel() {
       .sort((a, b) => {
         const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0
         const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0
-        return tb - ta // newest first
+        return tb - ta
       })
   }, [endDate, sessions, startDate])
 
@@ -273,11 +317,7 @@ export function AppDashboardPanel() {
     return 'hq-tag hq-tag--hard'
   }
 
-  const interviewTypeTagClass = (t: string) => {
-    if (t === 'behavioral') return 'hq-tag hq-tag--accent'
-    if (t === 'hr') return 'hq-tag hq-tag--accent'
-    return 'hq-tag hq-tag--accent'
-  }
+  const interviewTypeTagClass = (_t: string) => 'hq-tag hq-tag--accent'
 
   const statusTagClass = (status: InterviewSession['status']) => {
     if (status === 'completed') return 'hq-tag hq-tag--easy'
@@ -287,7 +327,6 @@ export function AppDashboardPanel() {
 
   return (
     <div className="animate-fade-up space-y-6 sm:space-y-7">
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
         <Card className="hq-stat-card hq-stat-card--blue">
           <div className="flex items-start justify-between gap-4">
@@ -358,9 +397,12 @@ export function AppDashboardPanel() {
         </Card>
       </div>
 
-      <LearningPathsDashboardWidget />
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(240px,300px)_minmax(0,1fr)]">
+        <div className="lg:sticky lg:top-4 lg:self-start">
+          <LearningPathsDashboardWidget />
+        </div>
 
-      <Card className="p-6">
+        <Card className="min-w-0 p-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold text-foreground">Interviews</h2>
@@ -407,45 +449,60 @@ export function AppDashboardPanel() {
         ) : (
           <div className="space-y-3">
             <div className="flex flex-col gap-2">
-              {pagedSessions.map((s) => (
-                <div key={s._id} className="hq-interview-row flex-wrap items-start sm:flex-nowrap sm:items-center">
-                  <div className="hq-int-icon">
-                    <Briefcase className="h-4 w-4" />
+              {pagedSessions.map((s) => {
+                const href =
+                  s.status === 'completed'
+                    ? `/app/interviews/${s._id}/results`
+                    : `/app/interviews/${s._id}`
+                const actionLabel =
+                  s.status === 'completed' ? 'View results' : s.status === 'in_progress' ? 'Resume' : 'Start'
+                return (
+              <div key={s._id} className="hq-interview-row flex-wrap items-start sm:flex-nowrap sm:items-center">
+                <div className="hq-int-icon">
+                  <Briefcase className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="hq-int-name">
+                        {formatInterviewSessionTitle(s, interviewConfigs)}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="hq-int-name">
-                      {formatInterviewSessionTitle(s, interviewConfigs)}
-                    </div>
-                    <div className="hq-int-meta">
-                      <span>
-                        {s.createdAt
-                          ? new Date(s.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
-                          : '—'}
-                      </span>
-                      <span className="hq-dot" aria-hidden />
-                      <span className={interviewTypeTagClass(s.interviewType)}>
-                        {formatInterviewTypeLabel(s.interviewType)}
-                      </span>
-                      <span className={difficultyTagClass(s.difficulty)}>{formatDifficultyLabel(s.difficulty)}</span>
-                      <span>
-                        {s.totalQuestions}Q
-                        {typeof s.questions?.length === 'number' ? ` · ${s.questions.length} generated` : ''}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex w-full flex-shrink-0 items-center justify-end gap-2 sm:w-auto sm:justify-start">
-                    <span className={`${statusTagClass(s.status)} capitalize`}>{s.status.replace('_', ' ')}</span>
-                    <button
-                      type="button"
-                      title="Delete session"
-                      onClick={() => setDeleteTargetId(s._id)}
-                      className="hq-action-btn hq-action-btn--danger btn-micro hover:bg-red-500/20"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                    </button>
+                  <div className="hq-int-meta">
+                    <span>
+                      {s.createdAt
+                        ? new Date(s.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+                        : '—'}
+                    </span>
+                    <span className="hq-dot" aria-hidden />
+                    <span className={interviewTypeTagClass(s.interviewType)}>
+                      {formatInterviewTypeLabel(s.interviewType)}
+                    </span>
+                    <span className={difficultyTagClass(s.difficulty)}>{formatDifficultyLabel(s.difficulty)}</span>
+                    <span>
+                      {s.totalQuestions}Q
+                      {typeof s.questions?.length === 'number' ? ` · ${s.questions.length} generated` : ''}
+                    </span>
                   </div>
                 </div>
-              ))}
+                <div className="flex w-full flex-shrink-0 items-center justify-end gap-2 sm:w-auto sm:justify-start">
+                  <span className={`${statusTagClass(s.status)} capitalize`}>{s.status.replace('_', ' ')}</span>
+                      <button
+                        type="button"
+                        onClick={() => router.push(href)}
+                        className="hq-panel-btn min-h-8 px-3 py-1.5 text-xs font-semibold"
+                      >
+                        {actionLabel}
+                      </button>
+                  <button
+                    type="button"
+                    title="Delete session"
+                    onClick={() => setDeleteTargetId(s._id)}
+                    className="hq-action-btn hq-action-btn--danger btn-micro hover:bg-red-500/20"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                  </button>
+                </div>
+              </div>
+                )
+              })}
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
@@ -520,6 +577,7 @@ export function AppDashboardPanel() {
           </div>
         )}
       </Card>
+      </div>
 
       <InterviewDeleteModal
         open={deleteTargetId !== null}
@@ -635,12 +693,6 @@ export function InterviewsPanel() {
   ), [filtered])
 
   const statusLabel: Record<string, string> = { created: 'Created', in_progress: 'In Progress', completed: 'Completed' }
-  const difficultyColor: Record<string, string> = {
-    Easy: 'text-emerald-400',
-    Medium: 'text-amber-400',
-    Hard: 'text-red-400',
-    Adaptive: 'text-primary',
-  }
   const difficultyOptions: Array<{ key: 'all' | 'Easy' | 'Medium' | 'Hard' | 'Adaptive'; label: string; icon: React.ReactNode; iconClass: string }> = [
     { key: 'all', label: 'All', icon: <BarChart2 className="h-3.5 w-3.5" />, iconClass: 'text-[var(--hq-display-blue)]' },
     { key: 'Easy', label: 'Easy', icon: <Leaf className="h-3.5 w-3.5" />, iconClass: 'text-emerald-400' },
@@ -650,10 +702,7 @@ export function InterviewsPanel() {
   ]
   const selectedDifficulty = difficultyOptions.find((o) => o.key === difficultyFilter) ?? difficultyOptions[0]
 
-  const interviewCardActionClass =
-    'btn-micro inline-flex min-h-10 w-full items-center justify-center rounded-xl px-3 py-2 text-xs font-semibold sm:min-h-10 sm:w-auto sm:min-w-[10.75rem] sm:text-sm'
-
-  const pageSize = 9
+  const pageSize = 8
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize))
   const safePage = Math.min(Math.max(page, 1), totalPages)
 
@@ -661,8 +710,6 @@ export function InterviewsPanel() {
     const start = (safePage - 1) * pageSize
     return sorted.slice(start, start + pageSize)
   }, [safePage, sorted])
-
-  const cardCols = useResponsiveColumns({ base: 1, sm: 2, xl: 3 })
 
   return (
     <div className="space-y-5 animate-fade-up">
@@ -818,81 +865,14 @@ export function InterviewsPanel() {
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {pageItems.map((s, index) => (
-              <div
+          <div className="hq-ilist">
+            {pageItems.map((s) => (
+              <InterviewListRow
                 key={s._id}
-                className="dashboard-card card-drop-in p-5 flex flex-col justify-between gap-4 group min-h-[150px]"
-                style={{ animationDelay: `${rowRevealDelay(index, cardCols)}ms` }}
-              >
-                <div className="flex items-start gap-3 min-w-0">
-                  <span className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-input/40 stat-icon-blue">
-                    <Briefcase className="h-4 w-4" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="hq-int-name font-semibold truncate capitalize">
-                      {formatInterviewSessionTitle(s, interviewConfigs)}
-                    </div>
-                    <div className="text-[11px] text-muted-foreground truncate">
-                      {formatIndustryDisplay(s.industryKey, interviewConfigs)}
-                    </div>
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Tag className="h-3 w-3" aria-hidden />
-                        {formatInterviewTypeLabel(s.interviewType)}
-                      </span>
-                      <span className="flex items-center gap-1"><Sparkles className="h-3 w-3" />{s.questions?.length ?? 0}/{s.totalQuestions} Qs</span>
-                      <span className={`font-medium ${difficultyColor[s.difficulty] ?? ''}`}>
-                        {formatDifficultyLabel(s.difficulty)}
-                      </span>
-                      {s.durationMinutes && (
-                        <span className="flex items-center gap-1"><AlarmClock className="h-3 w-3" />{s.durationMinutes}m</span>
-                      )}
-                    </div>
-                  </div>
-                  <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold badge-${s.status.replace('_', '-')}`}>
-                    {statusLabel[s.status]}
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap items-center justify-end gap-2">
-                  {s.status === 'created' ? (
-                    <button
-                      type="button"
-                      onClick={() => router.push(`/app/interviews/${s._id}`)}
-                      className={['hq-btn-primary', interviewCardActionClass].join(' ')}
-                    >
-                      Start Interview
-                    </button>
-                  ) : null}
-                  {s.status === 'in_progress' ? (
-                    <button
-                      type="button"
-                      onClick={() => router.push(`/app/interviews/${s._id}`)}
-                      className={['hq-btn-outline-accent', interviewCardActionClass].join(' ')}
-                    >
-                      Resume
-                    </button>
-                  ) : null}
-                  {s.status === 'completed' ? (
-                    <button
-                      type="button"
-                      onClick={() => router.push(`/app/interviews/${s._id}/results`)}
-                      className={['hq-panel-btn', interviewCardActionClass].join(' ')}
-                    >
-                      View Results
-                    </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    title="Delete session"
-                    onClick={() => setDeleteTargetId(s._id)}
-                    className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-border bg-input/30 text-muted-foreground btn-micro hover:border-destructive/40 hover:bg-destructive-muted hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" aria-hidden />
-                  </button>
-                </div>
-              </div>
+                session={s}
+                configs={interviewConfigs}
+                onDelete={() => setDeleteTargetId(s._id)}
+              />
             ))}
           </div>
 
@@ -919,6 +899,8 @@ export type CreateInterviewWizardProps = {
   stagePrefill?: LearningStage | null
   hideResumeUpload?: boolean
   focusResumeSection?: boolean
+  prefillType?: InterviewType | null
+  prefillTopic?: string | null
 }
 
 export function CreateInterviewWizard({
@@ -928,6 +910,8 @@ export function CreateInterviewWizard({
   stagePrefill = null,
   hideResumeUpload = false,
   focusResumeSection = false,
+  prefillType = null,
+  prefillTopic = null,
 }: CreateInterviewWizardProps = {}) {
   const router = useRouter()
   const toast = useToast()
@@ -978,6 +962,7 @@ export function CreateInterviewWizard({
   const [totalQuestions, setTotalQuestions] = useState(20)
   const [topicSearch, setTopicSearch] = useState('')
   const [topicMode, setTopicMode] = useState<TopicMode>('all')
+  const [topicViewMode, setTopicViewMode] = useState<'bundles' | 'individual'>('bundles')
   const [isSavingDraft, setIsSavingDraft] = useState(false)
   const [isCreatingInterview, setIsCreatingInterview] = useState(false)
   const [actionMessage, setActionMessage] = useState('')
@@ -986,6 +971,9 @@ export function CreateInterviewWizard({
   const [wizardError, setWizardError] = useState('')
   const [pastDifficulty, setPastDifficulty] = useState(false)
   const [resumeContext, setResumeContext] = useState<ResumeParseResult | null>(null)
+  const [savedResume, setSavedResume] = useState<ResumeParseResult | null>(null)
+  const [profileResumeChecked, setProfileResumeChecked] = useState(false)
+  const [showResumeUploader, setShowResumeUploader] = useState(false)
   const [learningPathId, setLearningPathId] = useState<string | null>(learningPathIdProp)
   const [learningStageId, setLearningStageId] = useState<string | null>(learningStageIdProp)
 
@@ -993,6 +981,13 @@ export function CreateInterviewWizard({
     setLearningPathId(learningPathIdProp)
     setLearningStageId(learningStageIdProp)
   }, [learningPathIdProp, learningStageIdProp])
+
+  useEffect(() => {
+    const profileResume = getSavedProfileResume()
+    setSavedResume(profileResume)
+    setShowResumeUploader(!profileResume)
+    setProfileResumeChecked(true)
+  }, [])
 
   useEffect(() => {
     if (!focusResumeSection) return
@@ -1091,8 +1086,10 @@ export function CreateInterviewWizard({
   const behavioralTopicOptions = topicScope.behavioralTopics
   const hrTopicOptions = topicScope.hrTopics
   const availableTopicOptions = topicScope.topics
-  const durationOptions = useMemo(() => unionDurationOptions(selectedSpecializations), [selectedSpecializations])
-  const isDurationEnabled = useMemo(() => anyRoleHasDuration(selectedSpecializations), [selectedSpecializations])
+  const durationOptions = useMemo(() => {
+    const fromSpecs = unionDurationOptions(selectedSpecializations)
+    return fromSpecs.length > 0 ? fromSpecs : [...DURATION_OPTIONS_DEFAULT]
+  }, [selectedSpecializations])
 
   const topicAllowedKind = useMemo((): 'technical' | 'behavioral' | 'both' | 'hr' => {
     if (interviewType === 'technical' || interviewType === 'coding') return 'technical'
@@ -1136,12 +1133,8 @@ export function CreateInterviewWizard({
     Boolean(interviewType) &&
     Boolean(difficulty) &&
     hasTopicSelection &&
-    (needsCatalog
-      ? hasDepartmentSelection &&
-        hasSpecializationSelection &&
-        (isDurationEnabled ? Boolean(duration) : true)
-      : true) &&
-    (needsCatalog && isDurationEnabled ? Boolean(duration) : true)
+    Boolean(duration) &&
+    (needsCatalog ? hasDepartmentSelection && hasSpecializationSelection : true)
 
   const stepStates = useMemo(() => {
     const typeDone = Boolean(interviewType)
@@ -1149,7 +1142,7 @@ export function CreateInterviewWizard({
       const selectionDone = typeDone && hasTopicSelection
       const difficultyDone = selectionDone && Boolean(difficulty)
       const generateReady =
-        difficultyDone && pastDifficulty && Boolean(totalQuestions)
+        difficultyDone && pastDifficulty && Boolean(totalQuestions) && Boolean(duration)
       return {
         typeDone,
         departmentDone: typeDone,
@@ -1167,7 +1160,7 @@ export function CreateInterviewWizard({
       difficultyDone &&
       pastDifficulty &&
       Boolean(totalQuestions) &&
-      (isDurationEnabled ? Boolean(duration) : true)
+      Boolean(duration)
 
     return {
       typeDone,
@@ -1184,7 +1177,6 @@ export function CreateInterviewWizard({
     hasSpecializationSelection,
     hasTopicSelection,
     interviewType,
-    isDurationEnabled,
     needsCatalog,
     pastDifficulty,
     totalQuestions,
@@ -1193,12 +1185,12 @@ export function CreateInterviewWizard({
   const firstIncompleteStepIndex = useMemo(() => {
     if (!stepStates.typeDone) return 0
     if (needsCatalog) {
-      if (!stepStates.departmentDone) return 1
-      if (!stepStates.specializationDone) return 2
-      if (!stepStates.topicsDone) return 3
+    if (!stepStates.departmentDone) return 1
+    if (!stepStates.specializationDone) return 2
+    if (!stepStates.topicsDone) return 3
       if (!stepStates.difficultyDone || !pastDifficulty) return 4
-      if (!stepStates.generateReady) return 5
-      return 6
+    if (!stepStates.generateReady) return 5
+    return 6
     }
     // type → topics → difficulty → generate (indices in filtered wizardSteps)
     if (!stepStates.topicsDone) return 1
@@ -1270,6 +1262,118 @@ export function CreateInterviewWizard({
       selectAllSpecializations,
     ],
   )
+
+  const summarySelectionPreview = useMemo(() => {
+    if (interviewType === 'coding') return formatTopicsDisplay(codingCategories)
+    if (interviewType === 'behavioral') return formatTopicsDisplay(behavioralCompetencies)
+    if (interviewType === 'hr') {
+      return formatTopicsDisplay(hrSections.map((key) => hrSectionLabel(key)))
+    }
+    if (interviewType === 'system_design') return formatTopicsDisplay(systemDesignTopics)
+    if (interviewType === 'mixed' || interviewType === 'both') {
+      const parts = (Object.entries(mixWeights) as [MixKind, number][])
+        .filter(([, weight]) => weight > 0)
+        .map(([kind, weight]) => {
+          const count = mixSelections[kind]?.length ?? 0
+          return `${formatInterviewTypeLabel(kind)} ${weight}% (${count})`
+        })
+      return parts.length > 0 ? parts.join(' · ') : '—'
+    }
+    return summaryTopicsPreview
+  }, [
+    behavioralCompetencies,
+    codingCategories,
+    hrSections,
+    interviewType,
+    mixSelections,
+    mixWeights,
+    summaryTopicsPreview,
+    systemDesignTopics,
+  ])
+
+  const summarySelectionLabel = useMemo(() => {
+    if (interviewType === 'coding') return 'Categories'
+    if (interviewType === 'behavioral') return 'Competencies'
+    if (interviewType === 'hr') return 'Sections'
+    if (interviewType === 'system_design') return 'Topics'
+    if (interviewType === 'mixed' || interviewType === 'both') return 'Mix'
+    return 'Topics'
+  }, [interviewType])
+
+  const summaryQuestionsPreview = useMemo(() => {
+    if (!totalQuestions) return '—'
+    if (interviewType === 'mixed' || interviewType === 'both') {
+      const parts = (Object.entries(mixWeights) as [MixKind, number][])
+        .filter(([, weight]) => weight > 0)
+        .map(([kind, weight]) => `${formatInterviewTypeLabel(kind)} ${weight}%`)
+      return parts.length > 0 ? `${totalQuestions} (${parts.join(' / ')})` : String(totalQuestions)
+    }
+    if (interviewType === 'technical') return `${totalQuestions} (all technical)`
+    if (interviewType === 'behavioral') return `${totalQuestions} (all behavioral)`
+    if (interviewType === 'coding') return `${totalQuestions} (coding)`
+    if (interviewType === 'system_design') return `${totalQuestions} (system design)`
+    if (interviewType === 'hr') return `${totalQuestions} (screening HR)`
+    return String(totalQuestions)
+  }, [interviewType, mixWeights, totalQuestions])
+
+  const reviewRows = useMemo(() => {
+    const rows: Array<{ label: string; value: string }> = [
+      {
+        label: 'Type',
+        value: interviewType ? formatInterviewTypeLabel(interviewType) : '—',
+      },
+    ]
+
+    if (needsCatalog) {
+      rows.push(
+        { label: 'Department', value: summaryDepartmentsPreview },
+        { label: 'Specialization', value: summarySpecializationsPreview },
+      )
+    }
+
+    rows.push(
+      { label: summarySelectionLabel, value: summarySelectionPreview },
+      {
+        label: 'Difficulty',
+        value: difficulty ? formatDifficultyLabel(difficulty) : '—',
+      },
+      { label: 'Questions', value: summaryQuestionsPreview },
+      { label: 'Duration', value: duration ? `${duration} min` : '—' },
+    )
+
+    return rows
+  }, [
+    difficulty,
+    duration,
+    interviewType,
+    needsCatalog,
+    summaryDepartmentsPreview,
+    summaryQuestionsPreview,
+    summarySelectionLabel,
+    summarySelectionPreview,
+    summarySpecializationsPreview,
+  ])
+
+  const selectionCount = useMemo(() => {
+    if (interviewType === 'coding') return codingCategories.length
+    if (interviewType === 'behavioral') return behavioralCompetencies.length
+    if (interviewType === 'hr') return hrSections.length
+    if (interviewType === 'system_design') return systemDesignTopics.length
+    if (interviewType === 'mixed' || interviewType === 'both') {
+      return (Object.values(mixSelections) as string[][]).reduce((sum, list) => sum + list.length, 0)
+    }
+    return selectAllTopics ? availableTopicOptions.length : topics.length
+  }, [
+    availableTopicOptions.length,
+    behavioralCompetencies.length,
+    codingCategories.length,
+    hrSections.length,
+    interviewType,
+    mixSelections,
+    selectAllTopics,
+    systemDesignTopics.length,
+    topics.length,
+  ])
 
   const stepsCompleteCount = useMemo(
     () => wizardSteps.filter((s) => s.isComplete).length,
@@ -1364,7 +1468,7 @@ export function CreateInterviewWizard({
       difficulty,
       totalQuestions,
       technicalQuestionRatio: technicalQuestionRatioForApi,
-      durationMinutes: needsCatalog && isDurationEnabled ? Number(duration) || null : null,
+      durationMinutes: Number(duration) || null,
       entryMode,
       learningPathId: learningPathId || null,
       learningStageId: learningStageId || null,
@@ -1383,26 +1487,25 @@ export function CreateInterviewWizard({
     behavioralCompetencies,
     codingCategories,
     departmentKey,
-    difficulty,
-    duration,
+      difficulty,
+      duration,
     entryMode,
     hrSections,
-    interviewType,
-    isDurationEnabled,
+      interviewType,
     learningPathId,
     learningStageId,
     mixSelections,
     mixWeights,
     needsCatalog,
-    resolvedSpecializationRefs,
+      resolvedSpecializationRefs,
     resumeContext,
-    selectAllSpecializations,
-    selectAllTopics,
-    selectedSpecializations,
+      selectAllSpecializations,
+      selectAllTopics,
+      selectedSpecializations,
     systemDesignTopics,
-    technicalQuestionRatioForApi,
-    topics,
-    totalQuestions,
+      technicalQuestionRatioForApi,
+      topics,
+      totalQuestions,
   ])
 
   const saveDraft = async () => {
@@ -1430,8 +1533,8 @@ export function CreateInterviewWizard({
         setActionError('Choose at least one option for this interview type.')
       } else if (!difficulty) {
         setActionError('Choose a difficulty level.')
-      } else if (needsCatalog && isDurationEnabled && !duration) {
-        setActionError('Select a session duration for this specialization.')
+      } else if (!duration) {
+        setActionError('Select a session duration.')
       } else if (!totalQuestions || totalQuestions < 1) {
         setActionError('Choose how many questions to generate.')
       } else {
@@ -1538,13 +1641,15 @@ export function CreateInterviewWizard({
     setTotalQuestions(20)
     setTopicSearch('')
     setTopicMode('all')
+    setTopicViewMode('bundles')
     setActionMessage('')
     setActionError('')
     setWizardStep('interviewType')
     setWizardError('')
     setPastDifficulty(false)
     setResumeContext(null)
-  }, [])
+    setShowResumeUploader(!savedResume)
+  }, [savedResume])
 
   const applyResumeSuggestions = useCallback(
     (resume: ResumeParseResult) => {
@@ -1560,15 +1665,18 @@ export function CreateInterviewWizard({
           )
           setSelectAllSpecializations(false)
         } else {
-          setSpecializationRefs([])
-          setSelectAllSpecializations(false)
+    setSpecializationRefs([])
+    setSelectAllSpecializations(false)
         }
         if (match.topics.length > 0) {
           setTopics(match.topics)
-          setSelectAllTopics(false)
+    setSelectAllTopics(false)
         }
       }
-      if (match.difficulty) setDifficulty(match.difficulty)
+      if (match.difficulty) {
+        setDifficulty(match.difficulty)
+        setPastDifficulty(true)
+      }
       if (match.interviewType) setInterviewType(match.interviewType)
     },
     [departments],
@@ -1588,7 +1696,10 @@ export function CreateInterviewWizard({
       }
     }
     if (stagePrefill.interviewType) setInterviewType(stagePrefill.interviewType)
-    if (stagePrefill.difficulty) setDifficulty(stagePrefill.difficulty)
+    if (stagePrefill.difficulty) {
+      setDifficulty(stagePrefill.difficulty)
+      setPastDifficulty(true)
+    }
     if (stagePrefill.suggestedTopics?.length) {
       setTopics(stagePrefill.suggestedTopics)
       setSelectAllTopics(false)
@@ -1601,13 +1712,26 @@ export function CreateInterviewWizard({
     }
   }, [stagePrefill, departments])
 
+  const prefillApplied = useRef(false)
+  useEffect(() => {
+    if (prefillApplied.current || !prefillType) return
+    prefillApplied.current = true
+    setInterviewType(prefillType)
+    if (!prefillTopic) return
+    if (prefillType === 'coding') setCodingCategories([prefillTopic])
+    else if (prefillType === 'behavioral') setBehavioralCompetencies([prefillTopic])
+    else if (prefillType === 'hr') setHrSections([prefillTopic])
+    else if (prefillType === 'system_design') setSystemDesignTopics([prefillTopic])
+    else setTopics([prefillTopic])
+  }, [prefillType, prefillTopic])
+
   const handleDepartmentChange = useCallback((nextKey: string | null) => {
     setDepartmentKey(nextKey)
-    setSpecializationRefs([])
-    setSelectAllSpecializations(false)
-    setSelectAllTopics(false)
-    setTopics([])
-    setDuration('')
+      setSpecializationRefs([])
+      setSelectAllSpecializations(false)
+      setSelectAllTopics(false)
+      setTopics([])
+      setDuration('')
     setTopicSearch('')
     setTopicMode('all')
     setPastDifficulty(false)
@@ -1659,17 +1783,17 @@ export function CreateInterviewWizard({
     setWizardError('')
     const idx = wizardStepKeys.indexOf(wizardStep)
     if (wizardStep === 'interviewType' && !stepStates.typeDone) {
-      setWizardError('Select an interview type to continue.')
-      return
-    }
+        setWizardError('Select an interview type to continue.')
+        return
+      }
     if (wizardStep === 'department' && !stepStates.departmentDone) {
-      setWizardError('Select at least one department to continue.')
-      return
-    }
+        setWizardError('Select at least one department to continue.')
+        return
+      }
     if (wizardStep === 'specialization' && !stepStates.specializationDone) {
-      setWizardError('Select at least one specialization to continue.')
-      return
-    }
+        setWizardError('Select at least one specialization to continue.')
+        return
+      }
     if (wizardStep === 'topics' && !stepStates.topicsDone) {
       setWizardError('Choose at least one option to continue.')
       return
@@ -1701,9 +1825,9 @@ export function CreateInterviewWizard({
                 <RotateCcw className="h-3.5 w-3.5" /> Reset
               </button>
             </div>
-            {actionError ? <p className="text-sm text-destructive">{actionError}</p> : null}
-            {actionMessage ? <p className="text-sm text-[var(--hq-green)]">{actionMessage}</p> : null}
-            {wizardError ? <p className="text-sm text-[var(--hq-amber)]">{wizardError}</p> : null}
+            {actionError ? <AlertBanner variant="error">{actionError}</AlertBanner> : null}
+            {actionMessage ? <AlertBanner variant="success">{actionMessage}</AlertBanner> : null}
+            {wizardError ? <AlertBanner variant="warning">{wizardError}</AlertBanner> : null}
 
             {(learningPathId || learningStageId) && (
               <p className="text-xs text-muted-foreground">
@@ -1725,14 +1849,59 @@ export function CreateInterviewWizard({
                 <div className="mb-3">
                   <div className="text-sm font-semibold text-foreground">Start from your resume</div>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Upload a CV to auto-fill role, skills, and topics — then configure and generate your interview.
+                    Use the resume saved in your profile or upload a different one for this interview.
                   </p>
                 </div>
-                <ResumeUpload
-                  value={resumeContext}
-                  onParsed={applyResumeSuggestions}
-                  onClear={() => setResumeContext(null)}
-                />
+                {profileResumeChecked && savedResume ? (
+                  <div className="mb-3 rounded-xl border border-border bg-card/60 p-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex min-w-0 items-start gap-2.5">
+                        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                          <FileText className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-foreground">Resume saved in your profile</p>
+                          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                            {savedResume.domain || 'General profile'}
+                            {savedResume.seniorityLevel ? ` · ${savedResume.seniorityLevel}` : ''}
+                            {savedResume.skills.length ? ` · ${savedResume.skills.length} skills` : ''}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 flex-wrap gap-2">
+                        <button
+                          type="button"
+                          disabled={isLoadingConfig}
+                          onClick={() => {
+                            applyResumeSuggestions(savedResume)
+                            setShowResumeUploader(false)
+                          }}
+                          className="hq-btn-primary h-9 gap-1.5 rounded-xl px-3 text-xs disabled:cursor-wait disabled:opacity-50"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                          {resumeContext === savedResume ? 'Using saved resume' : 'Use saved resume'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setResumeContext(null)
+                            setShowResumeUploader(true)
+                          }}
+                          className="inline-flex h-9 items-center rounded-xl border border-border bg-input/15 px-3 text-xs font-semibold text-foreground hover:bg-input/25"
+                        >
+                          Upload new
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+                {profileResumeChecked && showResumeUploader ? (
+                  <ResumeUpload
+                    value={resumeContext}
+                    onParsed={applyResumeSuggestions}
+                    onClear={() => setResumeContext(null)}
+                  />
+                ) : null}
               </div>
             ) : null}
 
@@ -1807,139 +1976,210 @@ export function CreateInterviewWizard({
 
                   {wizardStep === 'topics' ? (
                     <div className="space-y-3">
-                      <div className="text-sm font-semibold text-foreground">
-                        {interviewType === 'coding'
-                          ? 'Coding categories'
-                          : interviewType === 'behavioral'
-                            ? 'Behavioral competencies'
-                            : interviewType === 'hr'
-                              ? 'Screening HR sections'
-                              : interviewType === 'system_design'
-                                ? 'System design topics'
-                                : interviewType === 'mixed' || interviewType === 'both'
-                                  ? 'Mixed sections'
-                                  : 'Topics'}
-                      </div>
+                      {/* ── Header: title + view-mode toggle ── */}
+                      {(() => {
+                        const isBankType = interviewType === 'coding' || interviewType === 'behavioral' || interviewType === 'hr' || interviewType === 'system_design'
+                        const title =
+                          interviewType === 'coding' ? 'Coding categories'
+                          : interviewType === 'behavioral' ? 'Behavioral competencies'
+                          : interviewType === 'hr' ? 'Screening sections'
+                          : interviewType === 'system_design' ? 'System design topics'
+                          : interviewType === 'technical' ? 'Technical topics'
+                          : interviewType === 'mixed' || interviewType === 'both' ? 'Mixed sections'
+                          : 'Topics'
+                        return (
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-semibold text-foreground">{title}</span>
+                            {isBankType ? (
+                              <div className="flex items-center gap-0.5 rounded-lg border border-border bg-input/20 p-0.5">
+                                {(['bundles', 'individual'] as const).map((mode) => (
+                                  <button
+                                    key={mode}
+                                    type="button"
+                                    onClick={() => setTopicViewMode(mode)}
+                                    className={[
+                                      'inline-flex h-6 items-center rounded-md px-2.5 text-[11px] font-semibold transition-colors',
+                                      topicViewMode === mode
+                                        ? 'bg-primary text-primary-foreground shadow-sm'
+                                        : 'text-muted-foreground hover:text-foreground',
+                                    ].join(' ')}
+                                  >
+                                    {mode === 'bundles' ? 'Bundles' : 'Individual'}
+                                  </button>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
+                        )
+                      })()}
+
+                      {/* ── Selectors ── */}
                       {interviewType === 'coding' ? (
-                        <ChipMultiSelect
-                          options={[...CODING_CATEGORIES]}
-                          selected={codingCategories}
-                          onChange={setCodingCategories}
-                          search={topicSearch}
-                        />
+                        topicViewMode === 'bundles' ? (
+                          <TopicBundleSelector
+                            type="coding"
+                            selected={codingCategories}
+                            onChange={setCodingCategories}
+                          />
+                        ) : (
+                          <DynamicTopicGrid
+                            topics={[...CODING_CATEGORIES]}
+                            selected={codingCategories}
+                            onChange={setCodingCategories}
+                          />
+                        )
                       ) : interviewType === 'behavioral' ? (
-                        <ChipMultiSelect
-                          options={[...BEHAVIORAL_COMPETENCIES]}
-                          selected={behavioralCompetencies}
-                          onChange={setBehavioralCompetencies}
-                          search={topicSearch}
-                        />
+                        topicViewMode === 'bundles' ? (
+                          <TopicBundleSelector
+                            type="behavioral"
+                            selected={behavioralCompetencies}
+                            onChange={setBehavioralCompetencies}
+                          />
+                        ) : (
+                          <DynamicTopicGrid
+                            topics={[...BEHAVIORAL_COMPETENCIES]}
+                            selected={behavioralCompetencies}
+                            onChange={setBehavioralCompetencies}
+                          />
+                        )
                       ) : interviewType === 'hr' ? (
-                        <ChipMultiSelect
-                          options={HR_SECTIONS.map((s) => ({ key: s.key, label: s.label }))}
-                          selected={hrSections}
-                          onChange={setHrSections}
-                          search={topicSearch}
-                        />
+                        topicViewMode === 'bundles' ? (
+                          <TopicBundleSelector
+                            type="hr"
+                            selected={hrSections}
+                            onChange={setHrSections}
+                          />
+                        ) : (
+                          <DynamicTopicGrid
+                            topics={[...HR_SECTION_KEYS]}
+                            selected={hrSections}
+                            onChange={setHrSections}
+                            labelFn={hrSectionLabel}
+                          />
+                        )
                       ) : interviewType === 'system_design' ? (
-                        <ChipMultiSelect
-                          options={[...SYSTEM_DESIGN_TOPICS]}
-                          selected={systemDesignTopics}
-                          onChange={setSystemDesignTopics}
-                          search={topicSearch}
-                        />
+                        topicViewMode === 'bundles' ? (
+                          <TopicBundleSelector
+                            type="system_design"
+                            selected={systemDesignTopics}
+                            onChange={setSystemDesignTopics}
+                          />
+                        ) : (
+                          <DynamicTopicGrid
+                            topics={[...SYSTEM_DESIGN_TOPICS]}
+                            selected={systemDesignTopics}
+                            onChange={setSystemDesignTopics}
+                          />
+                        )
                       ) : interviewType === 'mixed' || interviewType === 'both' ? (
-                        <div className="space-y-4">
+                        /* Mixed mode: weight sliders + selectors per section */
+                        <div className="space-y-3">
                           <p className="text-xs text-muted-foreground">
-                            Set weights to sum to 100, then pick options for each included section.
+                            Set weights to sum to 100, then pick topics for each section.
                           </p>
                           {(
                             [
-                              ['coding', 'Coding', CODING_CATEGORIES],
-                              ['behavioral', 'Behavioral', BEHAVIORAL_COMPETENCIES],
-                              ['hr', 'Screening HR', HR_SECTIONS.map((s) => s.label)],
-                              ['system_design', 'System Design', SYSTEM_DESIGN_TOPICS],
+                              ['coding', 'Coding'],
+                              ['behavioral', 'Behavioral'],
+                              ['hr', 'Screening HR'],
+                              ['system_design', 'System Design'],
                             ] as const
-                          ).map(([kind, label, opts]) => {
+                          ).map(([kind, sectionLabel]) => {
                             const weight = mixWeights[kind] ?? 0
                             return (
-                              <div key={kind} className="rounded-2xl border border-border p-3 space-y-2">
+                              <div key={kind} className="rounded-lg border border-border p-3 space-y-2.5">
                                 <div className="flex items-center justify-between gap-2">
-                                  <span className="text-sm font-medium">{label}</span>
-                                  <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    Weight %
-                                    <input
-                                      type="number"
-                                      min={0}
-                                      max={100}
-                                      value={weight}
-                                      onChange={(e) =>
-                                        setMixWeights((prev) => ({
-                                          ...prev,
-                                          [kind]: Math.max(0, Math.min(100, Number(e.target.value) || 0)),
-                                        }))
-                                      }
-                                      className="h-8 w-16 rounded-lg border border-border bg-input/30 px-2"
-                                    />
-                                  </label>
+                                  <span className="text-sm font-semibold text-foreground">{sectionLabel}</span>
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-0.5 rounded-lg border border-border bg-input/20 p-0.5">
+                                      {(['bundles', 'individual'] as const).map((mode) => (
+                                        <button
+                                          key={mode}
+                                          type="button"
+                                          onClick={() => setTopicViewMode(mode)}
+                                          className={[
+                                            'inline-flex h-5 items-center rounded-md px-2 text-[10px] font-semibold transition-colors',
+                                            topicViewMode === mode
+                                              ? 'bg-primary text-primary-foreground shadow-sm'
+                                              : 'text-muted-foreground hover:text-foreground',
+                                          ].join(' ')}
+                                        >
+                                          {mode === 'bundles' ? 'Bundles' : 'Individual'}
+                                        </button>
+                                      ))}
+                                    </div>
+                                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                                      Weight %
+                                      <input
+                                        type="number"
+                                        min={0}
+                                        max={100}
+                                        value={weight}
+                                        onChange={(e) =>
+                                          setMixWeights((prev) => ({
+                                            ...prev,
+                                            [kind]: Math.max(0, Math.min(100, Number(e.target.value) || 0)),
+                                          }))
+                                        }
+                                        className="h-7 w-14 rounded-md border border-border bg-input/30 px-2 text-xs"
+                                      />
+                                    </label>
+                                  </div>
                                 </div>
                                 {weight > 0 ? (
-                                  <ChipMultiSelect
-                                    options={
-                                      kind === 'hr'
-                                        ? HR_SECTIONS.map((s) => ({ key: s.key, label: s.label }))
-                                        : [...opts]
-                                    }
-                                    selected={mixSelections[kind] ?? []}
-                                    onChange={(next) =>
-                                      setMixSelections((prev) => ({ ...prev, [kind]: next }))
-                                    }
-                                  />
+                                  topicViewMode === 'bundles' ? (
+                                    <TopicBundleSelector
+                                      type={kind === 'hr' ? 'hr' : kind === 'coding' ? 'coding' : kind === 'behavioral' ? 'behavioral' : 'system_design'}
+                                      selected={mixSelections[kind] ?? []}
+                                      onChange={(next) =>
+                                        setMixSelections((prev) => ({ ...prev, [kind]: next }))
+                                      }
+                                    />
+                                  ) : (
+                                    <DynamicTopicGrid
+                                      topics={
+                                        kind === 'coding' ? [...CODING_CATEGORIES]
+                                        : kind === 'behavioral' ? [...BEHAVIORAL_COMPETENCIES]
+                                        : kind === 'hr' ? [...HR_SECTION_KEYS]
+                                        : [...SYSTEM_DESIGN_TOPICS]
+                                      }
+                                      selected={mixSelections[kind] ?? []}
+                                      onChange={(next) =>
+                                        setMixSelections((prev) => ({ ...prev, [kind]: next }))
+                                      }
+                                      labelFn={kind === 'hr' ? hrSectionLabel : undefined}
+                                    />
+                                  )
                                 ) : null}
                               </div>
                             )
                           })}
                           <p className="text-xs text-muted-foreground">
                             Total weight:{' '}
-                            {(Object.values(mixWeights) as number[]).reduce((a, b) => a + (b || 0), 0)}
-                            % (must be 100)
+                            <span className={
+                              (Object.values(mixWeights) as number[]).reduce((a, b) => a + (b || 0), 0) === 100
+                                ? 'text-emerald-400 font-semibold'
+                                : 'text-amber-400 font-semibold'
+                            }>
+                              {(Object.values(mixWeights) as number[]).reduce((a, b) => a + (b || 0), 0)}%
+                            </span>
+                            {' '}(must equal 100)
                           </p>
                         </div>
                       ) : selectedSpecializations.length > 0 && interviewType ? (
-                        <TopicSelector
-                          technicalTopics={technicalTopicOptions}
-                          behavioralTopics={[]}
-                          hrTopics={[]}
-                          selectedTopics={topics}
+                        /* Technical catalog type — always individual cards */
+                        <DynamicTopicGrid
+                          topics={technicalTopicOptions}
+                          selected={topics}
                           onChange={setTopics}
-                          search={topicSearch}
-                          onSearchChange={setTopicSearch}
-                          mode={topicMode}
-                          onModeChange={setTopicMode}
-                          allowedKind="technical"
-                          selectAll={selectAllTopics}
-                          onSelectAllChange={setSelectAllTopics}
                         />
                       ) : (
-                        <div className="rounded-2xl border border-border bg-input/20 p-3 text-sm text-muted-foreground">
+                        <div className="rounded-lg border border-border bg-input/20 p-3 text-sm text-muted-foreground">
                           {needsCatalog
                             ? 'Choose at least one specialization first.'
                             : 'Select an interview type first.'}
                         </div>
                       )}
-                      {interviewType === 'coding' ||
-                      interviewType === 'behavioral' ||
-                      interviewType === 'hr' ||
-                      interviewType === 'system_design' ||
-                      interviewType === 'mixed' ||
-                      interviewType === 'both' ? (
-                        <input
-                          value={topicSearch}
-                          onChange={(e) => setTopicSearch(e.target.value)}
-                          placeholder="Filter…"
-                          className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
-                        />
-                      ) : null}
                     </div>
                   ) : null}
 
@@ -1947,7 +2187,13 @@ export function CreateInterviewWizard({
                     <div className="space-y-3">
                       <div className="text-sm font-semibold text-foreground">Difficulty</div>
                       {stepStates.topicsDone ? (
-                        <DifficultySelector value={difficulty} onChange={setDifficulty} />
+                        <DifficultySelector
+                          value={difficulty}
+                          onChange={(next) => {
+                            setDifficulty(next)
+                            setPastDifficulty(true)
+                          }}
+                        />
                       ) : (
                         <div className="rounded-2xl border border-border bg-input/20 p-3 text-sm text-muted-foreground">
                           Complete topics first.
@@ -1984,49 +2230,27 @@ export function CreateInterviewWizard({
 
                       <div className="space-y-3">
                         <div className="text-sm font-semibold text-foreground">Duration</div>
-                        {isDurationEnabled ? (
-                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            {durationOptions.map((opt) => (
-                              <SelectCard key={opt} title={`${opt} min`} selected={duration === opt.toString()} onClick={() => setDuration(opt.toString())} />
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2 rounded-2xl border border-border bg-input/20 p-3 text-sm text-muted-foreground">
-                            <Clock className="h-4 w-4" /> No time limit for the selected specializations
-                          </div>
-                        )}
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                          {durationOptions.map((opt) => (
+                            <SelectCard
+                              key={opt}
+                              title={`${opt} min`}
+                              selected={duration === opt.toString()}
+                              onClick={() => setDuration(opt.toString())}
+                            />
+                          ))}
+                        </div>
                       </div>
 
                       <div className="rounded-2xl border border-border bg-input/20 p-4 sm:p-5">
                         <div className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">Review</div>
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                          <div className="text-sm text-muted-foreground">Departments</div>
-                          <div className="text-sm font-semibold text-foreground">{summaryDepartmentsPreview}</div>
-                          <div className="text-sm text-muted-foreground">Specializations</div>
-                          <div className="text-sm font-semibold text-foreground">{summarySpecializationsPreview}</div>
-                          <div className="text-sm text-muted-foreground">Type</div>
-                          <div className="text-sm font-semibold text-foreground">
-                            {interviewType ? formatInterviewTypeLabel(interviewType) : '—'}
-                          </div>
-                          <div className="text-sm text-muted-foreground">Topics</div>
-                          <div className="text-sm font-semibold text-foreground">{summaryTopicsPreview}</div>
-                          <div className="text-sm text-muted-foreground">Difficulty</div>
-                          <div className="text-sm font-semibold text-foreground">
-                            {difficulty ? formatDifficultyLabel(difficulty) : '—'}
-                          </div>
-                          <div className="text-sm text-muted-foreground">Questions</div>
-                          <div className="text-sm font-semibold text-foreground">
-                            {totalQuestions}
-                            {interviewType === 'both'
-                              ? ` (Tech ${technicalRatio}% / Beh ${100 - technicalRatio}%)`
-                              : interviewType === 'technical'
-                                ? ' (all technical)'
-                                : interviewType === 'behavioral'
-                                  ? ' (all behavioral)'
-                                  : ''}
-                          </div>
-                          <div className="text-sm text-muted-foreground">Duration</div>
-                          <div className="text-sm font-semibold text-foreground">{isDurationEnabled ? (duration ? `${duration} min` : '—') : 'No limit'}</div>
+                          {reviewRows.map((row) => (
+                            <Fragment key={row.label}>
+                              <div className="text-sm text-muted-foreground">{row.label}</div>
+                              <div className="text-sm font-semibold text-foreground">{row.value}</div>
+                            </Fragment>
+                          ))}
                         </div>
                       </div>
 
@@ -2037,7 +2261,7 @@ export function CreateInterviewWizard({
                         onSaveDraft={saveDraft}
                         onStart={createInterview}
                         interviewType={interviewType}
-                        topicCount={selectAllTopics ? availableTopicOptions.length : topics.length}
+                        topicCount={selectionCount}
                       />
                     </>
                   ) : null}
@@ -2080,47 +2304,34 @@ export function CreateInterviewWizard({
                 Interview summary
               </div>
               <dl className="space-y-3 text-sm">
-                <div className="flex flex-col gap-0.5 border-b border-border/60 pb-3 last:border-0 last:pb-0">
-                  <dt className="text-xs text-muted-foreground">Type</dt>
-                  <dd className="font-medium text-foreground">
-                    {interviewType ? formatInterviewTypeLabel(interviewType) : '—'}
-                  </dd>
-                </div>
-                <div className="flex flex-col gap-0.5 border-b border-border/60 pb-3 last:border-0 last:pb-0">
-                  <dt className="text-xs text-muted-foreground">Departments</dt>
-                  <dd className="font-medium text-foreground">{summaryDepartmentsPreview}</dd>
-                </div>
-                <div className="flex flex-col gap-0.5 border-b border-border/60 pb-3 last:border-0 last:pb-0">
-                  <dt className="text-xs text-muted-foreground">Specializations</dt>
-                  <dd className="font-medium text-foreground">{summarySpecializationsPreview}</dd>
-                </div>
-                <div className="flex flex-col gap-0.5 border-b border-border/60 pb-3 last:border-0 last:pb-0">
-                  <dt className="text-xs text-muted-foreground">Topics</dt>
-                  <dd className="break-words font-medium text-foreground">{summaryTopicsPreview}</dd>
-                </div>
-                <div className="flex flex-col gap-0.5 border-b border-border/60 pb-3 last:border-0 last:pb-0">
-                  <dt className="text-xs text-muted-foreground">Difficulty</dt>
-                  <dd className="font-medium text-foreground">
-                    {difficulty ? (
-                      <span
-                        className={[
-                          'inline-flex rounded-md px-2 py-0.5 text-xs font-bold',
-                          difficulty === 'Easy'
-                            ? 'bg-success-muted text-success'
-                            : difficulty === 'Medium'
-                              ? 'bg-warning-muted text-warning'
-                              : difficulty === 'Hard'
-                                ? 'bg-destructive-muted text-destructive'
-                                : 'bg-primary/15 text-primary',
-                        ].join(' ')}
-                      >
-                        {formatDifficultyLabel(difficulty)}
-                      </span>
-                    ) : (
-                      <span className="font-medium text-muted-foreground">—</span>
-                    )}
-                  </dd>
-                </div>
+                {reviewRows.map((row) => (
+                  <div
+                    key={row.label}
+                    className="flex flex-col gap-0.5 border-b border-border/60 pb-3 last:border-0 last:pb-0"
+                  >
+                    <dt className="text-xs text-muted-foreground">{row.label}</dt>
+                    <dd className="break-words font-medium text-foreground">
+                      {row.label === 'Difficulty' && difficulty ? (
+                        <span
+                          className={[
+                            'inline-flex rounded-md px-2 py-0.5 text-xs font-bold',
+                            difficulty === 'Easy'
+                              ? 'bg-success-muted text-success'
+                              : difficulty === 'Medium'
+                                ? 'bg-warning-muted text-warning'
+                                : difficulty === 'Hard'
+                                  ? 'bg-destructive-muted text-destructive'
+                                  : 'bg-primary/15 text-primary',
+                          ].join(' ')}
+                        >
+                          {row.value}
+                        </span>
+                      ) : (
+                        row.value
+                      )}
+                    </dd>
+                  </div>
+                ))}
               </dl>
             </div>
 
@@ -2173,7 +2384,7 @@ export function CreateInterviewWizard({
               <ul className="space-y-2 text-sm text-foreground">
                 <li className="flex justify-between gap-2">
                   <span className="text-muted-foreground">Questions</span>
-                  <span className="font-medium">{totalQuestions}</span>
+                  <span className="text-right font-medium">{summaryQuestionsPreview}</span>
                 </li>
                 <li className="flex justify-between gap-2">
                   <span className="text-muted-foreground">Mode</span>
@@ -2182,23 +2393,13 @@ export function CreateInterviewWizard({
                   </span>
                 </li>
                 <li className="flex justify-between gap-2">
-                  <span className="text-muted-foreground">Topic mix</span>
-                  <span className="text-right font-medium">
-                    {hasTopicSelection
-                      ? interviewType === 'both'
-                        ? `${technicalRatio}% tech / ${100 - technicalRatio}% behavioral`
-                        : interviewType === 'technical'
-                          ? '100% technical'
-                          : interviewType === 'behavioral'
-                            ? '100% behavioral'
-                            : '—'
-                      : '—'}
-                  </span>
+                  <span className="text-muted-foreground">{summarySelectionLabel}</span>
+                  <span className="text-right font-medium">{summarySelectionPreview}</span>
                 </li>
                 <li className="flex justify-between gap-2">
                   <span className="text-muted-foreground">Duration</span>
                   <span className="text-right font-medium">
-                    {isDurationEnabled ? (duration ? `${duration} min` : '—') : 'No limit'}
+                    {duration ? `${duration} min` : '—'}
                   </span>
                 </li>
               </ul>
@@ -2210,10 +2411,14 @@ export function CreateInterviewWizard({
                 Tips
               </div>
               <ul className="list-disc space-y-2 pl-4 text-xs leading-relaxed text-muted-foreground">
-                <li>Use Select all to practice across every department, specialization, or topic quickly.</li>
-                <li>Pick interview type first — recommended topics adapt to technical, behavioral, or both.</li>
+                {needsCatalog ? (
+                  <li>Use Select all to practice across every department, specialization, or topic quickly.</li>
+                ) : (
+                  <li>Pick categories, competencies, or sections that match the round you are preparing for.</li>
+                )}
+                <li>Pick interview type first — the next steps adapt to that format.</li>
+                <li>Choose a duration so the session timer matches your practice goal.</li>
                 <li>You can save a draft locally before generating questions.</li>
-                <li>More questions give deeper practice; shorter sets are great for warm-ups.</li>
               </ul>
             </div>
           </div>

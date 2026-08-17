@@ -5,7 +5,7 @@ const footerLinks = [
   { label: 'Solutions', href: '/solutions' },
   { label: 'Features', href: '/features' },
   { label: 'Pricing', href: '/pricing' },
-  { label: 'Contact', href: '/features' },
+  { label: 'Contact', href: '/contact' },
 ]
 
 export function Footer() {
@@ -75,9 +75,11 @@ export function Footer() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-6 text-[13.5px] text-muted-foreground">
           <span>© {new Date().getFullYear()} HireQuest. All rights reserved.</span>
           <span className="flex flex-wrap items-center gap-2">
-            <Link href="/privacy" className="inline-flex min-h-10 items-center py-2 transition-colors hover:text-foreground">Privacy</Link>
+            <Link href="/privacy" className="inline-flex min-h-10 items-center py-2 transition-colors hover:text-foreground">Privacy Policy</Link>
             <span>·</span>
-            <Link href="/terms" className="inline-flex min-h-10 items-center py-2 transition-colors hover:text-foreground">Terms</Link>
+            <Link href="/terms" className="inline-flex min-h-10 items-center py-2 transition-colors hover:text-foreground">Terms of Use</Link>
+            <span>·</span>
+            <Link href="/security" className="inline-flex min-h-10 items-center py-2 transition-colors hover:text-foreground">Security</Link>
           </span>
         </div>
       </div>

@@ -44,6 +44,7 @@ export function MotionProvider({ children }: MotionProviderProps) {
       smoothWheel: true,
       wheelMultiplier: 0.95,
       touchMultiplier: 1.2,
+      allowNestedScroll: true,
     })
 
     let frame = 0

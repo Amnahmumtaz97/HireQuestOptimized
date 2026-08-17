@@ -14,6 +14,8 @@ import { InterviewProgressBar } from '@/components/app/interview/InterviewProgre
 import { InterviewSessionTimer } from '@/components/app/interview/InterviewSessionTimer'
 import { BounceLoader } from '@/components/ui/bounce-loader'
 import { interviewExitHref, interviewExitLabel } from '@/lib/learning-paths/interview-exit'
+import { useOnceGuidance } from '@/hooks/useOnceGuidance'
+import { GUIDANCE_TIPS } from '@/lib/guidance/tips'
 
 export function InterviewSessionPage() {
   const params = useParams<{ id: string }>()
@@ -42,6 +44,21 @@ export function InterviewSessionPage() {
 
   const current = questions[index]
   const busy = isSaving
+
+  const sessionGuidance = useMemo(() => {
+    if (isLoading || !session || session.status === 'completed') return null
+    if (!current) {
+      return { key: 'interview-generate', message: GUIDANCE_TIPS['interview-generate'] } as const
+    }
+    if (current.kind === 'coding') {
+      return { key: 'interview-coding', message: GUIDANCE_TIPS['interview-coding'] } as const
+    }
+    return { key: 'interview-session', message: GUIDANCE_TIPS['interview-session'] } as const
+  }, [current, isLoading, session])
+
+  useOnceGuidance(sessionGuidance?.key ?? null, sessionGuidance?.message ?? '', {
+    delayMs: 700,
+  })
 
   useEffect(() => {
     if (!session || session.status !== 'completed' || !id) return

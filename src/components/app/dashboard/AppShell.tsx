@@ -1,10 +1,11 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { DashboardNavbar } from '@/components/dashboard/DashboardNavbar'
 import { SidebarNav } from '@/components/app/dashboard/SidebarNav'
+import { PageGuidanceToasts } from '@/components/app/guidance/PageGuidanceToasts'
 import { OfflineBanner } from '@/components/ui/OfflineBanner'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 
@@ -42,28 +43,36 @@ export function AppShell({ children }: AppShellProps) {
   const toggleCollapsed = useCallback(() => setCollapsed(!sidebarCollapsed), [setCollapsed, sidebarCollapsed])
 
   const shellGridCols = useMemo(() => {
-    if (sidebarCollapsed) return 'md:grid-cols-[calc(72px+1.5rem)_1fr]'
-    return 'md:grid-cols-[calc(260px+1.5rem)_1fr] lg:grid-cols-[calc(272px+1.5rem)_1fr]'
+    if (sidebarCollapsed) return 'md:grid-cols-[72px_1fr]'
+    return 'md:grid-cols-[260px_1fr] lg:grid-cols-[272px_1fr]'
   }, [sidebarCollapsed])
 
   return (
-    <main className="hq-app min-h-dvh overflow-x-clip bg-[var(--background)] transition-colors duration-200">
+    <main className="hq-app min-h-dvh bg-[var(--background)] transition-colors duration-200">
+      <Suspense fallback={null}>
+        <PageGuidanceToasts />
+      </Suspense>
       <div
         className={[
-          'grid min-h-dvh grid-cols-1',
+          'grid grid-cols-1',
           shellGridCols,
           'transition-[grid-template-columns] duration-300 ease-out',
         ].join(' ')}
+        style={{ minHeight: '100dvh' }}
       >
-        <div className="sticky top-0 z-30 hidden h-dvh p-3 md:block">
-          <div
-            className={[
-              'hq-app-sidebar-float h-full overflow-hidden transition-[width] duration-300 ease-out',
-              sidebarCollapsed ? 'w-[72px]' : 'w-[260px] lg:w-[272px]',
-            ].join(' ')}
-          >
-            <SidebarNav collapsed={sidebarCollapsed} onToggleCollapsed={toggleCollapsed} />
-          </div>
+        {/* Spacer column — reserves the grid slot so content is properly offset */}
+        <div className="hidden md:block" aria-hidden />
+
+        {/* Docked sidebar — flush to the left edge, full viewport height */}
+        <div
+          className={[
+            'hq-app-sidebar-col z-30 hidden md:fixed md:inset-y-0 md:left-0 md:block',
+            sidebarCollapsed ? 'w-[72px]' : 'w-[260px] lg:w-[272px]',
+            'transition-[width] duration-300 ease-out',
+          ].join(' ')}
+          data-lenis-prevent
+        >
+          <SidebarNav collapsed={sidebarCollapsed} onToggleCollapsed={toggleCollapsed} />
         </div>
 
         <section className="flex min-w-0 flex-col">
@@ -95,20 +104,11 @@ export function AppShell({ children }: AppShellProps) {
       </div>
 
       <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
-        <SheetContent
-          side="left"
-          className={[
-            'w-[min(92vw,360px)] gap-0 border-0 bg-transparent p-3 shadow-none',
-            'supports-[backdrop-filter]:bg-transparent overflow-visible sm:p-4',
-            '[&>button]:right-6 [&>button]:top-6 [&>button]:z-10',
-            '[&>button]:border-white/25 [&>button]:bg-white/15 [&>button]:text-white',
-            '[&>button]:hover:bg-white/25 [&>button]:hover:text-white',
-          ].join(' ')}
-        >
+        <SheetContent side="left" className="h-dvh w-[min(92vw,272px)] gap-0 border-0 bg-transparent p-0 shadow-none">
           <SheetHeader className="sr-only">
             <SheetTitle>Navigation</SheetTitle>
           </SheetHeader>
-          <div className="hq-app-sidebar-float h-[calc(100dvh-1.5rem)] overflow-hidden sm:h-[calc(100dvh-2rem)]">
+          <div className="h-full overflow-y-auto overscroll-contain">
             <SidebarNav
               collapsed={false}
               onToggleCollapsed={() => undefined}

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Building2, Clock, Lock, GraduationCap, Briefcase, Route } from 'lucide-react'
+import { Building2, Clock, Lock, GraduationCap, Briefcase, Route, Bookmark } from 'lucide-react'
 import type { LearningPath, UserPathProgress } from '@/components/app/learning-paths/types'
 import { PATH_CATEGORY_LABELS, PATH_SUBCATEGORIES } from '@/lib/learning-paths/constants'
 
@@ -22,9 +22,11 @@ type PathCardProps = {
   progress?: UserPathProgress | null
   reason?: string | null
   badge?: string | null
+  saved?: boolean
+  onToggleSave?: (id: string) => void
 }
 
-export function PathCard({ path, progress, reason, badge }: PathCardProps) {
+export function PathCard({ path, progress, reason, badge, saved = false, onToggleSave }: PathCardProps) {
   const isPakistan =
     path.subcategory === 'pakistan' || Boolean(path.tags?.includes('pakistan'))
   const Icon = audienceIcon(path.targetAudience, isPakistan)
@@ -33,6 +35,7 @@ export function PathCard({ path, progress, reason, badge }: PathCardProps) {
   const subLabel = subcategoryLabel(path.subcategory)
 
   return (
+    <div className="relative">
     <Link
       href={`/app/learning-paths/${path.id}`}
       className={[
@@ -40,6 +43,7 @@ export function PathCard({ path, progress, reason, badge }: PathCardProps) {
         isPakistan
           ? 'border-border bg-gradient-to-br from-primary/8 via-card to-card hover:border-primary/45'
           : 'border-border bg-card hover:border-primary/40',
+        onToggleSave ? 'pr-12' : '',
       ].join(' ')}
     >
       <div className="flex items-start gap-3">
@@ -110,5 +114,21 @@ export function PathCard({ path, progress, reason, badge }: PathCardProps) {
         </div>
       </div>
     </Link>
+    {onToggleSave ? (
+      <button
+        type="button"
+        className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition hover:text-primary"
+        aria-label={saved ? 'Remove bookmark' : 'Bookmark path'}
+        aria-pressed={saved}
+        onClick={(event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          onToggleSave(path.id)
+        }}
+      >
+        <Bookmark className="h-4 w-4" fill={saved ? 'currentColor' : 'none'} />
+      </button>
+    ) : null}
+    </div>
   )
 }

@@ -1,7 +1,16 @@
 /**
- * Single source of truth for interview practice types (UI order, labels, storage).
+ * Single source of truth for interview practice types (UI order, labels, storage, icons).
  * Components and APIs should import from here — do not redefine option lists inline.
  */
+import {
+  BrainCircuit,
+  Code2,
+  Network,
+  MessageCircle,
+  UsersRound,
+  Sparkles,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
 export const INTERVIEW_TYPE_KEYS = [
   'technical',
@@ -31,6 +40,28 @@ export const INTERVIEW_TYPE_LABELS: Record<StoredInterviewTypeKey, string> = {
 
 /** Fixed display order for selectors across Manual / Resume / Path. */
 export const INTERVIEW_TYPE_UI_ORDER: InterviewTypeKey[] = [...INTERVIEW_TYPE_KEYS]
+
+/**
+ * Canonical icon per interview type.
+ * Import `INTERVIEW_TYPE_ICONS` wherever a per-type icon is needed instead
+ * of defining local mappings.
+ */
+export const INTERVIEW_TYPE_ICONS: Record<StoredInterviewTypeKey, LucideIcon> = {
+  technical: BrainCircuit,
+  coding: Code2,
+  system_design: Network,
+  behavioral: MessageCircle,
+  hr: UsersRound,
+  mixed: Sparkles,
+  both: Sparkles,
+}
+
+/** Returns the canonical LucideIcon for a given interview type string. Falls back to BrainCircuit. */
+export function interviewTypeIcon(type: string | null | undefined): LucideIcon {
+  if (!type) return BrainCircuit
+  const k = type.trim().toLowerCase()
+  return (INTERVIEW_TYPE_ICONS as Record<string, LucideIcon>)[k] ?? BrainCircuit
+}
 
 export const INTERVIEW_TYPE_SET = new Set<string>(STORED_INTERVIEW_TYPE_KEYS)
 

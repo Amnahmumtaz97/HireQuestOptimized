@@ -2,11 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Building2, Clock, MapPin } from 'lucide-react'
+import { ArrowLeft, Award, Building2, Clock, MapPin } from 'lucide-react'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { useToast } from '@/components/ui/toast'
 import { PathRoadmap } from '@/components/app/learning-paths/PathRoadmap'
 import { StageView } from '@/components/app/learning-paths/StageView'
+import { CertificationCard } from '@/components/app/certifications/CertificationCard'
+import { useCertBookmarks } from '@/components/app/certifications/useCertBookmarks'
+import type { Certification } from '@/components/app/certifications/types'
 import type {
   LearningPath,
   UserPathProgress,
@@ -34,8 +37,10 @@ function backHrefForPath(path: LearningPath): { href: string; label: string } {
 
 export function PathDetailPage({ pathId }: { pathId: string }) {
   const toast = useToast()
+  const { isSaved, toggle } = useCertBookmarks()
   const [path, setPath] = useState<LearningPath | null>(null)
   const [progress, setProgress] = useState<UserPathProgress | null>(null)
+  const [relatedCertifications, setRelatedCertifications] = useState<Certification[]>([])
   const [activeStageId, setActiveStageId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [enrolling, setEnrolling] = useState(false)
@@ -49,6 +54,9 @@ export function PathDetailPage({ pathId }: { pathId: string }) {
       if (!res.ok) throw new Error(data.message || 'Failed to load path')
       setPath(data.path)
       setProgress(data.progress)
+      setRelatedCertifications(
+        Array.isArray(data.relatedCertifications) ? data.relatedCertifications : [],
+      )
       const stages = (data.path?.stages ?? []) as LearningPath['stages']
       const preferred =
         data.progress?.currentStageId ||
@@ -293,6 +301,30 @@ export function PathDetailPage({ pathId }: { pathId: string }) {
           )}
         </div>
       </div>
+
+      {relatedCertifications.length > 0 ? (
+        <section className="space-y-4">
+          <div>
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Award className="h-4 w-4 text-primary" />
+              Recommended credentials
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Certifications that line up with this path&apos;s stack and role.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {relatedCertifications.map((cert) => (
+              <CertificationCard
+                key={cert.id}
+                cert={cert}
+                saved={isSaved(cert.id)}
+                onToggleSave={toggle}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   )
 }

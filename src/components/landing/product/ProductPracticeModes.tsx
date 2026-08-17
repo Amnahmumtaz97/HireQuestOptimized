@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useReveal } from '@/hooks/use-reveal'
 import { PRACTICE_MODES } from '@/components/landing/product/product-data'
 import { SectionBand, SectionHeading } from '@/components/landing/product/product-ui'
@@ -8,20 +9,33 @@ export function ProductPracticeModes() {
   const ref = useReveal<HTMLDivElement>()
 
   return (
-    <SectionBand tint id="modes">
-      <div ref={ref} className="mx-auto max-w-7xl px-4 sm:px-6">
+    <SectionBand id="modes" className="isolate">
+      <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
+        <Image
+          src="/36226316_v859-katie-12.jpg"
+          alt=""
+          fill
+          sizes="100vw"
+          className="hq-section-photo object-cover object-[22%_center] sm:object-left"
+        />
+        <div className="hq-section-photo-wash" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,color-mix(in_oklab,var(--background)_35%,transparent),color-mix(in_oklab,var(--background)_78%,transparent)_75%)]" />
+      </div>
+      <div ref={ref} className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6">
         <SectionHeading
           eyebrow="Interview types"
           title="Modes available in the wizard"
           description="Select one mode when configuring a session; mixed combines technical and behavioral prompts."
         />
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Flex + centered wrap keeps the trailing row balanced when the mode
+            count is not a multiple of the column count. */}
+        <div className="mt-12 flex flex-wrap justify-center gap-4">
           {PRACTICE_MODES.map((mode, index) => {
             const Icon = mode.icon
             return (
               <div
                 key={mode.title}
-                className="reveal relative rounded-2xl border border-border/70 bg-card/70 p-5 backdrop-blur-sm"
+                className="reveal relative w-full rounded-2xl border border-border/70 bg-card/85 p-5 backdrop-blur-md sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.667rem)]"
                 style={{ transitionDelay: `${index * 45}ms` }}
               >
                 {mode.badge ? (

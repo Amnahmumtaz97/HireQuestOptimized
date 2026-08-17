@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, ListChecks, Clock, Sparkles } from 'lucide-react'
 import { LoadingButton } from '@/components/ui/loading-button'
+import { StyledSelect } from '@/components/ui/styled-select'
 import { useToast } from '@/components/ui/toast'
 import type { LearningStage } from '@/components/app/learning-paths/types'
 import {
@@ -177,20 +178,20 @@ export function PathInterviewCreate({
               className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
             />
           </label>
-          <label className="block space-y-1.5 sm:col-span-2">
+          <div className="block space-y-1.5 sm:col-span-2">
             <span className="text-xs text-muted-foreground">Difficulty</span>
-            <select
+            <StyledSelect
               value={difficulty}
-              onChange={(e) => setDifficulty(e.target.value as SessionDifficulty)}
-              className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
-            >
-              {DIFFICULTY_UI_OPTIONS.map((opt) => (
-                <option key={opt.key} value={opt.key}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={(value) => setDifficulty(value as SessionDifficulty)}
+              options={DIFFICULTY_UI_OPTIONS.map((opt) => ({
+                value: opt.key,
+                label: opt.label,
+                description: opt.subtitle,
+              }))}
+              ariaLabel="Difficulty"
+              className="h-10"
+            />
+          </div>
         </div>
 
         <LoadingButton

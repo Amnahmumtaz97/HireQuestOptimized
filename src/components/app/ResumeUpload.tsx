@@ -11,9 +11,17 @@ type ResumeUploadProps = {
   value: ResumeParseResult | null
   onParsed: (resume: ResumeParseResult) => void
   onClear: () => void
+  variant?: 'dropzone' | 'button'
+  buttonLabel?: string
 }
 
-export function ResumeUpload({ value, onParsed, onClear }: ResumeUploadProps) {
+export function ResumeUpload({
+  value,
+  onParsed,
+  onClear,
+  variant = 'dropzone',
+  buttonLabel = 'Upload resume',
+}: ResumeUploadProps) {
   const toast = useToast()
   const inputRef = useRef<HTMLInputElement | null>(null)
   const [dragging, setDragging] = useState(false)
@@ -61,58 +69,77 @@ export function ResumeUpload({ value, onParsed, onClear }: ResumeUploadProps) {
 
   return (
     <div className="space-y-3">
-      <div
-        onDragOver={(e) => {
-          e.preventDefault()
-          setDragging(true)
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(e) => {
-          e.preventDefault()
-          setDragging(false)
-          const file = e.dataTransfer.files?.[0]
-          if (file) void upload(file)
-        }}
-        className={[
-          'flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed px-4 py-8 text-center transition',
-          dragging
-            ? 'border-primary bg-primary/10'
-            : 'border-border bg-input/10 hover:bg-input/20',
-        ].join(' ')}
-      >
-        {loading ? (
-          <>
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Parsing resume…</p>
-          </>
-        ) : (
-          <>
-            <FileUp className="h-6 w-6 text-muted-foreground" />
-            <p className="text-sm text-foreground">
-              Drop a resume (PDF/DOCX) or{' '}
-              <button
-                type="button"
-                className="font-semibold text-primary underline-offset-2 hover:underline"
-                onClick={() => inputRef.current?.click()}
-              >
-                browse
-              </button>
-            </p>
-            <p className="text-xs text-muted-foreground">Max 5MB · PDF/DOCX · configure before generate</p>
-          </>
-        )}
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0]
-            if (file) void upload(file)
-            e.target.value = ''
+      {variant === 'button' ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            className="hq-btn-primary h-10 gap-2 rounded-xl px-4 text-xs"
+            disabled={loading}
+            onClick={() => inputRef.current?.click()}
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <FileUp className="h-4 w-4" />
+            )}
+            {loading ? 'Parsing resume…' : value ? 'Upload a new resume' : buttonLabel}
+          </button>
+          <p className="text-xs text-muted-foreground">PDF or DOCX · max 5MB</p>
+        </div>
+      ) : (
+        <div
+          onDragOver={(e) => {
+            e.preventDefault()
+            setDragging(true)
           }}
-        />
-      </div>
+          onDragLeave={() => setDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault()
+            setDragging(false)
+            const file = e.dataTransfer.files?.[0]
+            if (file) void upload(file)
+          }}
+          className={[
+            'flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed px-4 py-8 text-center transition',
+            dragging
+              ? 'border-primary bg-primary/10'
+              : 'border-border bg-input/10 hover:bg-input/20',
+          ].join(' ')}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Parsing resume…</p>
+            </>
+          ) : (
+            <>
+              <FileUp className="h-6 w-6 text-muted-foreground" />
+              <p className="text-sm text-foreground">
+                Drop a resume (PDF/DOCX) or{' '}
+                <button
+                  type="button"
+                  className="font-semibold text-primary underline-offset-2 hover:underline"
+                  onClick={() => inputRef.current?.click()}
+                >
+                  browse
+                </button>
+              </p>
+              <p className="text-xs text-muted-foreground">Max 5MB · PDF/DOCX · configure before generate</p>
+            </>
+          )}
+        </div>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file) void upload(file)
+          e.target.value = ''
+        }}
+      />
 
       {value ? (
         <div className="rounded-xl border border-border bg-primary/5 px-4 py-3 text-sm">

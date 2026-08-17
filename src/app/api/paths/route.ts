@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
+import { isValidObjectId } from 'mongoose'
 import { authOptions } from '@/lib/auth'
 import { connectToDatabase } from '@/lib/mongoose'
 import { LearningPathModel } from '@/models/LearningPath'
@@ -39,6 +40,14 @@ export async function GET(request: Request) {
 
     const query: Record<string, unknown> = {
       ...visibilityQuery(session.user.id),
+    }
+    const idsParam = searchParams.get('ids')?.trim()
+    if (idsParam) {
+      const ids = idsParam
+        .split(',')
+        .map((id) => id.trim())
+        .filter((id) => isValidObjectId(id))
+      query._id = { $in: ids }
     }
     if (audience) query.targetAudience = audience
     if (category) query.category = category

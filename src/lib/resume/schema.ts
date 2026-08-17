@@ -39,6 +39,9 @@ export const resumeParseSchema = z.object({
   seniorityLevel: seniorityOrNull,
   domain: stringOrNull,
   skills: stringArray,
+  github: stringOrNull,
+  linkedin: stringOrNull,
+  website: stringOrNull,
   projects: z.preprocess((v) => {
     if (!Array.isArray(v)) return []
     return v.map((item) => {
@@ -93,12 +96,90 @@ export const RESUME_EXTRACT_SYSTEM = `You are extracting structured data from a 
   "seniorityLevel": "junior" | "mid" | "senior" | null,
   "domain": string | null,
   "skills": string[],
+  "github": string | null,
+  "linkedin": string | null,
+  "website": string | null,
   "projects": [{ "name": string, "description": string, "technologies": string[] }],
   "education": [{ "degree": string, "institution": string }]
 }
 
 If a field cannot be determined from the resume, use null for strings/numbers or an empty array for lists. Do not fabricate information not present in the resume text.
-Keep project descriptions under 280 characters. Cap skills at 25 items and projects at 6.`
+For github/linkedin/website, only include URLs or handles that are explicitly present (prefer full https URLs). Keep project descriptions under 280 characters. Cap skills at 25 items and projects at 6.`
+
+function withHttps(value: string) {
+  return /^https?:\/\//i.test(value) ? value : `https://${value}`
+}
+
+function normalizeUrlCandidate(raw: string): string | null {
+  const cleaned = raw
+    .trim()
+    .replace(/[),.;]+$/g, '')
+    .replace(/\s+/g, '')
+  if (!cleaned || cleaned.length > 200) return null
+  try {
+    const url = new URL(withHttps(cleaned))
+    if (!url.hostname.includes('.')) return null
+    return url.toString().replace(/\/$/, '')
+  } catch {
+    return null
+  }
+}
+
+/** Pull GitHub / LinkedIn / personal site links from raw resume text. */
+export function extractResumeLinks(text: string): {
+  github: string | null
+  linkedin: string | null
+  website: string | null
+} {
+  const githubMatch = text.match(
+    /(?:https?:\/\/)?(?:www\.)?github\.com\/[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}(?:\/)?/i,
+  )
+  const linkedinMatch = text.match(
+    /(?:https?:\/\/)?(?:[a-z]{2}\.)?linkedin\.com\/(?:in|pub)\/[A-Za-z0-9_%-]+\/?/i,
+  )
+
+  const github = githubMatch ? normalizeUrlCandidate(githubMatch[0]) : null
+  const linkedin = linkedinMatch ? normalizeUrlCandidate(linkedinMatch[0]) : null
+
+  let website: string | null = null
+  const urlMatches = text.match(
+    /(?:https?:\/\/)?(?:www\.)?[A-Za-z0-9][A-Za-z0-9.-]+\.[A-Za-z]{2,}(?:\/[^\s)<>"']*)?/gi,
+  )
+  if (urlMatches) {
+    for (const candidate of urlMatches) {
+      const normalized = normalizeUrlCandidate(candidate)
+      if (!normalized) continue
+      const host = new URL(normalized).hostname.toLowerCase()
+      if (
+        host.includes('github.com') ||
+        host.includes('linkedin.com') ||
+        host.includes('mailto') ||
+        host.endsWith('.pdf') ||
+        host.includes('google.com') ||
+        host.includes('microsoft.com')
+      ) {
+        continue
+      }
+      website = normalized
+      break
+    }
+  }
+
+  return { github, linkedin, website }
+}
+
+export function mergeResumeLinks(
+  resume: ResumeParseResult,
+  text: string,
+): ResumeParseResult {
+  const found = extractResumeLinks(text)
+  return resumeParseSchema.parse({
+    ...resume,
+    github: resume.github || found.github,
+    linkedin: resume.linkedin || found.linkedin,
+    website: resume.website || found.website,
+  })
+}
 
 export function parseResumeJsonText(raw: string): ResumeParseResult {
   let text = raw.trim()
@@ -194,6 +275,7 @@ export function heuristicExtractResume(text: string): ResumeParseResult {
       : null,
     domain,
     skills: skills.slice(0, 25),
+    ...extractResumeLinks(text),
     projects: [],
     education,
   })

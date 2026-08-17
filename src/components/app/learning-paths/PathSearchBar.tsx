@@ -1,6 +1,14 @@
 'use client'
 
 import { Search } from 'lucide-react'
+import { StyledSelect } from '@/components/ui/styled-select'
+
+const SORT_OPTIONS = [
+  { value: 'title', label: 'A–Z' },
+  { value: 'new', label: 'Newest' },
+  { value: 'popular', label: 'Popular' },
+  { value: 'recommended', label: 'Recommended' },
+] as const
 
 type PathSearchBarProps = {
   query: string
@@ -26,16 +34,13 @@ export function PathSearchBar({
           className="h-10 w-full rounded-xl border border-border bg-input/30 pl-9 pr-3 text-sm"
         />
       </label>
-      <select
+      <StyledSelect
         value={sort}
-        onChange={(e) => onSortChange(e.target.value)}
-        className="h-10 rounded-xl border border-border bg-input/30 px-3 text-sm sm:w-44"
-      >
-        <option value="title">A–Z</option>
-        <option value="new">Newest</option>
-        <option value="popular">Popular</option>
-        <option value="recommended">Recommended</option>
-      </select>
+        onChange={onSortChange}
+        options={SORT_OPTIONS}
+        ariaLabel="Sort learning paths"
+        className="h-10 sm:w-44"
+      />
     </div>
   )
 }

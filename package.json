@@ -10,9 +10,13 @@
     "lint": "next lint",
     "test": "vitest run",
     "test:consistency": "vitest run src/lib/interview-config/__tests__/consistency.test.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
     "create:admin": "node scripts/create-admin.js",
     "seed:interview-config": "node scripts/seed-interview-config.js",
-    "seed:learning-paths": "tsx scripts/seed-learning-paths.js"
+    "seed:learning-paths": "tsx scripts/seed-learning-paths.js",
+    "seed:certifications": "npx tsx scripts/seed-certifications.ts"
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.11.2",
@@ -52,11 +56,13 @@
     "react-markdown": "^10.1.0",
     "recharts": "^3.8.1",
     "remark-gfm": "^4.0.1",
+    "simple-icons": "^16.28.0",
     "tailwind-merge": "^3.5.0",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@types/node": "^20",
     "@types/pdf-parse": "^1.1.5",
     "@types/react": "^18",

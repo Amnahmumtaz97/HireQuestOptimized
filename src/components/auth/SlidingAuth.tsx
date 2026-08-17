@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BrandingPanel } from './BrandingPanel'
 import { AuthForms } from './AuthForms'
+import { ThemeSwitch } from '@/components/ui/theme-switch'
+import { StarfieldBackground } from '@/components/landing/StarfieldBackground'
 import type { EnabledOAuthProviders } from '@/lib/oauth-config'
 
 type Mode = 'signin' | 'signup'
@@ -43,6 +45,13 @@ export function SlidingAuth({ oauth }: SlidingAuthProps) {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-background text-foreground">
+      <StarfieldBackground />
+
+      {/* Theme toggle — always visible top-right */}
+      <div className="absolute right-4 top-4 z-50 sm:right-6 sm:top-5">
+        <ThemeSwitch />
+      </div>
+
       <div className="relative z-10 flex min-h-screen items-center justify-center p-3 sm:p-4 lg:p-6">
         <div className="relative w-full max-w-6xl overflow-hidden rounded-3xl border border-border bg-card shadow-[0_24px_60px_-32px_rgba(17,24,39,0.28)]">
 

@@ -17,6 +17,7 @@ import type { LucideIcon } from 'lucide-react'
 import { PathCard } from '@/components/app/learning-paths/PathCard'
 import { PathSearchBar } from '@/components/app/learning-paths/PathSearchBar'
 import { PathSections } from '@/components/app/learning-paths/PathSections'
+import { usePathBookmarks } from '@/hooks/usePathBookmarks'
 import type { LearningPath, PathCategory, UserPathProgress } from '@/components/app/learning-paths/types'
 import { PATH_CATEGORY_LABELS } from '@/lib/learning-paths/constants'
 import { ListPagination } from '@/components/ui/list-pagination'
@@ -56,6 +57,7 @@ export function PathSelector({
   initialTag?: string
   initialCategory?: string
 } = {}) {
+  const { isSaved, toggle } = usePathBookmarks()
   const [paths, setPaths] = useState<LearningPath[]>([])
   const [home, setHome] = useState<HomePayload | null>(null)
   const [loading, setLoading] = useState(true)
@@ -220,7 +222,12 @@ export function PathSelector({
           <>
             <div className="grid gap-4 sm:grid-cols-2">
               {paths.map((path) => (
-                <PathCard key={path.id} path={path} />
+                <PathCard
+                  key={path.id}
+                  path={path}
+                  saved={isSaved(path.id)}
+                  onToggleSave={toggle}
+                />
               ))}
             </div>
 

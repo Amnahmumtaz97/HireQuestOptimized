@@ -2,7 +2,7 @@
 
 import { useReveal } from '@/hooks/use-reveal'
 
-const companies = ['Google', 'Microsoft', 'Amazon', 'Meta', 'Netflix', 'Adobe']
+const companies = ['Systems Limited', 'NetSol', '10Pearls', 'Careem', 'Tkxel', 'Arbisoft']
 
 const stats = [
   { value: '10,000+', label: 'AI-Generated Questions' },

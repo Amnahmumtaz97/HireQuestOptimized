@@ -1,9 +1,11 @@
 import {
+  Award,
   BarChart3,
-  Building2,
+  Bookmark,
   Code2,
-  FileText,
   MessageCircle,
+  Mic,
+  Route,
   Settings2,
   Sparkles,
   TrendingUp,
@@ -24,53 +26,47 @@ export const CAPABILITY_DIVES: CapabilityDive[] = [
     title: 'AI feedback',
     howItWorks:
       'After a session, answers are scored across communication, correctness, clarity, and related dimensions—then summarized into strengths and improvement notes you can act on.',
-    outcome:
-      'Leave each attempt with dimension scores and concrete coaching notes, not a single pass/fail.',
+    outcome: 'Leave each attempt with dimension scores and concrete coaching notes, not a single pass/fail.',
     status: 'live',
   },
   {
-    icon: Building2,
-    title: 'Role- and company-style questions',
+    icon: Mic,
+    title: 'Interview list & sessions',
     howItWorks:
-      'The interview wizard scopes prompts by department, specialization, topics, and difficulty so practice mirrors the loop you are targeting—not a generic quiz bank.',
-    outcome:
-      'Practice questions that match the domain and seniority you are preparing for.',
+      'Configure a session in the wizard, then resume or review it from My Interviews. Status, type, difficulty, and scores stay on the same row.',
+    outcome: 'Pick up where you left off instead of hunting through scattered practice notes.',
+    status: 'live',
+  },
+  {
+    icon: Route,
+    title: 'Learning paths & certifications',
+    howItWorks:
+      'Browse path overview, categories, and catalog, then jump into certs that map to the same topics you practice in interviews.',
+    outcome: 'Prep for a role and an exam from one workspace, with matching guidance when a cert fits.',
     status: 'live',
   },
   {
     icon: BarChart3,
-    title: 'Performance analytics',
+    title: 'Dashboard & analytics',
     howItWorks:
-      'Completed sessions feed dashboards and result views that surface activity, completion trends, and skill breakdowns across saved interviews.',
-    outcome:
-      'See where you are improving week to week and which dimensions still need reps.',
+      'The dashboard shows activity and upcoming interviews. Analytics adds completion trends and skill breakdowns across saved sessions.',
+    outcome: 'See where you are improving week to week and which dimensions still need reps.',
     status: 'live',
   },
   {
-    icon: MessageCircle,
-    title: 'Behavioral practice',
+    icon: Bookmark,
+    title: 'Bookmarks',
     howItWorks:
-      'Choose behavioral (and mixed) interview types to rehearse structured storytelling under the same session runner used for technical loops.',
-    outcome:
-      'Build confidence on the human side of the interview with repeatable, reviewable sessions.',
+      'Save certifications, paths, and topics so the next session starts from what you already marked.',
+    outcome: 'Keep a short list of the tracks you are actually studying.',
     status: 'live',
   },
   {
     icon: Code2,
-    title: 'Coding challenges',
+    title: 'Live coding surface',
     howItWorks:
       'A dedicated live coding surface with complexity and edge-case analysis is planned as a first-class practice mode.',
-    outcome:
-      'Technical coding drills will sit alongside spoken interview practice in one workspace.',
-    status: 'roadmap',
-  },
-  {
-    icon: FileText,
-    title: 'Resume-driven questions',
-    howItWorks:
-      'Generating prompts directly from your resume and projects is on the roadmap so practice can mirror your own experience narrative.',
-    outcome:
-      'Future sessions will ask about your real projects instead of only catalog topics.',
+    outcome: 'Technical coding drills will sit alongside spoken interview practice in one workspace.',
     status: 'roadmap',
   },
 ]
@@ -92,7 +88,7 @@ export const SESSION_FLOW: Array<{
   {
     icon: MessageCircle,
     title: 'Practice',
-    detail: 'Run the session with generated questions under timed, focused conditions.',
+    detail: 'Run the session, then find it again on My Interviews when you need to resume.',
     href: '/product',
     linkLabel: 'Product overview',
   },
@@ -106,8 +102,15 @@ export const SESSION_FLOW: Array<{
   {
     icon: TrendingUp,
     title: 'Progress',
-    detail: 'Track completed sessions and skill trends so the next attempt is targeted.',
+    detail: 'Track completed sessions on the dashboard and analytics so the next attempt is targeted.',
     href: '/product#progress',
     linkLabel: 'Analytics preview',
+  },
+  {
+    icon: Award,
+    title: 'Certify',
+    detail: 'Open the certifications catalog when a path maps to an exam you want to pass.',
+    href: '/product#categories',
+    linkLabel: 'See catalog',
   },
 ]

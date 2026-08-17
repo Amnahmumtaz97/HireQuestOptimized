@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { CreateInterviewWizard } from '@/components/app/UserDashboard'
 import { PathInterviewCreate } from '@/components/app/interview/PathInterviewCreate'
 import type { LearningStage, UserPathProgress } from '@/components/app/learning-paths/types'
+import { normalizeStoredInterviewType } from '@/lib/interview-config/interview-types'
 
 export function NewInterviewPageClient() {
   const sp = useSearchParams()
@@ -13,6 +14,8 @@ export function NewInterviewPageClient() {
   const stageId = sp.get('stageId')
   const remediationId = sp.get('remediationId')
   const focusResume = mode === 'resume' || sp.get('focus') === 'resume'
+  const prefillType = sp.get('type')
+  const prefillTopic = sp.get('topic')
 
   const [stagePrefill, setStagePrefill] = useState<LearningStage | null>(null)
   const [pathTitle, setPathTitle] = useState<string | null>(null)
@@ -97,6 +100,8 @@ export function NewInterviewPageClient() {
       learningStageId={stageId}
       stagePrefill={stagePrefill}
       focusResumeSection={focusResume}
+      prefillType={normalizeStoredInterviewType(prefillType)}
+      prefillTopic={prefillTopic}
     />
   )
 }

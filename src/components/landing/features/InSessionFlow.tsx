@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { useReveal } from '@/hooks/use-reveal'
@@ -10,21 +11,37 @@ export function InSessionFlow() {
   const ref = useReveal<HTMLDivElement>()
 
   return (
-    <SectionBand id="in-session">
-      <div ref={ref} className="mx-auto max-w-7xl px-4 sm:px-6">
+    <SectionBand id="in-session" className="isolate">
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden>
+        <Image
+          src="/15292731_5576407.jpg"
+          alt=""
+          fill
+          sizes="100vw"
+          className="hq-section-photo object-cover object-center"
+        />
+        <div className="hq-section-photo-wash" />
+      </div>
+      <div ref={ref} className="relative mx-auto max-w-7xl px-4 sm:px-6">
         <SectionHeading
           eyebrow="In a session"
           title="Where capabilities show up"
           description="A compact practice loop—not a six-step onboarding orbit."
         />
 
-        <ol className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* One column per step on large screens so the loop reads as a single
+            left-to-right sequence; the trailing card fills the row below sm. */}
+        <ol className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {SESSION_FLOW.map((step, index) => {
             const Icon = step.icon
+            const isLast = index === SESSION_FLOW.length - 1
+            const fillsRow = isLast && SESSION_FLOW.length % 2 === 1
             return (
               <li
                 key={step.title}
-                className="reveal relative rounded-3xl border border-border/70 bg-card/70 p-5 backdrop-blur-sm"
+                className={`reveal relative rounded-3xl border border-border/70 bg-card/70 p-5 backdrop-blur-sm ${
+                  fillsRow ? 'sm:col-span-2 lg:col-span-1' : ''
+                }`}
                 style={{ transitionDelay: `${index * 50}ms` }}
               >
                 <div className="flex items-center gap-3">

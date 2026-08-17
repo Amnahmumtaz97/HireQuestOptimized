@@ -5,6 +5,7 @@ import { validateAccountProfile, type FieldErrors } from '@/lib/validation/clien
 import { LoadingButton } from '@/components/ui/loading-button'
 import { BounceLoader } from '@/components/ui/bounce-loader'
 import { useToast } from '@/components/ui/toast'
+import { AlertBanner } from '@/components/ui/alert-banner'
 
 export type AccountFormData = {
   firstName: string
@@ -213,8 +214,8 @@ export function AccountDetailsForm({
           ) : null}
         </label>
 
-        {error ? <p className="text-sm text-red-400">{error}</p> : null}
-        {message ? <p className="text-sm text-emerald-400">{message}</p> : null}
+        {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
+        {message ? <AlertBanner variant="success">{message}</AlertBanner> : null}
 
         <LoadingButton
           type="submit"

@@ -1,6 +1,7 @@
 'use client'
 
 import { ArrowRight } from 'lucide-react'
+import Link from 'next/link'
 import { useReveal } from '@/hooks/use-reveal'
 
 type Particle = { left: string; bottom: string; delay: string; duration: string; size: number }
@@ -61,11 +62,17 @@ export function CTA() {
           Start practicing in under a minute. No credit card required.
         </p>
 
-        <div className="mt-10 flex w-full justify-center px-1">
+        <div className="mt-10 flex w-full flex-col items-center justify-center gap-4 px-1 sm:flex-row sm:gap-6">
           <button className="cta-diagonal-btn inline-flex h-14 w-full max-w-md items-center justify-center gap-2 rounded-[10px] px-6 text-[15px] font-semibold sm:w-auto sm:px-10">
             Start Your First Interview
             <ArrowRight className="h-5 w-5" />
           </button>
+          <Link
+            href="/features"
+            className="cta-diagonal-btn-ghost inline-flex h-14 w-full max-w-md items-center justify-center rounded-[10px] px-6 text-[15px] font-semibold sm:w-auto sm:px-10"
+          >
+            Explore features
+          </Link>
         </div>
       </div>
     </section>

@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { isGeminiRateLimitError, resolveTextModelChain } from '@/lib/gemini/model-fallback'
 import {
   heuristicExtractResume,
+  mergeResumeLinks,
   parseResumeJsonText,
   RESUME_EXTRACT_SYSTEM,
   type ResumeParseResult,
@@ -49,7 +50,7 @@ ${truncated}
         })
         const result = await model.generateContent(prompt)
         const raw = result.response.text()
-        return parseResumeJsonText(raw)
+        return mergeResumeLinks(parseResumeJsonText(raw), truncated)
       } catch (e) {
         lastError = e
         if (isGeminiRateLimitError(e) && i < modelChain.length - 1) {

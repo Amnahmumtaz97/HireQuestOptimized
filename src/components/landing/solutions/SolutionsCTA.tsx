@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { useReveal } from '@/hooks/use-reveal'
+import { StarfieldBackground } from '@/components/landing/StarfieldBackground'
 
 export function SolutionsCTA() {
   const ref = useReveal<HTMLElement>()
@@ -17,12 +18,13 @@ export function SolutionsCTA() {
     : '/auth'
 
   return (
-    <section ref={ref} className="relative overflow-hidden border-t border-border/60 py-20 sm:py-24">
+    <section ref={ref} className="relative isolate overflow-hidden border-t border-border/60 py-20 sm:py-24">
+      <StarfieldBackground section />
       <div
-        className="pointer-events-none absolute inset-0 bg-[color-mix(in_oklab,var(--hq-display-blue)_5%,var(--background))]"
+        className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_center,color-mix(in_oklab,var(--hq-display-blue)_10%,transparent),transparent_68%)]"
         aria-hidden
       />
-      <div className="reveal relative mx-auto max-w-3xl px-4 text-center sm:px-6">
+      <div className="reveal relative z-10 mx-auto max-w-3xl px-4 text-center sm:px-6">
         <h2 className="text-3xl font-extrabold tracking-[-0.02em] text-foreground sm:text-4xl">
           Pick your path and start a session
         </h2>

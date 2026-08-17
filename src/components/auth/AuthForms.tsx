@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Mail, Lock, User, Eye, EyeOff, ArrowRight, ArrowLeft, Phone } from 'lucide-react'
+import { Mail, Lock, User, Eye, EyeOff, ArrowRight, ArrowLeft, Phone, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { AlertBanner } from '@/components/ui/alert-banner'
 import Link from 'next/link'
 import { getSession, signIn } from 'next-auth/react'
 import { Input } from '@/components/ui/input'
@@ -9,15 +10,30 @@ import { Label } from '@/components/ui/label'
 import {
   validateSignInFields,
   validateSignupFields,
+  validateEmail,
+  validatePassword,
   type FieldErrors,
 } from '@/lib/validation/client-forms'
 import type { EnabledOAuthProviders } from '@/lib/oauth-config'
 
-function FieldIcon({ children }: { children: React.ReactNode }) {
+function FieldIcon({ children, hasError }: { children: React.ReactNode; hasError?: boolean }) {
   return (
-    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+    <span className={[
+      'pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 transition-colors',
+      hasError ? 'text-red-400' : 'text-muted-foreground',
+    ].join(' ')}>
       {children}
     </span>
+  )
+}
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null
+  return (
+    <div className="flex items-start gap-1.5 pt-0.5" role="alert" aria-live="polite">
+      <AlertCircle className="mt-px h-3 w-3 shrink-0 text-red-500" aria-hidden />
+      <p className="text-[11px] font-medium leading-tight text-red-500">{message}</p>
+    </div>
   )
 }
 
@@ -58,6 +74,7 @@ async function redirectAfterAuth() {
 
 export function AuthForms({ mode, onToggle, oauth }: Props) {
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | null>(null)
   const [errorMessage, setErrorMessage] = useState('')
@@ -69,6 +86,9 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
+  // Track which fields the user has interacted with so we validate on blur
+  const [touched, setTouched] = useState<Partial<Record<string, boolean>>>({})
+
   const isSignIn = mode === 'signin'
   const showGoogle = Boolean(oauth?.google)
   const showGitHub = Boolean(oauth?.github)
@@ -78,7 +98,6 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
     setErrorMessage('')
     setOauthLoading(provider)
     try {
-      // Middleware sends admins from /app → /dashboard after session is established.
       await signIn(provider, { callbackUrl: '/app/new-interview' })
     } catch {
       setErrorMessage('Could not start social sign-in. Please try again.')
@@ -90,14 +109,68 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
     setFieldErrors({})
     setErrorMessage('')
     setSuccessMessage('')
+    setTouched({})
   }, [mode])
 
-  const clearFieldError = (key: keyof FieldErrors) => {
+  const setFieldError = (key: string, msg: string | undefined) => {
     setFieldErrors((prev) => {
-      const next = { ...prev }
-      delete next[key]
-      return next
+      if (msg === undefined) {
+        const next = { ...prev }
+        delete next[key]
+        return next
+      }
+      return { ...prev, [key]: msg }
     })
+  }
+
+  const clearFieldError = (key: string) => setFieldError(key, undefined)
+
+  const markTouched = (key: string) =>
+    setTouched((prev) => ({ ...prev, [key]: true }))
+
+  // Blur validators — only fire after the field has been touched
+  const blurEmail = () => {
+    markTouched('email')
+    const err = validateEmail(email)
+    setFieldError('email', err ?? undefined)
+  }
+
+  const blurPassword = () => {
+    markTouched('password')
+    const err = validatePassword(password)
+    setFieldError('password', err ?? undefined)
+    // Re-check confirm match when password changes
+    if (!isSignIn && touched.confirmPassword && confirmPassword) {
+      setFieldError(
+        'confirmPassword',
+        password !== confirmPassword ? 'Passwords do not match' : undefined,
+      )
+    }
+  }
+
+  const blurConfirm = () => {
+    markTouched('confirmPassword')
+    if (!confirmPassword) {
+      setFieldError('confirmPassword', 'Confirm your password')
+    } else if (password !== confirmPassword) {
+      setFieldError('confirmPassword', 'Passwords do not match')
+    } else {
+      clearFieldError('confirmPassword')
+    }
+  }
+
+  const blurFirstName = () => {
+    markTouched('firstName')
+    if (!firstName.trim()) setFieldError('firstName', 'First name is required')
+    else if (firstName.trim().length > 60) setFieldError('firstName', 'First name is too long')
+    else clearFieldError('firstName')
+  }
+
+  const blurLastName = () => {
+    markTouched('lastName')
+    if (!lastName.trim()) setFieldError('lastName', 'Last name is required')
+    else if (lastName.trim().length > 60) setFieldError('lastName', 'Last name is too long')
+    else clearFieldError('lastName')
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -110,21 +183,17 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
       const { ok, errors } = validateSignInFields(email, password)
       if (!ok) {
         setFieldErrors(errors)
-        setErrorMessage('Please fix the highlighted fields.')
         return
       }
     } else {
-      const { ok, errors, message } = validateSignupFields({
-        firstName,
-        lastName,
-        email,
-        phoneNumber,
-        password,
-        confirmPassword,
+      const { ok, errors } = validateSignupFields({
+        firstName, lastName, email, phoneNumber, password, confirmPassword,
       })
       if (!ok) {
         setFieldErrors(errors)
-        setErrorMessage(message ?? 'Please fix the highlighted fields.')
+        // Scroll to first error
+        const firstKey = Object.keys(errors)[0]
+        if (firstKey) document.getElementById(firstKey)?.focus()
         return
       }
     }
@@ -133,58 +202,54 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
 
     try {
       if (isSignIn) {
-        const response = await signIn('credentials', {
-          email,
-          password,
-          redirect: false,
-        })
+        const response = await signIn('credentials', { email, password, redirect: false })
 
         if (response?.ok) {
           await redirectAfterAuth()
           return
         }
 
-        setErrorMessage('Invalid email or password')
+        // Map credential error to field
+        setFieldErrors({ email: ' ', password: 'Incorrect email or password.' })
+        setErrorMessage('The email or password you entered is incorrect.')
         return
       }
 
       const signupResponse = await fetch('/api/auth/signup', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firstName,
-          lastName,
-          email,
-          phoneNumber,
-          password,
-          confirmPassword,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firstName, lastName, email, phoneNumber, password, confirmPassword }),
       })
 
       const signupData = await signupResponse.json()
 
       if (!signupResponse.ok) {
-        setErrorMessage(signupData.message ?? 'Could not create account')
+        const msg: string = signupData.message ?? 'Could not create account'
+        // Route server errors to the right field when possible
+        const lower = msg.toLowerCase()
+        if (lower.includes('email') && lower.includes('exist')) {
+          setFieldErrors({ email: 'An account with this email already exists.' })
+        } else if (lower.includes('email')) {
+          setFieldErrors({ email: msg })
+        } else if (lower.includes('password')) {
+          setFieldErrors({ password: msg })
+        } else {
+          setErrorMessage(msg)
+        }
         return
       }
 
-      const loginResponse = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      })
+      const loginResponse = await signIn('credentials', { email, password, redirect: false })
 
       if (!loginResponse?.ok) {
-        setSuccessMessage('Account created. Please sign in.')
+        setSuccessMessage('Account created! Please sign in.')
         onToggle()
         return
       }
 
       await redirectAfterAuth()
     } catch {
-      setErrorMessage('Something went wrong. Please try again.')
+      setErrorMessage('Network error — please check your connection and try again.')
     } finally {
       setIsSubmitting(false)
     }
@@ -204,16 +269,17 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
           </p>
         </div>
 
-        <form className="mt-7 space-y-4" onSubmit={handleSubmit}>
+        <form className="mt-7 space-y-4" onSubmit={handleSubmit} noValidate>
           {!isSignIn && (
             <>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className="space-y-1.5">
+                {/* First name */}
+                <div className="space-y-1">
                   <Label htmlFor="firstName" className="text-[12px] font-semibold text-foreground/80">
                     First Name
                   </Label>
                   <div className="relative">
-                    <FieldIcon>
+                    <FieldIcon hasError={Boolean(fieldErrors.firstName)}>
                       <User className="h-3.5 w-3.5" />
                     </FieldIcon>
                     <Input
@@ -221,24 +287,22 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
                       placeholder="Jane"
                       className="h-10 pl-9 text-sm"
                       value={firstName}
-                      onChange={(event) => {
-                        setFirstName(event.target.value)
-                        clearFieldError('firstName')
-                      }}
-                      required
+                      onChange={(e) => { setFirstName(e.target.value); clearFieldError('firstName') }}
+                      onBlur={blurFirstName}
                       aria-invalid={Boolean(fieldErrors.firstName)}
+                      aria-describedby={fieldErrors.firstName ? 'err-firstName' : undefined}
                     />
                   </div>
-                  {fieldErrors.firstName ? (
-                    <p className="text-[11px] text-red-500">{fieldErrors.firstName}</p>
-                  ) : null}
+                  <FieldError message={fieldErrors.firstName} />
                 </div>
-                <div className="space-y-1.5">
+
+                {/* Last name */}
+                <div className="space-y-1">
                   <Label htmlFor="lastName" className="text-[12px] font-semibold text-foreground/80">
                     Last Name
                   </Label>
                   <div className="relative">
-                    <FieldIcon>
+                    <FieldIcon hasError={Boolean(fieldErrors.lastName)}>
                       <User className="h-3.5 w-3.5" />
                     </FieldIcon>
                     <Input
@@ -246,78 +310,74 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
                       placeholder="Doe"
                       className="h-10 pl-9 text-sm"
                       value={lastName}
-                      onChange={(event) => {
-                        setLastName(event.target.value)
-                        clearFieldError('lastName')
-                      }}
-                      required
+                      onChange={(e) => { setLastName(e.target.value); clearFieldError('lastName') }}
+                      onBlur={blurLastName}
                       aria-invalid={Boolean(fieldErrors.lastName)}
+                      aria-describedby={fieldErrors.lastName ? 'err-lastName' : undefined}
                     />
                   </div>
-                  {fieldErrors.lastName ? (
-                    <p className="text-[11px] text-red-500">{fieldErrors.lastName}</p>
-                  ) : null}
+                  <FieldError message={fieldErrors.lastName} />
                 </div>
               </div>
-              <div className="space-y-1.5">
+
+              {/* Phone */}
+              <div className="space-y-1">
                 <Label htmlFor="phoneNumber" className="text-[12px] font-semibold text-foreground/80">
-                  Phone Number <span className="text-muted-foreground font-normal">(optional)</span>
+                  Phone Number{' '}
+                  <span className="font-normal text-muted-foreground">(optional)</span>
                 </Label>
                 <div className="relative">
-                  <FieldIcon>
+                  <FieldIcon hasError={Boolean(fieldErrors.phoneNumber)}>
                     <Phone className="h-3.5 w-3.5" />
                   </FieldIcon>
                   <Input
                     id="phoneNumber"
                     type="tel"
-                    placeholder="+91 9876543210"
+                    placeholder="+1 555 000 0000"
                     className="h-10 pl-9 text-sm"
                     value={phoneNumber}
-                    onChange={(event) => {
-                      setPhoneNumber(event.target.value)
-                      clearFieldError('phoneNumber')
-                    }}
+                    onChange={(e) => { setPhoneNumber(e.target.value); clearFieldError('phoneNumber') }}
+                    onBlur={() => markTouched('phoneNumber')}
                     aria-invalid={Boolean(fieldErrors.phoneNumber)}
                   />
                 </div>
-                {fieldErrors.phoneNumber ? (
-                  <p className="text-[11px] text-red-500">{fieldErrors.phoneNumber}</p>
-                ) : null}
+                <FieldError message={fieldErrors.phoneNumber} />
               </div>
             </>
           )}
 
-          <div className="space-y-1.5">
+          {/* Email */}
+          <div className="space-y-1">
             <Label htmlFor="email" className="text-[12px] font-semibold text-foreground/80">
               Email
             </Label>
             <div className="relative">
-              <FieldIcon>
+              <FieldIcon hasError={Boolean(fieldErrors.email)}>
                 <Mail className="h-3.5 w-3.5" />
               </FieldIcon>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@hirequest.ai"
+                placeholder="you@example.com"
                 className="h-10 pl-9 text-sm"
                 value={email}
-                onChange={(event) => {
-                  setEmail(event.target.value)
-                  clearFieldError('email')
-                }}
-                required
+                onChange={(e) => { setEmail(e.target.value); clearFieldError('email') }}
+                onBlur={blurEmail}
                 aria-invalid={Boolean(fieldErrors.email)}
+                aria-describedby={fieldErrors.email ? 'err-email' : undefined}
+                autoComplete={isSignIn ? 'email' : 'username'}
               />
             </div>
-            {fieldErrors.email ? <p className="text-[11px] text-red-500">{fieldErrors.email}</p> : null}
+            <FieldError message={fieldErrors.email?.trim() ? fieldErrors.email : undefined} />
           </div>
 
-          <div className="space-y-1.5">
+          {/* Password */}
+          <div className="space-y-1">
             <Label htmlFor="password" className="text-[12px] font-semibold text-foreground/80">
               Password
             </Label>
             <div className="relative">
-              <FieldIcon>
+              <FieldIcon hasError={Boolean(fieldErrors.password)}>
                 <Lock className="h-3.5 w-3.5" />
               </FieldIcon>
               <Input
@@ -326,66 +386,85 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
                 placeholder="••••••••"
                 className="h-10 pl-9 pr-10 text-sm"
                 value={password}
-                onChange={(event) => {
-                  setPassword(event.target.value)
-                  clearFieldError('password')
-                }}
-                required
+                onChange={(e) => { setPassword(e.target.value); clearFieldError('password') }}
+                onBlur={blurPassword}
                 minLength={8}
                 aria-invalid={Boolean(fieldErrors.password)}
+                aria-describedby={fieldErrors.password ? 'err-password' : undefined}
+                autoComplete={isSignIn ? 'current-password' : 'new-password'}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
                 className="absolute right-1 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-input/40 hover:text-primary"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
+                tabIndex={-1}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-            {fieldErrors.password ? <p className="text-[11px] text-red-500">{fieldErrors.password}</p> : null}
+            <FieldError message={fieldErrors.password} />
+            {!isSignIn && !fieldErrors.password && password.length > 0 && password.length < 8 ? (
+              <p className="flex items-center gap-1 text-[11px] text-amber-400">
+                <AlertCircle className="h-3 w-3" aria-hidden />
+                At least 8 characters required ({password.length}/8)
+              </p>
+            ) : null}
           </div>
 
+          {/* Confirm password */}
           {!isSignIn && (
-            <div className="space-y-1.5">
-              <Label htmlFor="confirm" className="text-[12px] font-semibold text-foreground/80">
+            <div className="space-y-1">
+              <Label htmlFor="confirmPassword" className="text-[12px] font-semibold text-foreground/80">
                 Confirm Password
               </Label>
               <div className="relative">
-                <FieldIcon>
+                <FieldIcon hasError={Boolean(fieldErrors.confirmPassword)}>
                   <Lock className="h-3.5 w-3.5" />
                 </FieldIcon>
                 <Input
-                  id="confirm"
-                  type="password"
+                  id="confirmPassword"
+                  type={showConfirm ? 'text' : 'password'}
                   placeholder="••••••••"
-                  className="h-10 pl-9 text-sm"
+                  className="h-10 pl-9 pr-10 text-sm"
                   value={confirmPassword}
-                  onChange={(event) => {
-                    setConfirmPassword(event.target.value)
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value)
                     clearFieldError('confirmPassword')
+                    // Live match check
+                    if (touched.confirmPassword && password && e.target.value) {
+                      if (password !== e.target.value) {
+                        setFieldErrors((prev) => ({ ...prev, confirmPassword: 'Passwords do not match' }))
+                      }
+                    }
                   }}
-                  required
+                  onBlur={blurConfirm}
                   minLength={8}
                   aria-invalid={Boolean(fieldErrors.confirmPassword)}
+                  autoComplete="new-password"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm((v) => !v)}
+                  className="absolute right-1 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-input/40 hover:text-primary"
+                  aria-label={showConfirm ? 'Hide confirm password' : 'Show confirm password'}
+                  tabIndex={-1}
+                >
+                  {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
-              {fieldErrors.confirmPassword ? (
-                <p className="text-[11px] text-red-500">{fieldErrors.confirmPassword}</p>
-              ) : null}
+              {!fieldErrors.confirmPassword && confirmPassword && password === confirmPassword ? (
+                <p className="flex items-center gap-1 text-[11px] text-emerald-400">
+                  <CheckCircle2 className="h-3 w-3" aria-hidden /> Passwords match
+                </p>
+              ) : (
+                <FieldError message={fieldErrors.confirmPassword} />
+              )}
             </div>
           )}
 
-          {errorMessage ? (
-            <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-[12px] text-red-500">
-              {errorMessage}
-            </div>
-          ) : null}
-          {successMessage ? (
-            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[12px] text-emerald-600">
-              {successMessage}
-            </div>
-          ) : null}
+          {errorMessage ? <AlertBanner variant="error">{errorMessage}</AlertBanner> : null}
+          {successMessage ? <AlertBanner variant="success">{successMessage}</AlertBanner> : null}
 
           {isSignIn && (
             <div className="flex items-center justify-between text-[12px]">
@@ -413,6 +492,20 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
             {isSubmitting ? 'Please wait…' : isSignIn ? 'Sign In' : 'Create Account'}
             <ArrowRight className="h-4 w-4" />
           </button>
+
+          {!isSignIn ? (
+            <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
+              By creating an account, you agree to our{' '}
+              <Link href="/terms" className="font-semibold text-primary hover:underline">
+                Terms of Use
+              </Link>{' '}
+              and{' '}
+              <Link href="/privacy" className="font-semibold text-primary hover:underline">
+                Privacy Policy
+              </Link>
+              .
+            </p>
+          ) : null}
         </form>
 
         {showOAuth ? (
@@ -460,6 +553,16 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
           >
             {isSignIn ? 'Sign up' : 'Sign in'}
           </button>
+        </p>
+
+        <p className="mt-4 text-center text-[11px] text-muted-foreground">
+          <Link href="/privacy" className="font-semibold text-primary hover:underline">
+            Privacy Policy
+          </Link>
+          <span className="mx-1.5">·</span>
+          <Link href="/terms" className="font-semibold text-primary hover:underline">
+            Terms of Use
+          </Link>
         </p>
 
         <div className="mt-5 flex justify-center">

@@ -10,6 +10,13 @@ interface Props {
 
 export function SessionProvider({ children, session }: Props) {
   return (
-    <NextAuthSessionProvider session={session}>{children}</NextAuthSessionProvider>
+    <NextAuthSessionProvider
+      session={session}
+      basePath="/api/auth"
+      refetchOnWindowFocus={false}
+      refetchWhenOffline={false}
+    >
+      {children}
+    </NextAuthSessionProvider>
   )
 }

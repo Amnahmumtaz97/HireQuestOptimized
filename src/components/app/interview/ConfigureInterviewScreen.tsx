@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Check, AlertTriangle, Sparkles } from 'lucide-react'
 import { LoadingButton } from '@/components/ui/loading-button'
+import { StyledSelect } from '@/components/ui/styled-select'
 import { useToast } from '@/components/ui/toast'
 import {
   InterviewTypeSelector,
@@ -199,29 +200,29 @@ export function ConfigureInterviewScreen({
               className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
             />
           </label>
-          <label className="space-y-1.5">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs text-muted-foreground">Seniority</span>
               <FieldBadge fromResume={fromResume('seniorityLevel')} />
             </div>
-            <select
+            <StyledSelect
               value={config.seniorityLevel || ''}
-              onChange={(e) =>
+              onChange={(value) =>
                 patch(
                   'seniorityLevel',
-                  (e.target.value || null) as InterviewSetupConfig['seniorityLevel'],
+                  (value || null) as InterviewSetupConfig['seniorityLevel'],
                 )
               }
-              className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
-            >
-              <option value="">Select…</option>
-              {SENIORITY_UI_OPTIONS.map((opt) => (
-                <option key={opt.key} value={opt.key}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              options={SENIORITY_UI_OPTIONS.map((opt) => ({
+                value: opt.key,
+                label: opt.label,
+              }))}
+              placeholder="Select seniority"
+              allowEmpty
+              ariaLabel="Seniority"
+              className="h-10"
+            />
+          </div>
           <div className="space-y-1.5 sm:col-span-2">
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs text-muted-foreground">Skills (from resume)</span>
@@ -328,23 +329,24 @@ export function ConfigureInterviewScreen({
           4 · Interview parameters
         </h2>
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="space-y-1.5">
+          <div className="space-y-1.5">
             <span className="text-xs text-muted-foreground">Difficulty</span>
-            <select
+            <StyledSelect
               value={config.difficulty || ''}
-              onChange={(e) =>
-                patch('difficulty', (e.target.value || null) as InterviewSetupConfig['difficulty'])
+              onChange={(value) =>
+                patch('difficulty', (value || null) as InterviewSetupConfig['difficulty'])
               }
-              className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
-            >
-              <option value="">Select…</option>
-              {DIFFICULTY_UI_OPTIONS.map((opt) => (
-                <option key={opt.key} value={opt.key}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              options={DIFFICULTY_UI_OPTIONS.map((opt) => ({
+                value: opt.key,
+                label: opt.label,
+                description: opt.subtitle,
+              }))}
+              placeholder="Select difficulty"
+              allowEmpty
+              ariaLabel="Difficulty"
+              className="h-10"
+            />
+          </div>
           <label className="space-y-1.5">
             <span className="text-xs text-muted-foreground">Duration (minutes)</span>
             <input

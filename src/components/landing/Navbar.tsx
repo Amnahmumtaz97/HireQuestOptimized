@@ -1,23 +1,22 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Menu, Moon, Sun, X } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { useTheme } from '@/components/providers/ThemeProvider'
+import { ThemeSwitch } from '@/components/ui/theme-switch'
 
 const links = [
   { label: 'Product', href: '/product' },
-  { label: 'Solutions', href: '/solutions' },
   { label: 'Features', href: '/features' },
+  { label: 'Solutions', href: '/solutions' },
   { label: 'Pricing', href: '/pricing' },
 ]
 
 export function Navbar() {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
-  const { theme, toggleTheme } = useTheme()
   const { data: session, status } = useSession()
 
   const role = session?.user?.role
@@ -65,15 +64,7 @@ export function Navbar() {
           </div>
 
           <div className="ml-auto flex items-center gap-2 sm:gap-4">
-            <button
-              type="button"
-              aria-label="Toggle theme"
-              onClick={toggleTheme}
-              suppressHydrationWarning
-              className="hq-btn-icon inline-flex"
-            >
-              {theme === 'light' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </button>
+            <ThemeSwitch />
 
             {isAuthenticated ? (
               <Link href={authedEntryHref} className="hq-marketing-cta !rounded-[10px] !pr-4">

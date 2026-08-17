@@ -10,7 +10,7 @@ export default function ProfilePage() {
     <>
       <DashboardPageHeader
         title="Profile"
-        description="Edit your personal details and contact information."
+        description="Your resume, links, and experience — used to tailor every interview."
       />
       <ProfileManagementPage />
     </>
