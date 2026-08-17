@@ -49,7 +49,7 @@ export async function GET() {
 
   try {
     await connectToDatabase()
-    const certs = await CertificationModel.find({}).sort({ name: 1 }).lean()
+    const certs = await CertificationModel.find({}).sort('name').lean()
     return NextResponse.json({ certifications: certs.map(serializeCertificationAdmin) })
   } catch (error) {
     return NextResponse.json(
