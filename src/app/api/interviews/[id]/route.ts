@@ -6,7 +6,6 @@ import { authOptions } from '@/lib/auth'
 import { connectToDatabase } from '@/lib/mongoose'
 import { InterviewSessionModel } from '@/models/InterviewSession'
 import { advancePathProgressForInterview } from '@/lib/learning-paths/advance-on-complete'
-import { sanitizeSessionForClient } from '@/lib/interview/sanitize-session'
 
 function validateId(id: string): NextResponse | null {
   if (!isValidObjectId(id)) {
@@ -31,7 +30,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     if (!doc) {
       return NextResponse.json({ message: 'Interview not found' }, { status: 404 })
     }
-    return NextResponse.json({ session: sanitizeSessionForClient(doc) })
+    return NextResponse.json({ session: doc })
   } catch (error) {
     return NextResponse.json(
       { message: error instanceof Error ? error.message : 'Failed to load interview' },
@@ -240,7 +239,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     return NextResponse.json({
-      session: sanitizeSessionForClient(updated as Record<string, unknown>),
+      session: updated,
       ...(pathProgress ? { pathProgress } : {}),
     })
   } catch (error) {

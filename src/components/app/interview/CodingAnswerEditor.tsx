@@ -49,7 +49,6 @@ type RunReport = {
     passed: boolean
     actual?: string
     error?: string
-    hidden?: boolean
   }>
 }
 
@@ -188,7 +187,7 @@ export function CodingAnswerEditor({
     persistTheme(next)
   }
 
-  async function runTests() {
+  async function runTests(includeHidden: boolean) {
     if (!canRun) {
       setError('The judge currently runs JavaScript only. Switch language to JavaScript to run tests.')
       return
@@ -203,6 +202,7 @@ export function CodingAnswerEditor({
           questionIndex,
           code: value || starterForLanguage,
           language: editorLanguage,
+          includeHidden,
         }),
       })
       const data = await res.json()
@@ -278,12 +278,22 @@ export function CodingAnswerEditor({
             loading={running}
             loadingLabel="Running…"
             disabled={disabled || !canRun}
-            onClick={() => void runTests()}
+            onClick={() => void runTests(false)}
             className="hq-btn-primary h-10 min-h-10 gap-1.5 px-3 text-xs"
-            title={canRun ? 'Run all tests (hidden tests are judged server-side)' : 'JavaScript only'}
+            title={canRun ? 'Run public tests' : 'JavaScript only'}
           >
             <Play className="h-3.5 w-3.5" aria-hidden />
-            Run tests
+            Run
+          </LoadingButton>
+          <LoadingButton
+            type="button"
+            loading={running}
+            disabled={disabled || !canRun}
+            onClick={() => void runTests(true)}
+            className="hq-btn-outline h-10 min-h-10 px-3 text-xs"
+            title={canRun ? 'Run all tests' : 'JavaScript only'}
+          >
+            Run all
           </LoadingButton>
         </div>
       </div>
@@ -348,15 +358,11 @@ export function CodingAnswerEditor({
                   >
                     <span className="font-sans font-semibold">#{i + 1}</span>{' '}
                     {r.passed ? 'Accepted' : 'Wrong Answer'}
-                    {r.hidden ? (
-                      <span className="mt-0.5 block opacity-90">hidden test</span>
-                    ) : (
-                      <span className="mt-0.5 block opacity-90">
-                        in {r.input} → expect {r.expected}
-                        {r.actual ? ` · got ${r.actual}` : ''}
-                        {r.error && !r.passed ? ` · ${r.error}` : ''}
-                      </span>
-                    )}
+                    <span className="mt-0.5 block opacity-90">
+                      in {r.input} → expect {r.expected}
+                      {r.actual ? ` · got ${r.actual}` : ''}
+                      {r.error && !r.passed ? ` · ${r.error}` : ''}
+                    </span>
                   </li>
                 ))}
               </ul>

@@ -15,7 +15,6 @@ import { loadInterviewCatalogDepartments } from '@/lib/interview-catalog/load'
 import { resumeContextSchema } from '@/lib/interview/resume-context-schema'
 import { validatePathStageLinkage } from '@/lib/learning-paths/validate-link'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { sanitizeSessionForClient } from '@/lib/interview/sanitize-session'
 
 const generateBodySchema = z.object({
   resumeContext: resumeContextSchema,
@@ -286,7 +285,7 @@ export async function POST(
     }
 
     return NextResponse.json({
-      session: sanitizeSessionForClient(updated as Record<string, unknown>),
+      session: updated,
       source: result.source,
       warnings: result.warnings,
     })

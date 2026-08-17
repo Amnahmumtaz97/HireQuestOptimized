@@ -7,7 +7,6 @@ import { LearningPathModel } from '@/models/LearningPath'
 import { StageModel } from '@/models/Stage'
 import { UserPathProgressModel } from '@/models/UserPathProgress'
 import { serializeProgress } from '@/lib/learning-paths/serialize'
-import { visibilityQuery } from '@/lib/learning-paths/constants'
 
 export async function POST(
   _request: Request,
@@ -25,11 +24,7 @@ export async function POST(
     }
 
     await connectToDatabase()
-    // Visibility filter prevents enrolling into other users' private paths.
-    const path = await LearningPathModel.findOne({
-      _id: id,
-      ...visibilityQuery(session.user.id),
-    }).lean()
+    const path = await LearningPathModel.findById(id).lean()
     if (!path) {
       return NextResponse.json({ message: 'Path not found' }, { status: 404 })
     }

@@ -23,7 +23,6 @@ import { connectToDatabase } from '@/lib/mongoose'
 import { InterviewSessionModel } from '@/models/InterviewSession'
 import { resumeContextSchema } from '@/lib/interview/resume-context-schema'
 import { validatePathStageLinkage } from '@/lib/learning-paths/validate-link'
-import { sanitizeSessionForClient, sanitizeSessionsForClient } from '@/lib/interview/sanitize-session'
 
 const MAX_QUESTIONS = QUESTION_COUNT_MAX
 
@@ -242,7 +241,7 @@ export async function GET() {
       .limit(50)
       .lean()
 
-    return NextResponse.json({ sessions: sanitizeSessionsForClient(sessions) })
+    return NextResponse.json({ sessions })
   } catch (error) {
     return NextResponse.json(
       { message: error instanceof Error ? error.message : 'Failed to fetch interviews' },
@@ -392,7 +391,7 @@ export async function POST(request: Request) {
         preferredQuestionFormat: null,
       })
 
-      return NextResponse.json({ session: sanitizeSessionForClient(created) }, { status: 201 })
+      return NextResponse.json({ session: created }, { status: 201 })
     }
 
     // —— Non-catalog types ——
@@ -469,7 +468,7 @@ export async function POST(request: Request) {
       preferredQuestionFormat,
     })
 
-    return NextResponse.json({ session: sanitizeSessionForClient(created) }, { status: 201 })
+    return NextResponse.json({ session: created }, { status: 201 })
   } catch (error) {
     return NextResponse.json(
       { message: error instanceof Error ? error.message : 'Failed to create interview' },

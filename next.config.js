@@ -3,21 +3,12 @@ const withPWA = require('next-pwa')({
   disable: process.env.NODE_ENV === 'development',
   register: true,
   skipWaiting: true,
+  // Keep this conservative; we can expand caching rules later.
   runtimeCaching: [
-    // All API responses are user-scoped or dynamic — never serve them from a
-    // shared service-worker cache (cross-user data leak on shared browsers).
     {
-      urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
+      urlPattern: ({ url }) => url.pathname.startsWith('/api/auth'),
       handler: 'NetworkOnly',
     },
-    // Authenticated app documents must not be cached either.
-    {
-      urlPattern: ({ request, url }) =>
-        request.destination === 'document' &&
-        (url.pathname.startsWith('/app') || url.pathname.startsWith('/dashboard')),
-      handler: 'NetworkOnly',
-    },
-    // Public marketing/document pages are safe to cache with a network-first fallback.
     {
       urlPattern: ({ request }) => request.destination === 'document',
       handler: 'NetworkFirst',
@@ -38,6 +29,18 @@ const withPWA = require('next-pwa')({
         expiration: {
           maxEntries: 200,
           maxAgeSeconds: 60 * 60 * 24 * 30,
+        },
+      },
+    },
+    {
+      urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'api',
+        networkTimeoutSeconds: 10,
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 60 * 5,
         },
       },
     },
@@ -65,32 +68,15 @@ const nextConfig = {
   },
   // Performance: compression
   compress: true,
-  // Security + caching headers
+  // Performance: headers for caching static assets
   async headers() {
-    const securityHeaders = [
-      { key: 'X-Content-Type-Options', value: 'nosniff' },
-      { key: 'X-Frame-Options', value: 'DENY' },
-      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-      {
-        key: 'Permissions-Policy',
-        value: 'camera=(), microphone=(self), geolocation=(), payment=(), usb=()',
-      },
-    ]
-    if (process.env.NODE_ENV === 'production') {
-      securityHeaders.push({
-        key: 'Strict-Transport-Security',
-        value: 'max-age=63072000; includeSubDomains',
-      })
-    }
     return [
       {
         source: '/(.*)',
-        headers: securityHeaders,
-      },
-      {
-        // API responses carry user data — keep them out of browser/proxy caches.
-        source: '/api/(.*)',
-        headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+        ],
       },
       {
         source: '/(.*)\\.(woff2|woff|ttf)',

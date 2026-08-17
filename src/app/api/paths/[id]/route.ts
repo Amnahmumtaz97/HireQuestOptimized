@@ -9,7 +9,6 @@ import { UserPathProgressModel } from '@/models/UserPathProgress'
 import { CertificationModel } from '@/models/Certification'
 import { serializePath, serializeProgress } from '@/lib/learning-paths/serialize'
 import { serializeCertification } from '@/lib/certifications/serialize'
-import { visibilityQuery } from '@/lib/learning-paths/constants'
 import {
   pathMatchInputFromDoc,
   selectRelatedCertifications,
@@ -31,11 +30,7 @@ export async function GET(
     }
 
     await connectToDatabase()
-    // Visibility filter prevents reading other users' private (resume) paths.
-    const path = await LearningPathModel.findOne({
-      _id: id,
-      ...visibilityQuery(session.user.id),
-    }).lean()
+    const path = await LearningPathModel.findById(id).lean()
     if (!path) {
       return NextResponse.json({ message: 'Path not found' }, { status: 404 })
     }
