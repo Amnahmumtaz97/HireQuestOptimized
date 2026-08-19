@@ -52,7 +52,7 @@ export async function GET() {
     })).filter((c) => c.count > 0)
 
     // Return known providers first (in defined order), then any others
-    const providers = KNOWN_PROVIDERS
+    const providers: Array<{ slug: string; name: string; count: number }> = KNOWN_PROVIDERS
       .filter((slug) => provMap.has(slug))
       .map((slug) => ({
         slug,
