@@ -33,7 +33,9 @@ if (!MONGODB_URI) {
 }
 
 // Inline schema — avoids Next.js module resolution issues in scripts
-const certSchema = new mongoose.Schema(
+type CertificationSeedDocument = Record<string, unknown>
+
+const certSchema = new mongoose.Schema<CertificationSeedDocument>(
   {
     name: String,
     provider: String,
@@ -67,8 +69,9 @@ const certSchema = new mongoose.Schema(
 
 certSchema.index({ name: 'text', provider: 'text', description: 'text', skills: 'text', tags: 'text' })
 
-const CertModel =
-  mongoose.models.Certification ?? mongoose.model('Certification', certSchema)
+const CertModel: mongoose.Model<CertificationSeedDocument> =
+  (mongoose.models.Certification as mongoose.Model<CertificationSeedDocument> | undefined) ??
+  mongoose.model<CertificationSeedDocument>('Certification', certSchema)
 
 async function main() {
   await mongoose.connect(MONGODB_URI as string)
