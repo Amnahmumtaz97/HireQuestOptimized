@@ -47,6 +47,17 @@ export function AppShell({ children }: AppShellProps) {
     return 'md:grid-cols-[260px_1fr] lg:grid-cols-[272px_1fr]'
   }, [sidebarCollapsed])
 
+  if (isInterviewWorkspace) {
+    return (
+      <main className="hq-app hq-interview-app-shell min-h-dvh bg-[var(--background)] transition-colors duration-200">
+        <Suspense fallback={null}>
+          <PageGuidanceToasts />
+        </Suspense>
+        {children}
+      </main>
+    )
+  }
+
   return (
     <main className="hq-app min-h-dvh bg-[var(--background)] transition-colors duration-200">
       <Suspense fallback={null}>

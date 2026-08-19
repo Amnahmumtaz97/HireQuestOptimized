@@ -284,7 +284,7 @@ export async function POST(request: Request) {
       }
     }
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : 'Failed to create path interview' },
+      { message: 'Failed to create path interview. Please try again.' },
       { status: 500 },
     )
   }

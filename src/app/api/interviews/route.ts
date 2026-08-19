@@ -470,8 +470,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ session: created }, { status: 201 })
   } catch (error) {
+    console.error('[interviews/create]', error)
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : 'Failed to create interview' },
+      { message: 'Failed to create interview. Please try again.' },
       { status: 500 },
     )
   }

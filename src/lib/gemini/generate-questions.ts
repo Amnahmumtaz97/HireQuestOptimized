@@ -13,6 +13,7 @@ import { formatIndustryDisplay, formatRoleCategoryDisplay } from '@/utils/dashbo
 import { assertConfirmedTopics } from '@/lib/interview-config/assert-selection'
 
 const DEFAULT_MODEL = 'gemini-2.0-flash'
+const DEFAULT_MODEL_FALLBACK = 'gemini-2.5-flash-lite'
 
 /** Cap Gemini image calls per batch (same API key; keeps Mongo documents smaller). */
 /** Diagrams disabled - no diagram questions will be generated */
@@ -255,7 +256,7 @@ export async function generateQuestionsWithGemini(
   const modelChain = resolveTextModelChain(
     DEFAULT_MODEL,
     process.env.GEMINI_MODEL,
-    process.env.GEMINI_MODEL_FALLBACK,
+    process.env.GEMINI_MODEL_FALLBACK || DEFAULT_MODEL_FALLBACK,
   )
 
   const coding = wantsCodingRound(params)

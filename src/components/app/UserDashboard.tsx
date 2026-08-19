@@ -58,6 +58,7 @@ import type {
 import type { DepartmentConfig } from '@/lib/interview-catalog/types'
 import { IconCard, IconGrid } from '@/components/ui/icon-card'
 import { AlertBanner } from '@/components/ui/alert-banner'
+import { InterviewGenerationLoader } from '@/components/app/interview/InterviewGenerationLoader'
 import { ChipMultiSelect } from '@/components/app/ChipMultiSelect'
 import { TopicBundleSelector, DynamicTopicGrid } from '@/components/app/TopicBundleSelector'
 import {
@@ -1522,6 +1523,7 @@ export function CreateInterviewWizard({
   }
 
   const createInterview = async () => {
+    if (isCreatingInterview) return
     if (!canCreateInterview) {
       if (!interviewType) {
         setActionError('Select an interview type.')
@@ -1561,7 +1563,6 @@ export function CreateInterviewWizard({
       if (!sessionId) {
         setActionError('Interview created but missing session id')
         toast.error('Interview created but missing session id')
-        router.push('/app/interviews')
         return
       }
 
@@ -1575,7 +1576,6 @@ export function CreateInterviewWizard({
         const msg = genData.message ?? 'Interview saved, but question generation failed'
         setActionError(msg)
         toast.error(msg)
-        router.push('/app/interviews')
         return
       }
 
@@ -1592,7 +1592,7 @@ export function CreateInterviewWizard({
         setActionMessage(`Interview ready — ${qCount} questions generated via ${source}.`)
         toast.success(`Interview ready — ${qCount} questions generated via ${source}.`)
       }
-      router.push('/app/interviews')
+      router.push(`/app/interviews/${sessionId}`)
     } catch {
       setActionError('Failed to create interview')
       toast.error('Failed to create interview')
@@ -1811,7 +1811,9 @@ export function CreateInterviewWizard({
   }
 
   return (
-    <div className="w-full">
+    <>
+      {isCreatingInterview ? <InterviewGenerationLoader /> : null}
+      <div className="w-full">
       {configError ? <p className="mb-4 text-sm text-red-400">{configError}</p> : null}
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-12 space-y-6 lg:col-span-8">
@@ -2424,6 +2426,7 @@ export function CreateInterviewWizard({
           </div>
         </aside>
       </div>
-    </div>
+      </div>
+    </>
   )
 }

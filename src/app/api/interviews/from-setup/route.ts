@@ -310,10 +310,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('[interviews/from-setup]', error)
     return NextResponse.json(
-      {
-        message:
-          error instanceof Error ? error.message : 'Failed to create interview from setup',
-      },
+      { message: 'Failed to create interview from setup. Please try again.' },
       { status: 500 },
     )
   }

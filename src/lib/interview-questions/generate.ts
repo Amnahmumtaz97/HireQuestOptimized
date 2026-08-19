@@ -6,6 +6,7 @@ import type { InterviewQuestionItem } from '@/lib/interview-questions/schema'
 import { validateGeneratedQuestions } from '@/lib/interview-questions/validate'
 import type { InterviewGenerationParams } from '@/lib/interview-questions/prompt'
 import { assertConfirmedTopics } from '@/lib/interview-config/assert-selection'
+import { isGeminiRateLimitError } from '@/lib/gemini/model-fallback'
 
 export type QuestionGenerationSource = 'gemini' | 'template'
 
@@ -237,10 +238,16 @@ export async function generateInterviewQuestions(
             : 'Gemini output failed validation; using template questions.',
       )
     } catch (e) {
-      if (!allowTemplate) {
+      if (!allowTemplate && !isGeminiRateLimitError(e)) {
         throw e instanceof Error ? e : new Error('Gemini generation failed')
       }
-      warnings.push(e instanceof Error ? e.message : 'Gemini generation failed.')
+      warnings.push(
+        isGeminiRateLimitError(e)
+          ? 'Gemini quota is currently exhausted; using curated interview questions.'
+          : e instanceof Error
+            ? e.message
+            : 'Gemini generation failed.',
+      )
       warnings.push(fallbackWarning(coding, systemDesign, 'failed'))
     }
   } else if (!allowTemplate) {

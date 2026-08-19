@@ -292,7 +292,7 @@ export async function POST(
   } catch (error) {
     console.error('[generate-questions]', error)
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : 'Failed to generate questions' },
+      { message: 'Failed to generate questions. Please try again.' },
       { status: 500 },
     )
   }
