@@ -1,10 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { ProgressRing } from '@/components/dashboard/ProgressRing'
+import { useState, useEffect } from 'react'
 import { BounceLoader } from '@/components/ui/bounce-loader'
 import { AlertBanner } from '@/components/ui/alert-banner'
+import { KpiGrid } from '@/components/app/analytics/KpiGrid'
+import { PerformanceTrend } from '@/components/app/analytics/PerformanceTrend'
+import { SkillBreakdown } from '@/components/app/analytics/SkillBreakdown'
+import { ActivityCalendar } from '@/components/app/analytics/ActivityCalendar'
+import { LearningPathProgress } from '@/components/app/analytics/LearningPathProgress'
+import { NextActionsPanel } from '@/components/app/analytics/NextActionsPanel'
+
 
 type AnalyticsPayload = {
   gamification: {
@@ -25,10 +30,14 @@ type AnalyticsPayload = {
   }
 }
 
+const TIME_RANGES = ['7 days', '30 days', 'All time'] as const
+type TimeRange = (typeof TIME_RANGES)[number]
+
 export function AnalyticsOverview() {
   const [data, setData] = useState<AnalyticsPayload | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [range, setRange] = useState<TimeRange>('All time')
 
   useEffect(() => {
     let cancelled = false
@@ -45,98 +54,89 @@ export function AnalyticsOverview() {
       }
     }
     void load()
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [])
 
   if (loading) {
     return (
-      <div className="flex min-h-[240px] items-center justify-center">
-        <BounceLoader label="Loading analytics" />
+      <div className="flex min-h-[320px] items-center justify-center">
+        <BounceLoader label="Loading analytics…" />
       </div>
     )
   }
 
   if (error || !data) {
-    return <AlertBanner variant="error">{error || 'No analytics yet.'}</AlertBanner>
+    return <AlertBanner variant="error">{error || 'No analytics data available.'}</AlertBanner>
   }
 
-  const confidence = data.analytics.interviewConfidenceScore ?? 0
-  const completed = data.analytics.interviewsCompleted
+  const { gamification: gam, analytics: an } = data
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      <div className="dashboard-card p-6 lg:col-span-2">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
-              Performance overview
-            </div>
-            <div className="mt-2 text-lg font-semibold tracking-tight text-foreground">
-              Your practice at a glance
-            </div>
-            <div className="mt-1 text-sm text-muted-foreground">
-              Built from completed interviews and learning-path progress.
-            </div>
-          </div>
-          <div className="hidden sm:block">
-            <ProgressRing size={72} progress={confidence / 100} />
-          </div>
-        </div>
+    <div className="space-y-5">
+      {/* ── Time-range tab bar ── */}
+      <div className="flex items-center gap-1 rounded-xl border border-border bg-card/60 p-1 w-fit">
+        {TIME_RANGES.map((r) => (
+          <button
+            key={r}
+            type="button"
+            onClick={() => setRange(r)}
+            className={[
+              'rounded-lg px-3 py-1.5 text-xs font-semibold transition-all',
+              range === r
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground',
+            ].join(' ')}
+          >
+            {r}
+          </button>
+        ))}
+      </div>
 
-        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <Stat label="Interviews completed" value={String(completed)} hint="All time" />
-          <Stat
-            label="Questions answered"
-            value={String(data.analytics.questionsAnswered)}
-            hint={`${data.gamification.xp} XP earned`}
-          />
-          <Stat
-            label="Current streak"
-            value={`${data.gamification.currentStreak}d`}
-            hint={`Best ${data.gamification.longestStreak}d`}
+      {/* ── KPI Grid ── */}
+      <KpiGrid
+        interviewsCompleted={an.interviewsCompleted}
+        questionsAnswered={an.questionsAnswered}
+        timeSpentMinutes={an.timeSpentMinutes}
+        currentStreak={gam.currentStreak}
+        longestStreak={gam.longestStreak}
+        xp={gam.xp}
+        confidenceScore={an.interviewConfidenceScore}
+      />
+
+      {/* ── Trend + Skill row ── */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <PerformanceTrend feedbackTrend={an.feedbackTrend ?? []} />
+        </div>
+        <div className="lg:col-span-1">
+          <SkillBreakdown
+            questionsAnswered={an.questionsAnswered}
+            interviewsCompleted={an.interviewsCompleted}
+            confidenceScore={an.interviewConfidenceScore}
           />
         </div>
       </div>
 
-      <div className="dashboard-card p-6">
-        <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
-          Keep going
-        </div>
-        <div className="mt-2 text-sm text-muted-foreground">
-          {completed === 0
-            ? 'Complete an interview to unlock trends here.'
-            : `${data.analytics.pathsEnrolled} paths enrolled · ${data.analytics.pathsCompleted} completed.`}
-        </div>
-        <ul className="mt-3 space-y-2 text-sm text-foreground">
-          <li>
-            <Link href="/app/question-bank" className="text-primary hover:underline">
-              Practice a topic from the question bank
-            </Link>
-          </li>
-          <li>
-            <Link href="/app/mocks" className="text-primary hover:underline">
-              Start a mock interview
-            </Link>
-          </li>
-          <li>
-            <Link href="/app/learning-paths" className="text-primary hover:underline">
-              Continue a learning path
-            </Link>
-          </li>
-        </ul>
-      </div>
-    </div>
-  )
-}
+      {/* ── Activity heatmap ── */}
+      <ActivityCalendar interviewsCompleted={an.interviewsCompleted} />
 
-function Stat({ label, value, hint }: { label: string; value: string; hint: string }) {
-  return (
-    <div className="rounded-2xl border border-border bg-[var(--hq-stat-surface)] p-4">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="mt-1 text-xl font-semibold text-foreground">{value}</div>
-      <div className="mt-1 text-[11px] text-muted-foreground">{hint}</div>
+      {/* ── Paths + Next Actions row ── */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <LearningPathProgress
+            pathsEnrolled={an.pathsEnrolled}
+            pathsCompleted={an.pathsCompleted}
+          />
+        </div>
+        <div className="lg:col-span-1">
+          <NextActionsPanel
+            interviewsCompleted={an.interviewsCompleted}
+            currentStreak={gam.currentStreak}
+            confidenceScore={an.interviewConfidenceScore}
+            pathsEnrolled={an.pathsEnrolled}
+          />
+        </div>
+      </div>
     </div>
   )
 }

@@ -1,6 +1,7 @@
 'use client'
 
-import { Volume2, Brain, CheckCircle2, Mic, type LucideIcon } from 'lucide-react'
+import Image from 'next/image'
+import { Volume2, Brain, CheckCircle2, type LucideIcon } from 'lucide-react'
 import { useReveal, useResponsiveColumns, rowRevealDelay } from '@/hooks/use-reveal'
 
 type Analysis = {
@@ -9,7 +10,16 @@ type Analysis = {
   description: string
   icon: LucideIcon
   bullets: string[]
-  illustration: 'voice' | 'behavioral'
+  image: {
+    src: string
+    alt: string
+  }
+  visual: {
+    tone: string
+    toneClass: string
+    metric: string
+    metricClass: string
+  }
 }
 
 const items: Analysis[] = [
@@ -20,7 +30,16 @@ const items: Analysis[] = [
       'Our AI processes your tone, pacing, and vocabulary in real time, providing actionable insights to project absolute confidence and authority.',
     icon: Volume2,
     bullets: ['Pitch modulation tracking', 'Filler word detection', 'Pacing & pause insights'],
-    illustration: 'voice',
+    image: {
+      src: '/voice-analysis.png',
+      alt: 'Voice analysis dashboard preview',
+    },
+    visual: {
+      tone: 'Tone Modulation',
+      toneClass: 'border-l-primary text-foreground',
+      metric: 'Filler Rate < 1%',
+      metricClass: 'border-l-emerald-400 text-emerald-400',
+    },
   },
   {
     eyebrow: 'Behavioral Coaching',
@@ -29,180 +48,22 @@ const items: Analysis[] = [
       'Simulate complex technical and behavioral interviews tailored to your target companies. The engine adapts to your responses dynamically.',
     icon: Brain,
     bullets: ['Company-specific question banks', 'STAR method structuring', 'Adaptive follow-ups'],
-    illustration: 'behavioral',
+    image: {
+      src: '/behavior-analysis.png',
+      alt: 'Behavioral STAR analysis preview',
+    },
+    visual: {
+      tone: 'STAR Compliance',
+      toneClass: 'border-l-indigo-500 text-indigo-400',
+      metric: '2.4x Metric Density',
+      metricClass: 'border-l-cyan-400 text-cyan-400',
+    },
   },
 ]
 
-function VoiceIllustration() {
-  const bars = [22, 46, 32, 68, 54, 82, 44, 90, 60, 74, 40, 58, 30, 66, 48, 78, 36, 62, 26, 50]
-  return (
-    <div
-      className="relative flex h-full w-full flex-col justify-between p-5 sm:p-6"
-      style={{
-        background:
-          'linear-gradient(160deg, color-mix(in oklab, var(--primary) 10%, var(--secondary)) 0%, var(--secondary) 60%, color-mix(in oklab, var(--primary) 6%, var(--secondary)) 100%)',
-      }}
-    >
-      <div className="relative flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div
-            className="flex h-9 w-9 items-center justify-center rounded-[9px] text-primary"
-            style={{ background: 'color-mix(in oklab, var(--primary) 14%, transparent)' }}
-          >
-            <Mic className="h-4 w-4" strokeWidth={1.8} />
-          </div>
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              Live capture
-            </div>
-            <div className="text-[13px] font-bold text-foreground tabular-nums">00:42 / 01:30</div>
-          </div>
-        </div>
-        <div
-          className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10.5px] font-semibold text-primary"
-          style={{
-            borderColor: 'color-mix(in oklab, var(--primary) 30%, transparent)',
-            background: 'color-mix(in oklab, var(--primary) 8%, transparent)',
-          }}
-        >
-          <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-          Analyzing
-        </div>
-      </div>
-
-      <div className="relative mt-4 flex flex-1 items-end gap-[3px]">
-        {bars.map((h, i) => (
-          <div
-            key={i}
-            className="flex-1 rounded-full"
-            style={{
-              height: `${h}%`,
-              background:
-                i > bars.length * 0.55
-                  ? 'color-mix(in oklab, var(--primary) 45%, transparent)'
-                  : 'var(--primary)',
-              opacity: i > bars.length * 0.72 ? 0.4 : 1,
-            }}
-          />
-        ))}
-      </div>
-
-      <div className="relative mt-5 grid grid-cols-1 gap-2 min-[380px]:grid-cols-3 sm:gap-2">
-        {[
-          { label: 'Pitch', value: '124 Hz' },
-          { label: 'Pace', value: '148 wpm' },
-          { label: 'Fillers', value: '2' },
-        ].map((m) => (
-          <div
-            key={m.label}
-            className="rounded-lg border px-3 py-2"
-            style={{
-              borderColor: 'color-mix(in oklab, var(--primary) 18%, var(--border))',
-              background: 'color-mix(in oklab, var(--background) 70%, transparent)',
-            }}
-          >
-            <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              {m.label}
-            </div>
-            <div className="mt-0.5 text-[13px] font-bold tabular-nums text-foreground">{m.value}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function BehavioralIllustration() {
-  const metrics = [
-    { label: 'Situation', value: 92 },
-    { label: 'Task', value: 84 },
-    { label: 'Action', value: 76 },
-    { label: 'Result', value: 88 },
-  ]
-  return (
-    <div
-      className="relative flex h-full w-full flex-col justify-between p-5 sm:p-6"
-      style={{
-        background:
-          'linear-gradient(160deg, color-mix(in oklab, var(--primary) 10%, var(--secondary)) 0%, var(--secondary) 60%, color-mix(in oklab, var(--primary) 6%, var(--secondary)) 100%)',
-      }}
-    >
-      <div className="relative flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div
-            className="flex h-9 w-9 items-center justify-center rounded-[9px] text-primary"
-            style={{ background: 'color-mix(in oklab, var(--primary) 14%, transparent)' }}
-          >
-            <Brain className="h-4 w-4" strokeWidth={1.8} />
-          </div>
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              STAR breakdown
-            </div>
-            <div className="text-[13px] font-bold text-foreground">Response quality</div>
-          </div>
-        </div>
-        <div
-          className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10.5px] font-semibold text-primary tabular-nums"
-          style={{
-            borderColor: 'color-mix(in oklab, var(--primary) 30%, transparent)',
-            background: 'color-mix(in oklab, var(--primary) 8%, transparent)',
-          }}
-        >
-          85 / 100
-        </div>
-      </div>
-
-      <div className="relative mt-5 space-y-3">
-        {metrics.map((m) => (
-          <div key={m.label}>
-            <div className="flex items-center justify-between text-[11.5px] font-semibold text-foreground">
-              <span>{m.label}</span>
-              <span className="text-muted-foreground tabular-nums">{m.value}%</span>
-            </div>
-            <div
-              className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full"
-              style={{ background: 'color-mix(in oklab, var(--primary) 12%, var(--border))' }}
-            >
-              <div
-                className="h-full rounded-full"
-                style={{
-                  width: `${m.value}%`,
-                  background:
-                    'linear-gradient(90deg, var(--primary) 0%, color-mix(in oklab, var(--primary) 65%, transparent) 100%)',
-                }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="relative mt-5 grid grid-cols-2 gap-2">
-        {[
-          { label: 'Confidence', value: 'High' },
-          { label: 'Follow-ups', value: '3 queued' },
-        ].map((m) => (
-          <div
-            key={m.label}
-            className="rounded-lg border px-3 py-2"
-            style={{
-              borderColor: 'color-mix(in oklab, var(--primary) 18%, var(--border))',
-              background: 'color-mix(in oklab, var(--background) 70%, transparent)',
-            }}
-          >
-            <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              {m.label}
-            </div>
-            <div className="mt-0.5 text-[13px] font-bold text-foreground">{m.value}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 function Card({ item, delay = 0 }: { item: Analysis; delay?: number }) {
   const Icon = item.icon
+
   return (
     <div
       className="reveal-from-top relative flex h-full flex-col rounded-2xl border p-6 sm:p-8 backdrop-blur-xl"
@@ -242,8 +103,64 @@ function Card({ item, delay = 0 }: { item: Analysis; delay?: number }) {
         ))}
       </ul>
 
-      <div className="mt-8 relative overflow-hidden rounded-xl border border-border aspect-[16/10]">
-        {item.illustration === 'voice' ? <VoiceIllustration /> : <BehavioralIllustration />}
+      <div className="group/visual relative mt-8 overflow-hidden rounded-2xl border border-primary/20 bg-background/60 p-3 shadow-inner">
+        <div
+          className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full opacity-80"
+          style={{
+            background:
+              'radial-gradient(circle, color-mix(in oklab, var(--primary) 24%, transparent), transparent 70%)',
+            filter: 'blur(34px)',
+          }}
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute -bottom-20 left-8 h-40 w-56 rounded-full opacity-60"
+          style={{
+            background:
+              'radial-gradient(ellipse, color-mix(in oklab, #06b6d4 15%, transparent), transparent 72%)',
+            filter: 'blur(38px)',
+          }}
+          aria-hidden
+        />
+        <div
+          className="relative flex aspect-[4/3] h-full w-full items-center justify-center overflow-hidden rounded-xl border border-border/80 p-4 sm:p-6"
+          style={{
+            background:
+              'linear-gradient(160deg, color-mix(in oklab, var(--primary) 10%, var(--secondary)) 0%, var(--secondary) 60%, color-mix(in oklab, var(--primary) 6%, var(--secondary)) 100%)',
+          }}
+        >
+          <Image
+            src={item.image.src}
+            alt={item.image.alt}
+            width={560}
+            height={350}
+            className="relative z-10 h-auto w-full max-w-[420px] object-contain drop-shadow-2xl transition-transform duration-500 group-hover/visual:scale-105"
+          />
+
+          <div
+            className={[
+              'absolute left-3 top-3 z-20 rounded-xl border border-border/80 border-l-4 bg-card/90 px-3 py-2 text-xs shadow-xl backdrop-blur-md sm:left-4 sm:top-4',
+              item.visual.toneClass,
+            ].join(' ')}
+          >
+            <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+              Analysis Signal
+            </div>
+            <div className="mt-0.5 text-xs font-extrabold sm:text-sm">{item.visual.tone}</div>
+          </div>
+
+          <div
+            className={[
+              'absolute bottom-3 right-3 z-20 rounded-xl border border-border/80 border-l-4 bg-card/90 px-3 py-2 text-xs shadow-xl backdrop-blur-md sm:bottom-4 sm:right-4',
+              item.visual.metricClass,
+            ].join(' ')}
+          >
+            <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+              Live Metric
+            </div>
+            <div className="mt-0.5 text-xs font-extrabold sm:text-sm">{item.visual.metric}</div>
+          </div>
+        </div>
       </div>
     </div>
   )
