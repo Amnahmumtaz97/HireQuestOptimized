@@ -9,6 +9,16 @@ export type InterviewSessionState = {
   interviewStartedAt?: string | null
   learningPathId?: string | null
   learningStageId?: string | null
+  /** Session-level config, used for the workspace title bar. */
+  interviewType?: string | null
+  difficulty?: string | null
+  topics?: string[] | null
+  industryKey?: string | null
+  roleCategoryKey?: string | null
+  codingCategories?: string[] | null
+  behavioralCompetencies?: string[] | null
+  systemDesignTopics?: string[] | null
+  hrSections?: string[] | null
   questions?: Array<{
     question: string
     type: 'technical' | 'behavioral' | 'hr'
@@ -147,18 +157,22 @@ export function useInterviewSession(interviewId: string | undefined) {
   ])
 
   const saveAnswer = useCallback(
-    async (answerText: string) => {
+    async (answerText: string, options?: { silent?: boolean }) => {
       if (!session) return null
       const trimmed = answerText.trim()
       if (!trimmed) {
-        setError('Answer cannot be empty')
+        // Autosave never nags about an empty draft; explicit saves still do.
+        if (!options?.silent) setError('Answer cannot be empty')
         return null
       }
-      return patchSession({
-        status: session.status === 'created' ? 'in_progress' : session.status,
-        currentQuestionIndex: index,
-        answer: { index, answer: trimmed },
-      })
+      return patchSession(
+        {
+          status: session.status === 'created' ? 'in_progress' : session.status,
+          currentQuestionIndex: index,
+          answer: { index, answer: trimmed },
+        },
+        options,
+      )
     },
     [index, patchSession, session],
   )

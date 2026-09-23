@@ -1,28 +1,36 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import {
-  ArrowLeft,
-  CheckCircle2,
-  Circle,
-  Flag,
-  ListChecks,
-  PanelLeftClose,
-  PanelLeftOpen,
-} from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useInterviewSession } from '@/hooks/interview/useInterviewSession'
 import { InterviewActions } from '@/components/app/interview/InterviewActions'
-import { InterviewAnswerEditor } from '@/components/app/interview/InterviewAnswerEditor'
+import {
+  InterviewAnswerEditor,
+  type AnswerSaveState,
+} from '@/components/app/interview/InterviewAnswerEditor'
 import { CodingAnswerEditor } from '@/components/app/interview/CodingAnswerEditor'
 import { InterviewQuestionCard } from '@/components/app/interview/InterviewQuestionCard'
-import { InterviewQuestionHeader } from '@/components/app/interview/InterviewQuestionHeader'
+import { InterviewQuestionMeta } from '@/components/app/interview/InterviewQuestionMeta'
+import {
+  InterviewQuestionRail,
+  type QuestionRailFilter,
+} from '@/components/app/interview/InterviewQuestionRail'
 import { InterviewProgressBar } from '@/components/app/interview/InterviewProgressBar'
 import { InterviewSessionTimer } from '@/components/app/interview/InterviewSessionTimer'
+import { InterviewTopBar } from '@/components/app/interview/InterviewTopBar'
 import { interviewExitHref, interviewExitLabel } from '@/lib/learning-paths/interview-exit'
 import { useOnceGuidance } from '@/hooks/useOnceGuidance'
 import { GUIDANCE_TIPS } from '@/lib/guidance/tips'
+import {
+  formatDifficultyLabel,
+  formatInterviewSessionTitle,
+  formatInterviewTypeLabel,
+} from '@/utils/dashboard/interview-labels'
+
+/** Quiet enough not to fight the typist, short enough that "Autosaved" feels true. */
+const AUTOSAVE_DELAY_MS = 1200
 
 export function InterviewSessionPage() {
   const params = useParams<{ id: string }>()
@@ -48,11 +56,15 @@ export function InterviewSessionPage() {
   } = useInterviewSession(id)
 
   const [answerDraft, setAnswerDraft] = useState('')
-  const [questionRailCollapsed, setQuestionRailCollapsed] = useState(false)
+  const [railCollapsed, setRailCollapsed] = useState(false)
+  const [railFilter, setRailFilter] = useState<QuestionRailFilter>('all')
+  const [justSaved, setJustSaved] = useState(false)
   const autoFinishStarted = useRef(false)
 
   const current = questions[index]
   const busy = isSaving
+  const savedAnswer = answerMap.get(index) ?? ''
+  const isDirty = answerDraft.trim() !== savedAnswer.trim()
 
   const sessionGuidance = useMemo(() => {
     if (isLoading || !session || session.status === 'completed') return null
@@ -76,20 +88,48 @@ export function InterviewSessionPage() {
 
   useEffect(() => {
     if (!session) return
-    const existing = answerMap.get(index) ?? ''
-    setAnswerDraft(existing)
+    setAnswerDraft(answerMap.get(index) ?? '')
+    setJustSaved(false)
   }, [answerMap, index, session])
+
+  /** Debounced background save. Coding answers are saved by the code editor itself. */
+  useEffect(() => {
+    if (!session || busy || !isDirty) return
+    if (!answerDraft.trim()) return
+    if (current?.kind === 'coding') return
+
+    const timer = window.setTimeout(() => {
+      void saveAnswer(answerDraft, { silent: true }).then((next) => {
+        if (next) setJustSaved(true)
+      })
+    }, AUTOSAVE_DELAY_MS)
+
+    return () => window.clearTimeout(timer)
+  }, [answerDraft, busy, current?.kind, isDirty, saveAnswer, session])
 
   const isFlagged = flaggedSet.has(index)
   const isLastQuestion = questions.length > 0 && index >= questions.length - 1
-  const unansweredCount = questions.reduce(
-    (count, _, questionIndex) => count + (answerMap.get(questionIndex)?.trim() ? 0 : 1),
-    0,
-  )
+  const answeredIndexes = useMemo(() => {
+    const set = new Set<number>()
+    questions.forEach((_, i) => {
+      if (answerMap.get(i)?.trim()) set.add(i)
+    })
+    return set
+  }, [answerMap, questions])
+  const unansweredCount = questions.length - answeredIndexes.size
+
+  const saveState: AnswerSaveState = isSaving
+    ? 'saving'
+    : isDirty
+      ? 'dirty'
+      : justSaved
+        ? 'saved'
+        : 'idle'
 
   const handleSaveAnswer = async () => {
     setError('')
-    await saveAnswer(answerDraft)
+    const next = await saveAnswer(answerDraft)
+    if (next) setJustSaved(true)
   }
 
   const handleToggleFlag = async () => {
@@ -97,28 +137,28 @@ export function InterviewSessionPage() {
     await setFlagged(index, !isFlagged)
   }
 
-  const saveDraftIfAny = async (): Promise<boolean> => {
+  const saveDraftIfAny = useCallback(async (): Promise<boolean> => {
     const trimmed = answerDraft.trim()
-    if (!trimmed) return true
+    if (!trimmed || trimmed === savedAnswer.trim()) return true
     const next = await saveAnswer(answerDraft)
     return next !== null
-  }
+  }, [answerDraft, saveAnswer, savedAnswer])
 
-  const handlePrevious = async () => {
+  const handlePrevious = useCallback(async () => {
     if (index <= 0) return
     setError('')
     if (!(await saveDraftIfAny())) return
     await goToQuestion(index - 1)
-  }
+  }, [goToQuestion, index, saveDraftIfAny, setError])
 
-  const handleNext = async () => {
+  const handleNext = useCallback(async () => {
     if (isLastQuestion) return
     setError('')
     if (!(await saveDraftIfAny())) return
     await goToQuestion(index + 1)
-  }
+  }, [goToQuestion, index, isLastQuestion, saveDraftIfAny, setError])
 
-  const handleFinish = async () => {
+  const handleFinish = useCallback(async () => {
     if (autoFinishStarted.current) return
     autoFinishStarted.current = true
     setError('')
@@ -131,22 +171,39 @@ export function InterviewSessionPage() {
     } finally {
       autoFinishStarted.current = false
     }
-  }
+  }, [finishInterview, id, router, saveDraftIfAny, setError])
 
-  const handleQuestionSelect = async (nextIndex: number) => {
-    if (nextIndex === index || busy) return
-    setError('')
-    if (!(await saveDraftIfAny())) return
-    await goToQuestion(nextIndex)
-  }
+  const handleQuestionSelect = useCallback(
+    async (nextIndex: number) => {
+      if (nextIndex === index || busy) return
+      setError('')
+      if (!(await saveDraftIfAny())) return
+      await goToQuestion(nextIndex)
+    },
+    [busy, goToQuestion, index, saveDraftIfAny, setError],
+  )
 
-  const headerKey = useMemo(() => `${index}-${current?.question ?? ''}`, [current?.question, index])
+  /** Alt+arrows move between questions without stealing normal text editing keys. */
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!event.altKey || event.ctrlKey || event.metaKey) return
+      if (event.key === 'ArrowRight') {
+        event.preventDefault()
+        void handleNext()
+      } else if (event.key === 'ArrowLeft') {
+        event.preventDefault()
+        void handlePrevious()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [handleNext, handlePrevious])
 
   if (isLoading) {
     return (
-      <div className="hq-interview-session h-dvh min-h-0 overflow-hidden" aria-busy="true">
-        <div className="hq-interview-session__loading" role="status">
-          <span className="hq-interview-session__loading-bar" aria-hidden="true" />
+      <div className="hq-interview-session hq-iv" aria-busy="true">
+        <div className="hq-iv-loading" role="status">
+          <span className="hq-iv-loading__bar" aria-hidden="true" />
           Loading interview workspace
         </div>
       </div>
@@ -155,12 +212,9 @@ export function InterviewSessionPage() {
 
   if (error && !session) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 p-6">
         <div className="text-sm font-medium text-destructive">{error}</div>
-        <Link
-          href="/app/learning-paths"
-          className="hq-btn-outline px-4 py-2 text-sm btn-micro"
-        >
+        <Link href="/app/learning-paths" className="hq-btn-outline px-4 py-2 text-sm btn-micro">
           <ArrowLeft className="h-4 w-4" /> Learning paths
         </Link>
       </div>
@@ -168,23 +222,19 @@ export function InterviewSessionPage() {
   }
 
   if (!session) {
-    return <div className="text-sm text-muted-foreground">No interview found.</div>
+    return <div className="p-6 text-sm text-muted-foreground">No interview found.</div>
   }
 
   const exitHref = interviewExitHref(session)
   const exitLabel = interviewExitLabel(session)
 
   if (session.status === 'completed') {
-    return (
-      <div className="text-sm text-muted-foreground">
-        Redirecting to results…
-      </div>
-    )
+    return <div className="p-6 text-sm text-muted-foreground">Redirecting to results…</div>
   }
 
   if (!current) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 p-6">
         <div className="text-sm text-muted-foreground">No questions yet for this interview.</div>
         <button
           type="button"
@@ -203,192 +253,144 @@ export function InterviewSessionPage() {
 
   const isCoding = current.kind === 'coding' && Boolean(id)
 
+  const title = formatInterviewSessionTitle({
+    interviewType: session.interviewType,
+    industryKey: session.industryKey,
+    roleCategoryKey: session.roleCategoryKey,
+    topics: session.topics,
+    codingCategories: session.codingCategories,
+    behavioralCompetencies: session.behavioralCompetencies,
+    systemDesignTopics: session.systemDesignTopics,
+    hrSections: session.hrSections,
+  })
+
+  const topBarTags = [
+    formatInterviewTypeLabel(session.interviewType),
+    session.difficulty ? formatDifficultyLabel(session.difficulty) : '',
+    `${questions.length} questions`,
+  ].filter(Boolean)
+
   return (
     <div
       className={[
-        'hq-interview-session h-dvh min-h-0 overflow-hidden',
-        isCoding ? 'hq-interview-session--coding' : '',
-        questionRailCollapsed ? 'hq-interview-session--rail-collapsed' : '',
+        'hq-interview-session hq-iv',
+        isCoding ? 'hq-interview-session--coding hq-iv--coding' : '',
+        railCollapsed ? 'hq-iv--rail-collapsed' : '',
       ].join(' ')}
     >
-      <aside
-        className={[
-          'hq-interview-question-rail',
-          questionRailCollapsed ? 'hq-interview-question-rail--collapsed' : '',
-        ].join(' ')}
-        aria-label="Interview questions"
-      >
-        <div className="hq-interview-question-rail__header">
-          <div className="flex items-center gap-2">
-            <ListChecks className="h-4 w-4 text-primary" aria-hidden />
-            {!questionRailCollapsed ? <span>Questions</span> : null}
-          </div>
-          <div className="flex items-center gap-2">
-            {!questionRailCollapsed ? (
-              <span className="text-xs text-muted-foreground">{questions.length} total</span>
-            ) : null}
-            <button
-              type="button"
-              className="hq-interview-question-rail__toggle"
-              aria-label={questionRailCollapsed ? 'Expand question list' : 'Collapse question list'}
-              title={questionRailCollapsed ? 'Expand question list' : 'Collapse question list'}
-              onClick={() => setQuestionRailCollapsed((collapsed) => !collapsed)}
-            >
-              {questionRailCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
-            </button>
-          </div>
-        </div>
-        {!questionRailCollapsed ? <div className="hq-interview-question-rail__legend" aria-hidden="true">
-          <span><CheckCircle2 /> Answered</span>
-          <span><Circle /> Current</span>
-          <span><Flag /> Review</span>
-        </div> : null}
-        <nav
-          className="hq-interview-question-rail__list"
-          onDoubleClick={() => setQuestionRailCollapsed((collapsed) => !collapsed)}
-        >
-          {questions.map((questionItem, questionIndex) => {
-            const answered = Boolean(answerMap.get(questionIndex)?.trim())
-            const flagged = flaggedSet.has(questionIndex)
-            const selected = questionIndex === index
-            return (
-              <button
-                key={`${questionIndex}-${questionItem.question}`}
-                type="button"
-                className={[
-                  'hq-interview-question-rail__item',
-                  selected ? 'hq-interview-question-rail__item--current' : '',
-                  flagged ? 'hq-interview-question-rail__item--flagged' : '',
-                ].join(' ')}
-                aria-current={selected ? 'step' : undefined}
-                onClick={() => void handleQuestionSelect(questionIndex)}
-                disabled={busy}
-              >
-                <span className="hq-interview-question-rail__number">{questionIndex + 1}</span>
-                {!questionRailCollapsed ? (
-                  <>
-                    <span className="hq-interview-question-rail__preview">
-                      {questionItem.question}
-                    </span>
-                    <span className="hq-interview-question-rail__state" aria-hidden="true">
-                      {flagged ? <Flag /> : answered ? <CheckCircle2 /> : <Circle />}
-                    </span>
-                  </>
-                ) : null}
-              </button>
-            )
-          })}
-        </nav>
-      </aside>
+      <InterviewTopBar
+        title={title}
+        tags={topBarTags}
+        exitHref={exitHref}
+        exitLabel={exitLabel}
+        unansweredCount={unansweredCount}
+        flaggedCount={flaggedSet.size}
+        onConfirmExit={handleFinish}
+        timer={
+          <InterviewSessionTimer
+            durationMinutes={session.durationMinutes ?? null}
+            interviewStartedAt={session.interviewStartedAt ?? undefined}
+            status={session.status}
+            onTimeExpired={() => void handleFinish()}
+          />
+        }
+      />
 
-      <section className="hq-interview-session__main">
-        {error ? <div className="hq-interview-session__error text-sm font-medium text-destructive">{error}</div> : null}
-        <InterviewQuestionHeader
-          key={headerKey}
-          questionNumber={index + 1}
-          totalQuestions={questions.length}
-          topic={current.topic}
-          type={isCoding ? 'coding' : current.type}
-          difficulty={current.difficulty}
-          exitHref={exitHref}
-          exitLabel={exitLabel}
-          unansweredCount={unansweredCount}
-          flaggedCount={flaggedSet.size}
-          onConfirmExit={handleFinish}
-          extraActions={
-            <InterviewSessionTimer
-              durationMinutes={session.durationMinutes ?? null}
-              interviewStartedAt={session.interviewStartedAt ?? undefined}
-              status={session.status}
-              onTimeExpired={() => void handleFinish()}
-            />
-          }
+      <InterviewProgressBar
+        current={index + 1}
+        total={questions.length}
+        answeredIndexes={answeredIndexes}
+        flaggedIndexes={flaggedSet}
+        onSelect={(i) => void handleQuestionSelect(i)}
+        disabled={busy}
+      />
+
+      <div className="hq-iv-body">
+        <InterviewQuestionRail
+          questions={questions}
+          index={index}
+          answerMap={answerMap}
+          flaggedSet={flaggedSet}
+          filter={railFilter}
+          onFilterChange={setRailFilter}
+          collapsed={railCollapsed}
+          onToggleCollapsed={() => setRailCollapsed((c) => !c)}
+          onSelect={(i) => void handleQuestionSelect(i)}
+          disabled={busy}
         />
-        <InterviewProgressBar current={index + 1} total={questions.length} />
 
-        {isCoding && id ? (
-          <div className="hq-coding-workspace">
-            <section className="hq-coding-workspace__problem" aria-label="Problem statement">
+        <main className="hq-iv-main hq-interview-session__main">
+          {error ? <p className="hq-iv-error">{error}</p> : null}
+
+          <InterviewQuestionMeta
+            topic={current.topic}
+            type={isCoding ? 'coding' : current.type}
+            difficulty={current.difficulty}
+            isFlagged={isFlagged}
+            onToggleFlag={() => void handleToggleFlag()}
+            disabled={busy}
+          />
+
+          {isCoding && id ? (
+            <div className="hq-coding-workspace">
+              <section className="hq-coding-workspace__problem" aria-label="Problem statement">
+                <InterviewQuestionCard
+                  variant="coding"
+                  questionText={current.question}
+                  illustrationDataUrl={current.illustrationDataUrl ?? undefined}
+                  illustrationRequired={current.illustrationRequired}
+                  topic={current.topic}
+                  difficulty={current.difficulty}
+                  functionName={current.functionName || 'solve'}
+                />
+              </section>
+              <section className="hq-coding-workspace__editor" aria-label="Code editor">
+                <CodingAnswerEditor
+                  fillHeight
+                  interviewId={id}
+                  questionIndex={index}
+                  starterCode={current.starterCode || 'function solve() {\n  // your code\n}\n'}
+                  functionName={current.functionName || 'solve'}
+                  language={current.language || 'javascript'}
+                  value={answerDraft}
+                  onChange={setAnswerDraft}
+                  disabled={busy}
+                />
+              </section>
+            </div>
+          ) : (
+            <div className="hq-iv-scroll">
               <InterviewQuestionCard
-                variant="coding"
                 questionText={current.question}
                 illustrationDataUrl={current.illustrationDataUrl ?? undefined}
                 illustrationRequired={current.illustrationRequired}
-                topic={current.topic}
-                difficulty={current.difficulty}
-                functionName={current.functionName || 'solve'}
               />
-            </section>
-            <section className="hq-coding-workspace__editor" aria-label="Code editor">
-              <CodingAnswerEditor
-                fillHeight
-                interviewId={id}
-                questionIndex={index}
-                starterCode={current.starterCode || 'function solve() {\n  // your code\n}\n'}
-                functionName={current.functionName || 'solve'}
-                language={current.language || 'javascript'}
+              <InterviewAnswerEditor
                 value={answerDraft}
                 onChange={setAnswerDraft}
                 disabled={busy}
+                saveState={saveState}
+                onSubmitShortcut={() =>
+                  void (isLastQuestion && canShowFinish ? handleFinish() : handleNext())
+                }
               />
-            </section>
-          </div>
-        ) : (
-          <div className="hq-interview-session__body">
-            <InterviewQuestionCard
-              questionText={current.question}
-              illustrationDataUrl={current.illustrationDataUrl ?? undefined}
-              illustrationRequired={current.illustrationRequired}
-            />
-            <InterviewAnswerEditor
-              value={answerDraft}
-              onChange={setAnswerDraft}
-              disabled={busy}
-            />
-          </div>
-        )}
+            </div>
+          )}
+        </main>
+      </div>
 
-        <InterviewActions
-          isSaving={busy}
-          isFlagged={isFlagged}
-          isFirstQuestion={index === 0}
-          isLastQuestion={isLastQuestion}
-          canShowFinish={canShowFinish}
-          onSaveAnswer={() => void handleSaveAnswer()}
-          onToggleFlag={() => void handleToggleFlag()}
-          onPrevious={() => void handlePrevious()}
-          onNext={() => void handleNext()}
-          onFinish={() => void handleFinish()}
-        />
-      </section>
-
-      <aside className="hq-interview-number-rail" aria-label="Navigate by question number">
-        <span className="hq-interview-number-rail__label">Jump</span>
-        <nav>
-          {questions.map((question, questionIndex) => {
-            const answered = Boolean(answerMap.get(questionIndex)?.trim())
-            const flagged = flaggedSet.has(questionIndex)
-            return (
-              <button
-                key={`jump-${questionIndex}`}
-                type="button"
-                className={[
-                  'hq-interview-number-rail__button',
-                  questionIndex === index ? 'hq-interview-number-rail__button--current' : '',
-                  answered ? 'hq-interview-number-rail__button--answered' : '',
-                  flagged ? 'hq-interview-number-rail__button--flagged' : '',
-                ].join(' ')}
-                aria-label={`Go to question ${questionIndex + 1}`}
-                aria-current={questionIndex === index ? 'step' : undefined}
-                onClick={() => void handleQuestionSelect(questionIndex)}
-                disabled={busy}
-              >
-                {questionIndex + 1}
-              </button>
-            )
-          })}
-        </nav>
-      </aside>
+      <InterviewActions
+        isSaving={busy}
+        isFlagged={isFlagged}
+        isFirstQuestion={index === 0}
+        isLastQuestion={isLastQuestion}
+        canShowFinish={canShowFinish}
+        onSaveAnswer={() => void handleSaveAnswer()}
+        onToggleFlag={() => void handleToggleFlag()}
+        onPrevious={() => void handlePrevious()}
+        onNext={() => void handleNext()}
+        onFinish={() => void handleFinish()}
+      />
     </div>
   )
 }

@@ -45,10 +45,14 @@ ${truncated}
           generationConfig: {
             responseMimeType: 'application/json',
             temperature: 0.1,
-            maxOutputTokens: 8192,
+            // Gemini 2.5 spends reasoning tokens from this same budget; 8192 truncated long resumes.
+            maxOutputTokens: 32768,
           },
         })
         const result = await model.generateContent(prompt)
+        if (result.response.candidates?.[0]?.finishReason === 'MAX_TOKENS') {
+          throw new Error(`Gemini model "${modelId}" returned truncated resume JSON.`)
+        }
         const raw = result.response.text()
         return mergeResumeLinks(parseResumeJsonText(raw), truncated)
       } catch (e) {

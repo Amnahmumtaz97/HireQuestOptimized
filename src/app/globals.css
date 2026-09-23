@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* =========================================
-  HireQuest — Blue Zinc Futuristic Design System
+  HireQuest â€” Blue Zinc Futuristic Design System
   Dark-first. All colors in oklch.
   ========================================= */
 
@@ -12,7 +12,7 @@
   --hq-font-ui: 'Manrope', ui-sans-serif, system-ui, sans-serif;
   --hq-font-interview: 'Outfit', 'Manrope', ui-sans-serif, system-ui, sans-serif;
 
-  /* Core palette — lighter dark mode */
+  /* Core palette â€” lighter dark mode */
   --background: #121a32;
   --foreground: #f8fafc;
   --card: #1a2440;
@@ -79,7 +79,7 @@
   --shadow-elegant: 0 18px 48px -22px rgba(0, 0, 0, 0.55);
   --transition-smooth: cubic-bezier(0.65, 0, 0.35, 1);
 
-  /* Gradients — same brand blue as Get Started / interview CTAs */
+  /* Gradients â€” same brand blue as Get Started / interview CTAs */
   --gradient-primary: #2563eb;
   --gradient-text: #2563eb;
   --gradient-radial: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(37, 99, 235, 0.22) 0%, transparent 70%);
@@ -88,7 +88,7 @@
     radial-gradient(at 82% 12%, rgba(37, 99, 235, 0.08) 0, transparent 50%),
     radial-gradient(at 50% 90%, rgba(37, 99, 235, 0.08) 0, transparent 50%);
 
-  /* HireQuest dashboard — lighter dark surfaces */
+  /* HireQuest dashboard â€” lighter dark surfaces */
   --hq-accent: var(--primary);
   --hq-blue: #2563eb;
   --hq-purple: #2563eb;
@@ -712,7 +712,7 @@
     box-shadow: 0 16px 32px -16px color-mix(in oklab, var(--foreground) 16%, transparent);
   }
 
-  /* Idle / dealt fan — question starts center-ish */
+  /* Idle / dealt fan â€” question starts center-ish */
   .hq-deck-stage--dealt .hq-deck-card--question {
     transform: translate(10px, 56px) rotate(-2deg);
   }
@@ -910,7 +910,7 @@
     color: var(--muted-foreground);
   }
 
-  /* Hero mock panel — IDE / coding backdrop */
+  /* Hero mock panel â€” IDE / coding backdrop */
   .hq-hero-code-panel {
     --hq-hero-panel-border: rgba(148, 163, 184, 0.38);
     --hq-hero-panel-divider: rgba(148, 163, 184, 0.28);
@@ -935,7 +935,7 @@
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-radius: 24px 24px 0 0;
-    /* Full-bleed divider — avoids notch gaps where border-b meets rounded outer edges */
+    /* Full-bleed divider â€” avoids notch gaps where border-b meets rounded outer edges */
     box-shadow: inset 0 -1px 0 var(--hq-hero-panel-divider);
   }
 
@@ -1335,7 +1335,7 @@
     border-bottom: none;
   }
 
-  /* Landing hero atmosphere — interview artwork + brand washes */
+  /* Landing hero atmosphere â€” interview artwork + brand washes */
   .hq-hero-photo {
     opacity: 0.6;
     filter: saturate(1.05) brightness(1);
@@ -1742,7 +1742,7 @@
     }
   }
 
-  /* Uiverse go-corner cards — HireQuest primary fill */
+  /* Uiverse go-corner cards â€” HireQuest primary fill */
   .hq-go-card {
     --hq-go-scale: 42;
     display: block;
@@ -2114,7 +2114,7 @@
     transition: none;
   }
 
-  /* ---- Sidebar active neon indicator (bar only — parent flex-centers so Motion layoutId transforms do not replace translateY(-50%)) ---- */
+  /* ---- Sidebar active neon indicator (bar only â€” parent flex-centers so Motion layoutId transforms do not replace translateY(-50%)) ---- */
   .neon-indicator {
     display: block;
     width: 3px;
@@ -2131,7 +2131,7 @@
   .glow-primary { box-shadow: 0 0 40px oklch(0.72 0.18 230 / 0.5); }
   .glow-primary-lg { box-shadow: 0 0 80px oklch(0.72 0.18 230 / 0.45), 0 0 30px oklch(0.72 0.18 230 / 0.3); }
 
-  /* ---- Pricing grid (no mask — full coverage) ---- */
+  /* ---- Pricing grid (no mask â€” full coverage) ---- */
   .bg-grid-pricing {
     background-image:
       linear-gradient(to right, oklch(0.72 0.18 230 / 0.07) 1px, transparent 1px),
@@ -2221,395 +2221,1181 @@
   }
 
   /* ---- Full-screen interview workspace ---- */
-  .hq-interview-session {
-    display: grid;
-    grid-template-columns: 292px minmax(0, 1fr) 58px;
-    gap: 12px;
-    padding: 12px;
+  .hq-iv {
+    --iv-rail-w: 286px;
+    --iv-gap: 14px;
+    --iv-radius: 14px;
+    --iv-hairline: color-mix(in oklab, var(--border) 74%, transparent);
+    --iv-surface: color-mix(in oklab, var(--card) 90%, var(--background));
+    --iv-flag: #ec4899;
+
+    display: flex;
+    height: 100dvh;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
     background:
-      radial-gradient(circle at 82% 18%, color-mix(in oklab, var(--primary) 11%, transparent), transparent 30%),
+      radial-gradient(ellipse 70% 46% at 78% -6%, color-mix(in oklab, var(--primary) 14%, transparent), transparent 70%),
       var(--background);
   }
 
-  .hq-interview-session--rail-collapsed {
-    grid-template-columns: 72px minmax(0, 1fr) 58px;
+  .hq-iv--rail-collapsed {
+    --iv-rail-w: 68px;
   }
 
-  .hq-interview-question-rail,
-  .hq-interview-session__main {
-    min-width: 0;
-    min-height: 0;
-    border: 1px solid color-mix(in oklab, var(--border) 78%, transparent);
-    background: color-mix(in oklab, var(--card) 88%, var(--background));
-    box-shadow: var(--shadow-card);
-  }
-
-  .hq-interview-question-rail {
+  /* ---------- Top bar ---------- */
+  .hq-iv-topbar {
     display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border-radius: 8px;
-  }
-
-  .hq-interview-session__loading {
-    display: grid;
-    min-height: 100%;
-    place-items: center;
-    color: var(--muted-foreground);
-    font-size: 12px;
-  }
-
-  .hq-interview-session__loading-bar {
-    width: 96px;
-    height: 2px;
-    margin-bottom: 10px;
-    background: color-mix(in oklab, var(--primary) 30%, transparent);
-    box-shadow: 36px 0 0 var(--primary);
-    opacity: 0.7;
-  }
-
-  .hq-interview-question-rail--collapsed {
-    grid-column: auto;
-  }
-
-  .hq-interview-question-rail--collapsed .hq-interview-question-rail__header {
-    justify-content: center;
-    padding-inline: 8px;
-  }
-
-  .hq-interview-question-rail--collapsed .hq-interview-question-rail__list {
     align-items: center;
-    padding-inline: 8px;
+    justify-content: space-between;
+    gap: 16px;
+    flex: 0 0 auto;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--iv-hairline);
   }
 
-  .hq-interview-question-rail--collapsed .hq-interview-question-rail__item {
+  .hq-iv-topbar__identity {
     display: flex;
-    width: 38px;
-    flex: 0 0 38px;
-    justify-content: center;
-    padding: 6px;
+    min-width: 0;
+    align-items: center;
+    gap: 12px;
   }
 
-  .hq-interview-question-rail--collapsed .hq-interview-question-rail__number {
-    width: 28px;
-    height: 28px;
-  }
-
-  .hq-interview-question-rail__toggle {
+  .hq-iv-topbar__mark {
     display: grid;
-    width: 26px;
-    height: 26px;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
     place-items: center;
-    border-radius: 6px;
-    color: var(--muted-foreground);
-    transition: color 160ms ease, background-color 160ms ease;
+    border-radius: 10px;
+    background: linear-gradient(140deg, var(--primary), color-mix(in oklab, var(--primary) 55%, #a855f7));
+    color: #fff;
   }
 
-  .hq-interview-question-rail__toggle:hover {
-    background: color-mix(in oklab, var(--primary) 12%, transparent);
+  .hq-iv-topbar__mark svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .hq-iv-topbar__titles {
+    min-width: 0;
+  }
+
+  .hq-iv-topbar__title {
+    overflow: hidden;
     color: var(--foreground);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .hq-interview-question-rail__toggle svg {
+  .hq-iv-topbar__tags {
+    display: flex;
+    align-items: center;
+    margin-top: 2px;
+    color: var(--muted-foreground);
+    font-size: 11.5px;
+  }
+
+  .hq-iv-topbar__tags > span {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .hq-iv-topbar__dot {
+    width: 3px;
+    height: 3px;
+    margin: 0 7px;
+    border-radius: 999px;
+    background: currentColor;
+    opacity: 0.55;
+  }
+
+  .hq-iv-topbar__aside {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .hq-iv-topbar__exit {
+    display: inline-flex;
+    height: 40px;
+    align-items: center;
+    gap: 8px;
+    padding: 0 14px;
+    border: 1px solid var(--iv-hairline);
+    border-radius: 10px;
+    background: var(--iv-surface);
+    color: var(--foreground);
+    font-size: 13px;
+    font-weight: 600;
+    transition: border-color 160ms ease, background-color 160ms ease;
+  }
+
+  .hq-iv-topbar__exit:hover {
+    border-color: color-mix(in oklab, var(--primary) 46%, transparent);
+    background: color-mix(in oklab, var(--primary) 9%, var(--iv-surface));
+  }
+
+  .hq-iv-topbar__exit svg {
     width: 15px;
     height: 15px;
   }
 
-  .hq-interview-question-rail__header {
-    display: flex;
+  @media (max-width: 640px) {
+    .hq-iv-topbar__exit-label {
+      display: none;
+    }
+  }
+
+  /* ---------- Timer ---------- */
+  .hq-iv-timer {
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 20px 16px 12px;
+    gap: 9px;
+    height: 40px;
+    padding: 0 13px;
+    border: 1px solid var(--iv-hairline);
+    border-radius: 10px;
+    background: var(--iv-surface);
     color: var(--foreground);
-    font-size: 13px;
-    font-weight: 800;
-    letter-spacing: 0.08em;
+    font-variant-numeric: tabular-nums;
+    transition: border-color 200ms ease, background-color 200ms ease, color 200ms ease;
+  }
+
+  .hq-iv-timer__ico {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    color: var(--muted-foreground);
+  }
+
+  .hq-iv-timer__body {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+  }
+
+  .hq-iv-timer__value {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .hq-iv-timer__label {
+    color: var(--muted-foreground);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
     text-transform: uppercase;
   }
 
-  .hq-interview-question-rail__legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 0 16px 14px;
-    color: var(--muted-foreground);
-    font-size: 9px;
+  .hq-iv-timer--warning {
+    border-color: color-mix(in oklab, var(--hq-amber) 55%, transparent);
+    background: color-mix(in oklab, var(--hq-amber) 12%, var(--iv-surface));
   }
 
-  .hq-interview-question-rail__legend span {
-    display: inline-flex;
+  .hq-iv-timer--warning .hq-iv-timer__ico,
+  .hq-iv-timer--warning .hq-iv-timer__value {
+    color: var(--hq-amber);
+  }
+
+  .hq-iv-timer--critical,
+  .hq-iv-timer--expired {
+    border-color: color-mix(in oklab, var(--hq-red) 60%, transparent);
+    background: color-mix(in oklab, var(--hq-red) 14%, var(--iv-surface));
+  }
+
+  .hq-iv-timer--critical .hq-iv-timer__ico,
+  .hq-iv-timer--critical .hq-iv-timer__value,
+  .hq-iv-timer--expired .hq-iv-timer__ico,
+  .hq-iv-timer--expired .hq-iv-timer__value {
+    color: var(--hq-red);
+  }
+
+  .hq-iv-timer--critical {
+    animation: hq-iv-pulse 1.6s ease-in-out infinite;
+  }
+
+  @keyframes hq-iv-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--hq-red) 34%, transparent); }
+    50% { box-shadow: 0 0 0 5px color-mix(in oklab, var(--hq-red) 0%, transparent); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hq-iv-timer--critical { animation: none; }
+  }
+
+  /* ---------- Segmented progress ---------- */
+  .hq-iv-progress {
+    display: flex;
+    flex: 0 0 auto;
     align-items: center;
+    gap: 18px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--iv-hairline);
+  }
+
+  .hq-iv-progress__track {
+    display: flex;
+    min-width: 0;
+    flex: 1;
     gap: 4px;
   }
 
-  .hq-interview-question-rail__legend svg,
-  .hq-interview-question-rail__state svg {
-    width: 12px;
-    height: 12px;
+  .hq-iv-progress__cell {
+    min-width: 0;
+    flex: 1 1 0;
   }
 
-  .hq-interview-question-rail__legend span:first-child svg,
-  .hq-interview-question-rail__item:not(.hq-interview-question-rail__item--current) .hq-interview-question-rail__state svg {
-    color: var(--hq-green);
+  .hq-iv-progress__seg {
+    display: block;
+    width: 100%;
+    height: 5px;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--muted-foreground) 22%, transparent);
+    transition: background-color 200ms ease, transform 160ms ease, box-shadow 160ms ease;
   }
 
-  .hq-interview-question-rail__legend span:nth-child(2) svg,
-  .hq-interview-question-rail__item--current .hq-interview-question-rail__state svg {
-    color: var(--primary);
+  .hq-iv-progress__seg:not(:disabled):hover {
+    transform: scaleY(1.9);
   }
 
-  .hq-interview-question-rail__legend span:nth-child(3) svg,
-  .hq-interview-question-rail__item--flagged .hq-interview-question-rail__state svg {
-    color: #ec4899;
+  .hq-iv-progress__seg--done {
+    background: var(--primary);
   }
 
-  .hq-interview-question-rail__list {
+  .hq-iv-progress__seg--flagged {
+    background: var(--iv-flag);
+  }
+
+  .hq-iv-progress__seg--current {
+    background: linear-gradient(90deg, var(--primary), color-mix(in oklab, var(--primary) 45%, #c084fc));
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 22%, transparent);
+    transform: scaleY(1.7);
+  }
+
+  .hq-iv-progress__meta {
     display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 10px;
+    color: var(--muted-foreground);
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .hq-iv-progress__position {
+    color: var(--foreground);
+  }
+
+  .hq-iv-progress__sep {
+    width: 3px;
+    height: 3px;
+    border-radius: 999px;
+    background: currentColor;
+    opacity: 0.5;
+  }
+
+  @media (max-width: 767px) {
+    .hq-iv-progress__meta { display: none; }
+  }
+
+  /* ---------- Body shell ---------- */
+  .hq-iv-body {
+    display: grid;
     min-height: 0;
     flex: 1;
-    flex-direction: column;
-    gap: 6px;
-    overflow-y: auto;
-    padding: 0 10px 12px;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    grid-template-columns: var(--iv-rail-w) minmax(0, 1fr);
+    gap: var(--iv-gap);
+    padding: var(--iv-gap) 20px;
   }
 
-  .hq-interview-question-rail__list::-webkit-scrollbar,
-  .hq-interview-number-rail nav::-webkit-scrollbar {
-    display: none;
-  }
-
-  .hq-interview-question-rail__item {
-    display: grid;
-    grid-template-columns: 28px minmax(0, 1fr) 16px;
-    align-items: center;
-    gap: 8px;
-    min-height: 56px;
-    padding: 8px;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    color: var(--muted-foreground);
-    text-align: left;
-    transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
-  }
-
-  .hq-interview-question-rail__item:hover {
-    border-color: color-mix(in oklab, var(--primary) 34%, transparent);
-    background: color-mix(in oklab, var(--primary) 7%, transparent);
-    color: var(--foreground);
-  }
-
-  .hq-interview-question-rail__item--current {
-    border-color: color-mix(in oklab, var(--primary) 80%, transparent);
-    background: color-mix(in oklab, var(--primary) 12%, transparent);
-    color: var(--foreground);
-  }
-
-  .hq-interview-question-rail__number {
-    display: grid;
-    width: 26px;
-    height: 26px;
-    place-items: center;
-    border-radius: 999px;
-    background: color-mix(in oklab, var(--muted) 70%, transparent);
-    color: var(--foreground);
-    font-size: 11px;
-    font-weight: 800;
-  }
-
-  .hq-interview-question-rail__item--current .hq-interview-question-rail__number {
-    background: var(--primary);
-    color: var(--primary-foreground);
-  }
-
-  .hq-interview-question-rail__item--flagged .hq-interview-question-rail__number {
-    background: #ec4899;
-    color: #fff;
-  }
-
-  .hq-interview-question-rail__preview {
-    display: -webkit-box;
-    overflow: hidden;
-    font-size: 11px;
-    line-height: 1.45;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-  }
-
-  .hq-interview-question-rail__state {
-    display: grid;
-    place-items: center;
-  }
-
-  .hq-interview-session__main {
-    display: flex;
-    min-height: 0;
-    flex-direction: column;
-    gap: 16px;
-    overflow: hidden;
-    padding: 24px;
-    border-radius: 8px;
-  }
-
-  .hq-interview-number-rail {
+  /* ---------- Question rail ---------- */
+  .hq-iv-rail {
     display: flex;
     min-width: 0;
     min-height: 0;
     flex-direction: column;
-    align-items: center;
-    gap: 12px;
     overflow: hidden;
-    padding: 18px 6px;
-    border: 1px solid color-mix(in oklab, var(--border) 78%, transparent);
-    border-radius: 8px;
-    background: color-mix(in oklab, var(--card) 88%, var(--background));
+    border: 1px solid var(--iv-hairline);
+    border-radius: var(--iv-radius);
+    background: var(--iv-surface);
     box-shadow: var(--shadow-card);
   }
 
-  .hq-interview-number-rail__label {
-    color: var(--muted-foreground);
-    font-size: 9px;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    writing-mode: vertical-rl;
-  }
-
-  .hq-interview-number-rail nav {
+  .hq-iv-rail__head {
     display: flex;
-    min-height: 0;
-    flex: 1;
-    flex-direction: column;
+    flex: 0 0 auto;
     align-items: center;
     gap: 8px;
-    overflow-y: auto;
-    padding: 2px;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    padding: 16px 14px 12px;
   }
 
-  .hq-interview-number-rail__button {
-    display: grid;
-    width: 30px;
-    height: 30px;
-    flex: 0 0 30px;
-    place-items: center;
-    border: 1px solid color-mix(in oklab, var(--border) 85%, transparent);
-    border-radius: 6px;
-    background: color-mix(in oklab, var(--muted) 45%, transparent);
+  .hq-iv-rail__title {
+    flex: 1;
+    color: var(--foreground);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .hq-iv-rail__count {
     color: var(--muted-foreground);
-    font-size: 10px;
-    font-weight: 800;
-    transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease, transform 160ms ease;
+    font-size: 11.5px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
   }
 
-  .hq-interview-number-rail__button:hover {
-    transform: translateY(-1px);
-    border-color: color-mix(in oklab, var(--primary) 70%, transparent);
+  .hq-iv-rail--collapsed .hq-iv-rail__head {
+    justify-content: center;
+    padding-inline: 8px;
+  }
+
+  .hq-iv-rail__toggle {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    place-items: center;
+    border-radius: 8px;
+    color: var(--muted-foreground);
+    transition: color 160ms ease, background-color 160ms ease;
+  }
+
+  .hq-iv-rail__toggle:hover {
+    background: color-mix(in oklab, var(--primary) 12%, transparent);
     color: var(--foreground);
   }
 
-  .hq-interview-number-rail__button--current {
-    border-color: var(--primary);
-    background: var(--primary);
-    color: var(--primary-foreground);
-    box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 18%, transparent);
+  .hq-iv-rail__toggle svg {
+    width: 15px;
+    height: 15px;
   }
 
-  .hq-interview-number-rail__button--answered:not(.hq-interview-number-rail__button--current) {
-    border-color: color-mix(in oklab, var(--hq-green) 65%, transparent);
-    color: var(--hq-green);
-  }
-
-  .hq-interview-number-rail__button--flagged {
-    border-color: #ec4899;
-    color: #ec4899;
-  }
-
-  .hq-interview-session__error {
+  .hq-iv-rail__filters {
+    display: flex;
     flex: 0 0 auto;
+    gap: 3px;
+    margin: 0 12px 10px;
+    padding: 3px;
+    border-radius: 9px;
+    background: color-mix(in oklab, var(--muted-foreground) 12%, transparent);
   }
 
-  .hq-interview-session__body {
+  .hq-iv-rail__filter {
+    flex: 1;
+    padding: 6px 4px;
+    border-radius: 7px;
+    color: var(--muted-foreground);
+    font-size: 11.5px;
+    font-weight: 600;
+    transition: background-color 160ms ease, color 160ms ease;
+  }
+
+  .hq-iv-rail__filter:hover {
+    color: var(--foreground);
+  }
+
+  .hq-iv-rail__filter--on {
+    background: var(--primary);
+    color: var(--primary-foreground, #fff);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.14);
+  }
+
+  .hq-iv-rail__list {
     display: flex;
     min-height: 0;
     flex: 1;
     flex-direction: column;
-    justify-content: center;
-    gap: 16px;
+    gap: 3px;
     overflow-y: auto;
-    padding: 4px 0;
+    padding: 0 9px 10px;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--muted-foreground) 30%, transparent) transparent;
   }
 
-  .hq-interview-session__body .hq-interview-question {
-    font-size: clamp(1.15rem, 2.2vw, 1.55rem);
+  .hq-iv-rail__empty {
+    padding: 18px 8px;
+    color: var(--muted-foreground);
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .hq-iv-rail__item {
+    display: grid;
+    align-items: center;
+    gap: 10px;
+    grid-template-columns: 26px minmax(0, 1fr) 16px;
+    padding: 9px 8px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    color: var(--muted-foreground);
+    text-align: left;
+    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+  }
+
+  .hq-iv-rail--collapsed .hq-iv-rail__item {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    padding: 7px 4px;
+  }
+
+  .hq-iv-rail__item:hover {
+    background: color-mix(in oklab, var(--primary) 8%, transparent);
+    color: var(--foreground);
+  }
+
+  .hq-iv-rail__item--current {
+    border-color: color-mix(in oklab, var(--primary) 42%, transparent);
+    background: color-mix(in oklab, var(--primary) 14%, transparent);
+    color: var(--foreground);
+  }
+
+  .hq-iv-rail__num {
+    display: grid;
+    width: 26px;
+    height: 26px;
+    place-items: center;
+    border-radius: 7px;
+    background: color-mix(in oklab, var(--muted-foreground) 15%, transparent);
+    color: var(--muted-foreground);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+  }
+
+  .hq-iv-rail__item--done .hq-iv-rail__num {
+    background: color-mix(in oklab, var(--hq-green) 20%, transparent);
+    color: var(--hq-green);
+  }
+
+  .hq-iv-rail__item--current .hq-iv-rail__num {
+    background: var(--primary);
+    color: var(--primary-foreground, #fff);
+  }
+
+  .hq-iv-rail__preview {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 12px;
+    line-height: 1.4;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .hq-iv-rail__state {
+    display: grid;
+    place-items: center;
+  }
+
+  .hq-iv-rail__ico {
+    width: 14px;
+    height: 14px;
+  }
+
+  .hq-iv-rail__ico--done {
+    color: var(--hq-green);
+  }
+
+  .hq-iv-rail__ico--flag {
+    color: var(--iv-flag);
+  }
+
+  .hq-iv-rail__pip {
+    display: block;
+    width: 6px;
+    height: 6px;
+    border: 1.5px solid color-mix(in oklab, var(--muted-foreground) 45%, transparent);
+    border-radius: 999px;
+  }
+
+  /* ---------- Rail stats ---------- */
+  .hq-iv-stats {
+    display: grid;
+    flex: 0 0 auto;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin: 0 12px 12px;
+    padding: 12px 8px;
+    border: 1px solid var(--iv-hairline);
+    border-radius: 11px;
+    background: color-mix(in oklab, var(--muted-foreground) 7%, transparent);
+  }
+
+  .hq-iv-stats__cell {
+    /* column-reverse puts the value above its label without reordering the DOM. */
+    display: flex;
+    flex-direction: column-reverse;
+    text-align: center;
+  }
+
+  .hq-iv-stats dt {
+    color: var(--muted-foreground);
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .hq-iv-stats__val {
+    margin-bottom: 2px;
+    color: var(--foreground);
+    font-size: 19px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .hq-iv-stats__val--done { color: var(--hq-green); }
+  .hq-iv-stats__val--flag { color: var(--iv-flag); }
+
+  /* ---------- Main column ---------- */
+  .hq-iv-main {
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: column;
+    gap: 14px;
+    overflow: hidden;
+    padding: 18px;
+    border: 1px solid var(--iv-hairline);
+    border-radius: var(--iv-radius);
+    background: var(--iv-surface);
+    box-shadow: var(--shadow-card);
+  }
+
+  .hq-iv-error {
+    flex: 0 0 auto;
+    padding: 9px 12px;
+    border: 1px solid color-mix(in oklab, var(--hq-red) 40%, transparent);
+    border-radius: 9px;
+    background: color-mix(in oklab, var(--hq-red) 11%, transparent);
+    color: var(--hq-red);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .hq-iv-scroll {
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--muted-foreground) 30%, transparent) transparent;
+  }
+
+  /* ---------- Question meta row ---------- */
+  .hq-iv-meta {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .hq-iv-meta__chips {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .hq-iv-chip {
+    display: inline-flex;
+    max-width: 100%;
+    align-items: center;
+    overflow: hidden;
+    padding: 4px 11px;
+    border: 1px solid var(--iv-hairline);
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--muted-foreground) 9%, transparent);
+    color: var(--muted-foreground);
+    font-size: 11.5px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .hq-iv-chip--topic {
+    border-color: color-mix(in oklab, var(--primary) 40%, transparent);
+    background: color-mix(in oklab, var(--primary) 15%, transparent);
+    color: color-mix(in oklab, var(--primary) 78%, var(--foreground));
+  }
+
+  .hq-iv-meta__flag {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 7px;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--iv-hairline);
+    border-radius: 9px;
+    color: var(--muted-foreground);
+    font-size: 12px;
+    font-weight: 600;
+    transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+  }
+
+  .hq-iv-meta__flag svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .hq-iv-meta__flag:hover {
+    border-color: color-mix(in oklab, var(--iv-flag) 48%, transparent);
+    color: var(--foreground);
+  }
+
+  .hq-iv-meta__flag--on {
+    border-color: color-mix(in oklab, var(--iv-flag) 55%, transparent);
+    background: color-mix(in oklab, var(--iv-flag) 13%, transparent);
+    color: var(--iv-flag);
+  }
+
+  .hq-iv-meta__flag--on svg {
+    fill: currentColor;
+  }
+
+  /* ---------- Question card ---------- */
+  .hq-iv .hq-interview-question {
+    flex: 0 0 auto;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .hq-iv .hq-interview-question .interview-question-md {
+    color: var(--foreground);
+    font-size: clamp(1.02rem, 0.94rem + 0.34vw, 1.28rem);
+    font-weight: 650;
+    letter-spacing: -0.012em;
     line-height: 1.45;
   }
 
-  @media (max-width: 767px) {
-    .hq-interview-session {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 8px;
+  /* Coding keeps its own panel chrome. */
+  .hq-iv .hq-coding-problem .interview-question-md {
+    font-size: 0.95rem;
+    font-weight: 400;
+    letter-spacing: normal;
+    line-height: 1.65;
+  }
+
+  /* ---------- Answer editor ---------- */
+  .hq-iv-answer {
+    display: flex;
+    min-height: 250px;
+    flex: 1 0 auto;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--iv-hairline);
+    border-radius: 12px;
+    background: color-mix(in oklab, var(--background) 55%, var(--card));
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+  }
+
+  .hq-iv-answer:focus-within {
+    border-color: color-mix(in oklab, var(--primary) 55%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 16%, transparent);
+  }
+
+  .hq-iv-answer__head {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--iv-hairline);
+  }
+
+  .hq-iv-answer__title {
+    color: var(--foreground);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .hq-iv-answer__tools {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .hq-iv-answer__count {
+    color: var(--muted-foreground);
+    font-size: 11.5px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+
+  /* ---------- Voice dictation ---------- */
+  .hq-iv-mic {
+    display: inline-flex;
+    height: 28px;
+    align-items: center;
+    gap: 6px;
+    padding: 0 11px;
+    border: 1px solid var(--iv-hairline);
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--muted-foreground) 9%, transparent);
+    color: var(--muted-foreground);
+    font-size: 11.5px;
+    font-weight: 600;
+    transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+  }
+
+  .hq-iv-mic svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+  }
+
+  .hq-iv-mic:hover {
+    border-color: color-mix(in oklab, var(--primary) 48%, transparent);
+    color: var(--foreground);
+  }
+
+  .hq-iv-mic:disabled {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .hq-iv-mic--on {
+    border-color: color-mix(in oklab, var(--hq-red) 58%, transparent);
+    background: color-mix(in oklab, var(--hq-red) 15%, transparent);
+    color: var(--hq-red);
+  }
+
+  .hq-iv-mic--on svg {
+    fill: currentColor;
+  }
+
+  .hq-iv-dictation {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 11px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--iv-hairline);
+    background: color-mix(in oklab, var(--primary) 8%, transparent);
+  }
+
+  .hq-iv-dictation__text {
+    min-width: 0;
+    color: var(--foreground);
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+
+  .hq-iv-dictation__error {
+    flex: 0 0 auto;
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--iv-hairline);
+    color: var(--hq-red);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .hq-iv-dictation__wave {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 2.5px;
+    height: 16px;
+  }
+
+  .hq-iv-dictation__wave i {
+    display: block;
+    width: 2.5px;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--primary);
+    animation: hq-iv-wave 1s ease-in-out infinite;
+  }
+
+  .hq-iv-dictation__wave i:nth-child(2) { animation-delay: 0.12s; }
+  .hq-iv-dictation__wave i:nth-child(3) { animation-delay: 0.24s; }
+  .hq-iv-dictation__wave i:nth-child(4) { animation-delay: 0.36s; }
+  .hq-iv-dictation__wave i:nth-child(5) { animation-delay: 0.48s; }
+
+  @keyframes hq-iv-wave {
+    0%, 100% { transform: scaleY(0.3); opacity: 0.55; }
+    50% { transform: scaleY(1); opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hq-iv-dictation__wave i { animation: none; transform: scaleY(0.6); }
+  }
+
+  /* ---------- Delivery stats (after exact transcription) ---------- */
+  .hq-iv-delivery {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--iv-hairline);
+    background: color-mix(in oklab, var(--muted-foreground) 6%, transparent);
+  }
+
+  .hq-iv-delivery__stats {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--muted-foreground);
+    font-size: 11.5px;
+  }
+
+  .hq-iv-delivery__stats strong {
+    color: var(--foreground);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+  }
+
+  .hq-iv-delivery__toggle {
+    height: 24px;
+    padding: 0 10px;
+    border: 1px solid var(--iv-hairline);
+    border-radius: 999px;
+    color: var(--muted-foreground);
+    font-size: 11px;
+    font-weight: 600;
+    transition: border-color 160ms ease, color 160ms ease;
+  }
+
+  .hq-iv-delivery__toggle:hover {
+    border-color: color-mix(in oklab, var(--primary) 48%, transparent);
+    color: var(--foreground);
+  }
+
+  @media (max-width: 640px) {
+    .hq-iv-mic__label { display: none; }
+    .hq-iv-mic { padding-inline: 8px; }
+  }
+
+  .hq-iv-answer__input {
+    min-height: 0;
+    flex: 1;
+    padding: 14px;
+    border: 0;
+    background: transparent;
+    color: var(--foreground);
+    font-size: 14.5px;
+    line-height: 1.7;
+    outline: none;
+    resize: none;
+  }
+
+  .hq-iv-answer__input::placeholder {
+    color: color-mix(in oklab, var(--muted-foreground) 78%, transparent);
+  }
+
+  .hq-iv-answer__input:read-only {
+    cursor: default;
+    opacity: 0.75;
+  }
+
+  .hq-iv-answer__foot {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 14px;
+    border-top: 1px solid var(--iv-hairline);
+  }
+
+  .hq-iv-answer__hint {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: 7px;
+    color: var(--muted-foreground);
+    font-size: 11.5px;
+  }
+
+  .hq-iv-answer__hint svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+    color: var(--hq-amber);
+  }
+
+  .hq-iv-answer__status {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .hq-iv-answer__save {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--muted-foreground);
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+
+  .hq-iv-answer__save svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .hq-iv-answer__save--saved { color: var(--hq-green); }
+  .hq-iv-answer__save--dirty { color: var(--hq-amber); }
+
+  .hq-iv-answer__spin {
+    animation: hq-iv-spin 900ms linear infinite;
+  }
+
+  @keyframes hq-iv-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hq-iv-answer__spin { animation: none; }
+  }
+
+  .hq-iv-answer__kbd {
+    padding: 3px 7px;
+    border: 1px solid var(--iv-hairline);
+    border-radius: 6px;
+    background: color-mix(in oklab, var(--muted-foreground) 10%, transparent);
+    color: var(--muted-foreground);
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  @media (max-width: 900px) {
+    .hq-iv-answer__hint { display: none; }
+  }
+
+  /* ---------- Footer actions ---------- */
+  .hq-iv-actions {
+    display: flex;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 20px;
+    border-top: 1px solid var(--iv-hairline);
+    background: color-mix(in oklab, var(--card) 40%, transparent);
+  }
+
+  .hq-iv-actions__left,
+  .hq-iv-actions__right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .hq-iv-btn {
+    display: inline-flex;
+    height: 42px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 18px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 600;
+    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 140ms ease, box-shadow 160ms ease;
+  }
+
+  .hq-iv-btn svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+  }
+
+  .hq-iv-btn:disabled {
+    opacity: 0.42;
+    pointer-events: none;
+  }
+
+  .hq-iv-btn--quiet {
+    border-color: var(--iv-hairline);
+    background: var(--iv-surface);
+    color: var(--foreground);
+  }
+
+  .hq-iv-btn--quiet:hover {
+    border-color: color-mix(in oklab, var(--primary) 42%, transparent);
+    background: color-mix(in oklab, var(--primary) 9%, var(--iv-surface));
+  }
+
+  .hq-iv-btn--flagged {
+    border-color: color-mix(in oklab, var(--iv-flag) 55%, transparent);
+    background: color-mix(in oklab, var(--iv-flag) 13%, transparent);
+    color: var(--iv-flag);
+  }
+
+  .hq-iv-btn--flagged svg { fill: currentColor; }
+
+  .hq-iv-btn--primary {
+    min-width: 172px;
+    background: linear-gradient(135deg, var(--primary), color-mix(in oklab, var(--primary) 62%, #7c3aed));
+    color: #fff;
+    box-shadow: 0 8px 20px -12px color-mix(in oklab, var(--primary) 90%, transparent);
+  }
+
+  .hq-iv-btn--primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 26px -12px color-mix(in oklab, var(--primary) 95%, transparent);
+  }
+
+  .hq-iv-btn--primary:active {
+    transform: translateY(0);
+  }
+
+  .hq-iv-btn--finish {
+    border-color: color-mix(in oklab, var(--hq-green) 48%, transparent);
+    background: color-mix(in oklab, var(--hq-green) 14%, transparent);
+    color: var(--hq-green);
+  }
+
+  .hq-iv-btn--finish:hover {
+    background: color-mix(in oklab, var(--hq-green) 22%, transparent);
+  }
+
+  .hq-iv-actions__save {
+    min-width: 84px;
+  }
+
+  @media (max-width: 640px) {
+    .hq-iv-actions__save { display: none; }
+    .hq-iv-btn--primary { min-width: 0; flex: 1; }
+    .hq-iv-btn { padding-inline: 13px; }
+  }
+
+  /* ---------- Loading ---------- */
+  .hq-iv-loading {
+    display: grid;
+    min-height: 100%;
+    place-items: center;
+    color: var(--muted-foreground);
+    font-size: 12.5px;
+  }
+
+  .hq-iv-loading__bar {
+    width: 104px;
+    height: 3px;
+    margin-bottom: 12px;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--primary) 26%, transparent);
+    overflow: hidden;
+  }
+
+  .hq-iv-loading__bar::after {
+    content: '';
+    display: block;
+    width: 42%;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--primary);
+    animation: hq-iv-slide 1.15s ease-in-out infinite;
+  }
+
+  @keyframes hq-iv-slide {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(240%); }
+  }
+
+  /* ---------- Coding variant ---------- */
+  .hq-iv--coding .hq-coding-workspace {
+    min-height: 0;
+    max-height: none;
+    height: 100%;
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 1023px) {
+    .hq-iv { height: auto; min-height: 100dvh; overflow: visible; }
+
+    .hq-iv-body {
+      grid-template-columns: minmax(0, 1fr);
+      padding-inline: 14px;
     }
 
-    .hq-interview-session--rail-collapsed {
-      display: flex;
+    .hq-iv-rail {
+      max-height: 190px;
     }
 
-    .hq-interview-question-rail {
-      flex: 0 0 auto;
-      max-height: 142px;
-    }
-
-    .hq-interview-question-rail__header {
-      padding: 10px 12px 6px;
-    }
-
-    .hq-interview-question-rail__legend {
-      padding: 0 12px 8px;
-    }
-
-    .hq-interview-question-rail__list {
+    .hq-iv-rail__list {
       flex-direction: row;
       overflow-x: auto;
       overflow-y: hidden;
-      padding: 0 8px 8px;
     }
 
-    .hq-interview-question-rail__item {
-      display: flex;
-      flex: 0 0 42px;
-      min-height: 42px;
-      justify-content: center;
-      padding: 6px;
+    .hq-iv-rail__item {
+      flex: 0 0 auto;
+      grid-template-columns: 1fr;
+      justify-items: center;
     }
 
-    .hq-interview-question-rail__preview,
-    .hq-interview-question-rail__state {
+    .hq-iv-rail__preview,
+    .hq-iv-rail__state,
+    .hq-iv-rail__toggle {
       display: none;
     }
 
-    .hq-interview-session__main {
-      gap: 12px;
-      padding: 14px;
-    }
-
-    .hq-interview-number-rail {
-      display: none;
-    }
-
-    .hq-interview-session__body {
-      justify-content: flex-start;
-    }
+    .hq-iv-main { overflow: visible; }
+    .hq-iv-scroll { overflow: visible; }
   }
 
-  :root[data-theme='light'] .hq-interview-session {
+  @media (max-width: 640px) {
+    .hq-iv-topbar { padding: 11px 14px; }
+    .hq-iv-progress { padding: 10px 14px; }
+    .hq-iv-actions { padding: 11px 14px; }
+    .hq-iv-main { padding: 14px; }
+  }
+
+  /* ---------- Theme tuning ---------- */
+  :root[data-theme='light'] .hq-iv {
+    --iv-hairline: #e5e7eb;
+    --iv-surface: #ffffff;
     background:
-      radial-gradient(circle at 82% 18%, color-mix(in oklab, var(--primary) 7%, transparent), transparent 30%),
-      var(--background);
+      radial-gradient(ellipse 70% 46% at 78% -6%, color-mix(in oklab, var(--primary) 7%, transparent), transparent 70%),
+      #fbfcfe;
+  }
+
+  :root[data-theme='light'] .hq-iv-answer {
+    background: #fdfdfe;
+  }
+
+  :root[data-theme='light'] .hq-iv-actions {
+    background: #ffffff;
+  }
+
+  :root[data-theme='dark'] .hq-iv {
+    --iv-hairline: rgba(148, 163, 184, 0.19);
+    --iv-surface: color-mix(in oklab, var(--card) 90%, #0b1220);
+  }
+
+  :root[data-theme='dark'] .hq-iv-answer {
+    background: color-mix(in oklab, var(--background) 68%, #0b1220);
   }
   :root[data-theme='light'] .hq-interview-session .interview-question-md code {
     background: #f1f5f9;
@@ -3438,7 +4224,7 @@
 
 /* ---- HireQuest dashboard reference (app shell / stats / panel buttons) ---- */
 @layer components {
-  /* Landing — clean white / dark shells */
+  /* Landing â€” clean white / dark shells */
   .landing-page-shell {
     isolation: isolate;
     background-color: var(--background);
@@ -3467,7 +4253,7 @@
     background-image: none;
   }
 
-  /* Uiverse.io (amir_6539) — layered box-shadow starfield */
+  /* Uiverse.io (amir_6539) â€” layered box-shadow starfield */
   .hq-starfield {
     position: fixed;
     inset: 0;
@@ -3526,12 +4312,12 @@
   }
 
   /* ---- Landing: Diagonal invite/CTA section ----
-     Keep diagonals sharp — no soft edge-fade masks on these layers. */
+     Keep diagonals sharp â€” no soft edge-fade masks on these layers. */
   .cta-diagonal-section {
     isolation: isolate;
   }
 
-  /* Diagonal blue plate — clip-path for the ~10° cut */
+  /* Diagonal blue plate â€” clip-path for the ~10Â° cut */
   .cta-diagonal-plate {
     position: absolute;
     inset: 0;
@@ -3544,7 +4330,7 @@
     clip-path: polygon(0 12%, 100% 3%, 100% 100%, 0 100%);
   }
 
-  /* Constellation dot pattern — masked to the blue plate only */
+  /* Constellation dot pattern â€” masked to the blue plate only */
   .cta-diagonal-mesh {
     position: absolute;
     inset: 0;
@@ -3628,7 +4414,7 @@
     }
   }
 
-  /* Blurred radial glows — clipped to the blue plate so they never
+  /* Blurred radial glows â€” clipped to the blue plate so they never
      spill into the transparent top wedge as a dark blur band */
   .cta-diagonal-glow-a,
   .cta-diagonal-glow-b {
@@ -3765,8 +4551,8 @@
 
   /* ---- Shared brand palette (matches CTA diagonal) ---- */
   /*
-     Deep #1E40AF · Mid #1D4ED8 · Bright #2563EB
-     Highlight #3B82F6 · Pale #BFDBFE · Icy #DBEAFE
+     Deep #1E40AF Â· Mid #1D4ED8 Â· Bright #2563EB
+     Highlight #3B82F6 Â· Pale #BFDBFE Â· Icy #DBEAFE
   */
 
   /* ---- Radial spotlight backdrop ---- */
@@ -3795,7 +4581,7 @@
     z-index: 1;
   }
 
-  /* ---- Blueprint (transparent bg — page diagonal shows through) ---- */
+  /* ---- Blueprint (transparent bg â€” page diagonal shows through) ---- */
   .section-blueprint {
     position: relative;
     overflow: hidden;
@@ -4019,7 +4805,7 @@
       );
   }
 
-  /* Toolkit band — clean companies-blue fill, no blobs / no blur */
+  /* Toolkit band â€” clean companies-blue fill, no blobs / no blur */
   .toolkit-band {
     position: relative;
     overflow: hidden;
@@ -4041,7 +4827,7 @@
     -webkit-backdrop-filter: none;
   }
 
-  /* Toolkit cards — theme-aware surfaces on the blue band */
+  /* Toolkit cards â€” theme-aware surfaces on the blue band */
   .toolkit-card {
     background: var(--card);
     border: 1px solid var(--hairline);
@@ -4099,7 +4885,7 @@
     color: #ffffff;
   }
 
-  /* Fanned glass cards (Uiverse-inspired) — toolkit band */
+  /* Fanned glass cards (Uiverse-inspired) â€” toolkit band */
   .hq-glass-fan {
     position: relative;
     display: flex;
@@ -4432,7 +5218,7 @@
   .tst-divider { border-top: 1px solid rgba(255, 255, 255, 0.12); }
   :root[data-theme='light'] .tst-divider { border-top: 1px solid #e5e7eb; }
 
-  /* ---- FAQ (transparent bg — page diagonal shows through) + glowing nodes ---- */
+  /* ---- FAQ (transparent bg â€” page diagonal shows through) + glowing nodes ---- */
   .section-stripes {
     position: relative;
     overflow: hidden;
@@ -4489,7 +5275,7 @@
 
   /* ---- Section flow wedge (a diagonal band at the top of a section
      that hints at the previous section's color, matching the CTA
-     diagonal direction — thicker on the left, thinner on the right). ---- */
+     diagonal direction â€” thicker on the left, thinner on the right). ---- */
   .section-flow-wedge {
     position: absolute;
     top: 0;
@@ -4695,7 +5481,7 @@
     box-shadow: 0 10px 28px -16px rgba(15, 23, 42, 0.1);
   }
 
-  /* Accent colors — multi-color orbit steps */
+  /* Accent colors â€” multi-color orbit steps */
   .process-accent-sky { color: #38bdf8; }
   .process-accent-violet { color: #a78bfa; }
   .process-accent-blue { color: #2563eb; }
@@ -5549,7 +6335,7 @@
     padding-right: calc(0.875rem + 4px);
   }
 
-  /** Wizard stepper active state (creation flow — reference blue) */
+  /** Wizard stepper active state (creation flow â€” reference blue) */
   .hq-wiz-step-btn--active {
     /* Avoid negative translate which can be clipped by overflow on parent cards.
        Use border + inner glow and subtle scale instead for prominent selection. */
@@ -5657,7 +6443,7 @@
     color: #64748b;
   }
 
-  /* Interview type cards — theme-aware blue accents (no violet) */
+  /* Interview type cards â€” theme-aware blue accents (no violet) */
   .interview-type-accent--tech { color: #67e8f9; }
   .interview-type-accent--beh { color: #93c5fd; }
   .interview-type-accent--both { color: #fbbf24; }
@@ -5929,7 +6715,7 @@
     box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.28), 0 2px 10px rgba(0, 0, 0, 0.35);
   }
 
-  /* Light mode — white button on the blue sidebar */
+  /* Light mode â€” white button on the blue sidebar */
   :root[data-theme='light'] .hq-app-sidebar-cta {
     background: #ffffff;
     border: 1px solid rgba(37, 99, 235, 0.2);
@@ -7196,7 +7982,7 @@
 }
 
 /* =========================================
-   Certification browse — catalog cards
+   Certification browse â€” catalog cards
    ========================================= */
 .hq-cert-search {
   height: 2.75rem;

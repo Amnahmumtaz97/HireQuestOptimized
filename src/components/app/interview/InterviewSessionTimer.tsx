@@ -67,33 +67,33 @@ export function InterviewSessionTimer({
   const isExpired = Boolean(interviewStartedAt && remainingSeconds != null && remainingSeconds <= 0)
   const hasStarted = Boolean(interviewStartedAt)
 
+  /** Escalates as the clock runs down so the pressure is visible before it's too late. */
+  const tone = isExpired
+    ? 'expired'
+    : !hasStarted
+      ? 'idle'
+      : displaySeconds <= 60
+        ? 'critical'
+        : displaySeconds <= 300
+          ? 'warning'
+          : 'normal'
+
   return (
     <div
-      className={[
-        'inline-flex w-full max-w-full items-center gap-2 rounded-xl border px-2.5 py-2 text-sm tabular-nums sm:w-auto sm:px-3',
-        isExpired
-          ? 'border-destructive/40 bg-destructive-muted text-destructive'
-          : 'border-border bg-card text-foreground shadow-card',
-      ].join(' ')}
+      className={`hq-iv-timer hq-iv-timer--${tone}`}
       role="timer"
-      aria-live="polite"
+      aria-live={tone === 'critical' ? 'assertive' : 'polite'}
       aria-label={
         hasStarted
           ? `Time remaining: ${formatMmSs(displaySeconds)}`
           : `Session length ${formatMmSs(totalSeconds)}, timer starts when you begin`
       }
     >
-      <AlarmClock
-        className={`h-4 w-4 shrink-0 ${isExpired ? 'text-destructive' : 'text-muted-foreground'}`}
-      />
-      <div className="flex min-w-0 flex-col leading-tight">
-        <span
-          className={`text-base font-semibold tracking-tight ${isExpired ? 'text-destructive' : 'text-foreground'}`}
-        >
-          {formatMmSs(displaySeconds)}
-        </span>
-        <span className="truncate text-[10px] font-medium text-muted-foreground">
-          {isExpired ? "Time's up" : hasStarted ? 'Remaining' : 'Not started'}
+      <AlarmClock className="hq-iv-timer__ico" aria-hidden="true" />
+      <div className="hq-iv-timer__body">
+        <span className="hq-iv-timer__value">{formatMmSs(displaySeconds)}</span>
+        <span className="hq-iv-timer__label">
+          {isExpired ? "Time's up" : hasStarted ? 'Time left' : 'Not started'}
         </span>
       </div>
     </div>

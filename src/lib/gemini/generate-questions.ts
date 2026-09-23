@@ -43,15 +43,33 @@ function diagramKindForQuestion(text: string): DiagramKind {
   return 'general'
 }
 
+/**
+ * Gemini 2.5 models are "thinking" models: reasoning tokens are billed against
+ * maxOutputTokens before any content is emitted. At the old 8192 cap a batch of
+ * coding problems spent ~3k tokens thinking and got truncated mid-JSON
+ * (finishReason MAX_TOKENS), which surfaced as an opaque JSON.parse error.
+ */
+const MAX_OUTPUT_TOKENS = 32768
+
 function getGenerativeModel(genAI: GoogleGenerativeAI, modelId: string) {
   return genAI.getGenerativeModel({
     model: modelId,
     generationConfig: {
       responseMimeType: 'application/json',
       temperature: 0.65,
-      maxOutputTokens: 8192,
+      maxOutputTokens: MAX_OUTPUT_TOKENS,
     },
   })
+}
+
+/** Truncated output is unparseable; treat it like a failure worth retrying on another model. */
+class GeminiTruncatedError extends Error {
+  constructor(modelId: string) {
+    super(
+      `Gemini model "${modelId}" hit the output token limit (${MAX_OUTPUT_TOKENS}) and returned truncated JSON.`,
+    )
+    this.name = 'GeminiTruncatedError'
+  }
 }
 
 function roleLabel(params: InterviewGenerationParams): string {
@@ -263,25 +281,55 @@ export async function generateQuestionsWithGemini(
   const prompt = coding ? buildCodingBatchPrompt(params) : buildBatchPrompt(params)
   let rawText = ''
 
+  let lastError: unknown = null
+
   for (let i = 0; i < modelChain.length; i++) {
     const modelId = modelChain[i]
+    const isLast = i === modelChain.length - 1
     try {
       const model = getGenerativeModel(genAI, modelId)
       const result = await model.generateContent(prompt)
-      rawText = result.response.text()
+      const finishReason = result.response.candidates?.[0]?.finishReason
+      const text = result.response.text()
+
+      if (finishReason === 'MAX_TOKENS') throw new GeminiTruncatedError(modelId)
+      if (!text.trim()) {
+        throw new Error(`Gemini model "${modelId}" returned an empty response (${finishReason ?? 'no finish reason'}).`)
+      }
+
+      rawText = text
       break
     } catch (e) {
-      if (isGeminiRateLimitError(e) && i < modelChain.length - 1) {
-        console.warn(`[gemini] Model "${modelId}" rate limited or quota exhausted; trying next model.`)
+      lastError = e
+      // Quota, truncation and transient upstream faults are all worth another model.
+      const retryable = isGeminiRateLimitError(e) || e instanceof GeminiTruncatedError
+      if (retryable && !isLast) {
+        console.warn(`[gemini] Model "${modelId}" failed (${(e as Error).name}); trying next model.`)
         continue
       }
       throw e
     }
   }
-  const parsed = parseGeminiQuestionJsonArray(rawText)
 
-  if (parsed.length !== params.totalQuestions) {
-    throw new Error(`Expected ${params.totalQuestions} questions, got ${parsed.length}`)
+  if (!rawText.trim()) {
+    throw lastError instanceof Error
+      ? lastError
+      : new Error('Gemini returned no usable output for this interview.')
+  }
+
+  const rawParsed = parseGeminiQuestionJsonArray(rawText)
+
+  // Models routinely over-produce. Extra items are harmless — keep the first N.
+  // Shortfalls are padded downstream for coding / system design rounds.
+  const parsed =
+    rawParsed.length > params.totalQuestions
+      ? rawParsed.slice(0, params.totalQuestions)
+      : rawParsed
+
+  if (rawParsed.length !== params.totalQuestions) {
+    console.warn(
+      `[gemini] Expected ${params.totalQuestions} questions, model returned ${rawParsed.length}.`,
+    )
   }
 
   const confirmedTopics = assertConfirmedTopics(params.topics)

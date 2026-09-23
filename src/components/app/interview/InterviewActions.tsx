@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowLeft, ArrowRight, CheckCircle2, Flag, Save } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle2, Flag } from 'lucide-react'
 
 type InterviewActionsProps = {
   isSaving: boolean
@@ -27,72 +27,78 @@ export function InterviewActions({
   onNext,
   onFinish,
 }: InterviewActionsProps) {
-  const btn =
-    'btn-micro inline-flex h-11 min-h-[44px] items-center justify-center gap-1.5 rounded-xl px-3 text-sm font-semibold transition disabled:pointer-events-none disabled:opacity-45'
+  // Finish takes the primary slot on the last question; otherwise Next does.
+  const showFinishAsPrimary = canShowFinish && isLastQuestion
 
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+    <div className="hq-iv-actions">
+      <div className="hq-iv-actions__left">
         <button
           type="button"
           onClick={onPrevious}
           disabled={isSaving || isFirstQuestion}
-          className={['hq-btn-outline', btn, 'sm:px-5'].join(' ')}
+          className="hq-iv-btn hq-iv-btn--quiet btn-micro"
         >
-          <ArrowLeft className="h-4 w-4 shrink-0" />
-          <span className="truncate">Previous</span>
+          <ArrowLeft aria-hidden="true" />
+          <span>Previous</span>
         </button>
-        <button
-          type="button"
-          onClick={onSaveAnswer}
-          disabled={isSaving}
-          className={['hq-btn-primary', btn, 'sm:px-5'].join(' ')}
-        >
-          <Save className="h-4 w-4 shrink-0" />
-          <span className="truncate">{isSaving ? 'Saving…' : 'Save'}</span>
-        </button>
+
         <button
           type="button"
           onClick={onToggleFlag}
           disabled={isSaving}
-          className={[
-            btn,
-            'sm:px-5',
-            isFlagged ? 'hq-btn-warning' : 'hq-btn-outline',
-          ].join(' ')}
+          aria-pressed={isFlagged}
+          className={`hq-iv-btn hq-iv-btn--quiet btn-micro${isFlagged ? ' hq-iv-btn--flagged' : ''}`}
         >
-          <Flag className="h-4 w-4 shrink-0" />
-          <span className="truncate">
-            {isFlagged ? 'Unflag' : (
-              <>
-                Flag<span className="hidden sm:inline"> for review</span>
-              </>
-            )}
-          </span>
-        </button>
-        <button
-          type="button"
-          onClick={onNext}
-          disabled={isSaving || isLastQuestion}
-          className={['hq-btn-outline', btn, 'sm:px-5'].join(' ')}
-        >
-          <span className="truncate">
-            Next<span className="hidden sm:inline"> Question</span>
-          </span>
-          <ArrowRight className="h-4 w-4 shrink-0" />
+          <Flag aria-hidden="true" />
+          <span>{isFlagged ? 'Unflag' : 'Flag for review'}</span>
         </button>
       </div>
 
-      {canShowFinish ? (
+      <div className="hq-iv-actions__right">
         <button
           type="button"
-          onClick={onFinish}
+          onClick={onSaveAnswer}
           disabled={isSaving}
-          className={['hq-btn-success w-full sm:w-auto sm:min-w-[12rem]', btn, 'px-5'].join(' ')}
+          className="hq-iv-btn hq-iv-btn--quiet btn-micro hq-iv-actions__save"
         >
-          <CheckCircle2 className="h-4 w-4 shrink-0" /> Finish Interview
+          <span>{isSaving ? 'Saving…' : 'Save'}</span>
         </button>
-      ) : null}
+
+        {canShowFinish && !isLastQuestion ? (
+          <button
+            type="button"
+            onClick={onFinish}
+            disabled={isSaving}
+            className="hq-iv-btn hq-iv-btn--finish btn-micro"
+          >
+            <CheckCircle2 aria-hidden="true" />
+            <span>Finish</span>
+          </button>
+        ) : null}
+
+        {showFinishAsPrimary ? (
+          <button
+            type="button"
+            onClick={onFinish}
+            disabled={isSaving}
+            className="hq-iv-btn hq-iv-btn--primary btn-micro"
+          >
+            <CheckCircle2 aria-hidden="true" />
+            <span>Finish interview</span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onNext}
+            disabled={isSaving || isLastQuestion}
+            className="hq-iv-btn hq-iv-btn--primary btn-micro"
+          >
+            <span>Next question</span>
+            <ArrowRight aria-hidden="true" />
+          </button>
+        )}
+      </div>
     </div>
   )
 }
