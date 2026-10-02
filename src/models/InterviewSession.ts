@@ -1,4 +1,14 @@
 import { Schema, model, models, type Model } from 'mongoose'
+import type { DeliveryStats } from '@/lib/speech/transcript'
+import type {
+  AnswerInputMode,
+  AnswerTranscript,
+  EvaluationStatus,
+  KeyPoint,
+  QuestionEvaluation,
+  Rubric,
+  SessionEvaluation,
+} from '@/lib/evaluation/types'
 
 export interface IInterviewQuestion {
   type: 'technical' | 'behavioral' | 'hr'
@@ -14,7 +24,36 @@ export interface IInterviewQuestion {
   functionName?: string
   publicTests?: Array<{ input: string; expected: string }>
   hiddenTests?: Array<{ input: string; expected: string }>
+
+  // Answer key + routing (EVALUATION_PLAN §4, §7, §22). Stripped from client
+  // responses until the session is completed.
+  rubric?: Rubric
+  keyPoints?: KeyPoint[]
+  redFlags?: string[]
+  idealAnswerSummary?: string
+  competency?: string
+  expectedComplexity?: { time: string; space: string }
+  edgeCases?: string[]
+  scaleHints?: string[]
 }
+
+export interface IInterviewAnswer {
+  index: number
+  answer: string
+  updatedAt: Date
+  testsPassed?: number
+  testsTotal?: number
+  /** Spoken answers: exact words, plus the `[pause 1.4s]` form kept OUT of `answer` (§22). */
+  transcript?: AnswerTranscript | null
+  delivery?: DeliveryStats | null
+  /** Deepgram recognition confidence — an audio-quality gate, not candidate confidence (§17). */
+  audioConfidence?: number | null
+  inputMode?: AnswerInputMode | null
+  evaluation?: QuestionEvaluation | null
+}
+
+const RUBRIC_ENUM = ['technical', 'coding', 'behavioral', 'system_design', 'hr'] as const
+const EVALUATION_STATUS_ENUM = ['none', 'pending', 'running', 'ready', 'failed'] as const
 
 export interface IInterviewSession {
   userId: string
@@ -72,13 +111,11 @@ export interface IInterviewSession {
   currentQuestionIndex?: number
   /** Question indices the user flagged for review */
   flaggedQuestionIndexes?: number[]
-  answers?: Array<{
-    index: number
-    answer: string
-    updatedAt: Date
-    testsPassed?: number
-    testsTotal?: number
-  }>
+  answers?: IInterviewAnswer[]
+  evaluationStatus?: EvaluationStatus
+  evaluationStartedAt?: Date | null
+  evaluationError?: string | null
+  evaluation?: SessionEvaluation | null
   learningPathId?: string | null
   learningStageId?: string | null
   pathRemediationId?: string | null
@@ -176,6 +213,20 @@ const interviewSessionSchema = new Schema<IInterviewSession>(
             type: [{ input: String, expected: String }],
             default: undefined,
           },
+          rubric: { type: String, enum: [...RUBRIC_ENUM], default: undefined },
+          keyPoints: {
+            type: [{ text: { type: String, required: true }, dimension: { type: String } }],
+            default: undefined,
+          },
+          redFlags: { type: [String], default: undefined },
+          idealAnswerSummary: { type: String, default: undefined },
+          competency: { type: String, default: undefined },
+          expectedComplexity: {
+            type: { time: String, space: String },
+            default: undefined,
+          },
+          edgeCases: { type: [String], default: undefined },
+          scaleHints: { type: [String], default: undefined },
         },
       ],
       default: undefined,
@@ -202,9 +253,75 @@ const interviewSessionSchema = new Schema<IInterviewSession>(
           updatedAt: { type: Date, required: true },
           testsPassed: { type: Number },
           testsTotal: { type: Number },
+          transcript: {
+            type: { verbatim: String, annotated: String },
+            default: undefined,
+          },
+          // DeliveryStats is already typed in code; Mixed avoids a 30-field schema copy.
+          delivery: { type: Schema.Types.Mixed, default: undefined },
+          audioConfidence: { type: Number, default: undefined },
+          inputMode: { type: String, enum: ['typed', 'spoken', 'coding'], default: undefined },
+          evaluation: {
+            type: {
+              rubric: { type: String, enum: [...RUBRIC_ENUM] },
+              contentScore: { type: Number, default: null },
+              deliveryScore: { type: Number, default: null },
+              scores: { type: Map, of: Number },
+              levels: { type: Map, of: Number },
+              keyPointsHit: [Number],
+              keyPointsPartial: [Number],
+              keyPointsMissed: [Number],
+              factualErrors: [{ severity: String, claim: String }],
+              tests: {
+                type: {
+                  publicPassed: Number,
+                  publicTotal: Number,
+                  hiddenPassed: Number,
+                  hiddenTotal: Number,
+                  failedToRun: Boolean,
+                  failedHiddenIndexes: [Number],
+                },
+                default: undefined,
+              },
+              capsApplied: [String],
+              rationale: String,
+              tips: [String],
+              flags: [String],
+              answerHash: String,
+              model: String,
+              promptVersion: String,
+              evaluatedAt: Date,
+              aiGraded: Boolean,
+            },
+            default: undefined,
+          },
         },
       ],
       default: [],
+    },
+    evaluationStatus: {
+      type: String,
+      enum: [...EVALUATION_STATUS_ENUM],
+      default: 'none',
+    },
+    evaluationStartedAt: { type: Date, default: null },
+    evaluationError: { type: String, default: null },
+    evaluation: {
+      type: {
+        contentScore: { type: Number, default: null },
+        deliveryScore: { type: Number, default: null },
+        byTopic: { type: Map, of: Number },
+        byRubric: { type: Map, of: Number },
+        answeredCount: Number,
+        gradedCount: Number,
+        ungradableCount: Number,
+        pathEligible: Boolean,
+        strengths: [String],
+        gaps: [String],
+        nextTopics: [String],
+        completedAt: Date,
+      },
+      default: null,
     },
     learningPathId: { type: String, trim: true, default: null, index: true },
     learningStageId: { type: String, trim: true, default: null, index: true },
@@ -259,6 +376,18 @@ function syncInterviewSessionSchema(cached: Schema): void {
       behavioralCompetencies: { type: [String], default: undefined },
       hrSections: { type: [String], default: undefined },
       systemDesignTopics: { type: [String], default: undefined },
+    })
+  }
+  if (!cached.path('evaluationStatus')) {
+    cached.add({
+      evaluationStatus: {
+        type: String,
+        enum: [...EVALUATION_STATUS_ENUM],
+        default: 'none',
+      },
+      evaluationStartedAt: { type: Date, default: null },
+      evaluationError: { type: String, default: null },
+      evaluation: { type: Schema.Types.Mixed, default: null },
     })
   }
   if (!cached.path('resumeContext')) {

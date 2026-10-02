@@ -10,6 +10,8 @@
     "lint": "next lint",
     "test": "vitest run",
     "test:consistency": "vitest run src/lib/interview-config/__tests__/consistency.test.ts",
+    "test:evaluation": "vitest run src/lib/evaluation src/lib/interview-questions/answer-keys.test.ts",
+    "eval:calibrate": "tsx scripts/eval-calibrate.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",

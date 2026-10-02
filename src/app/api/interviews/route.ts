@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { authOptions } from '@/lib/auth'
+import { redactSessionsForClient } from '@/lib/evaluation/redact'
 import { getServerSession } from 'next-auth'
 import { NextResponse } from 'next/server'
 import {
@@ -241,7 +242,7 @@ export async function GET() {
       .limit(50)
       .lean()
 
-    return NextResponse.json({ sessions })
+    return NextResponse.json({ sessions: redactSessionsForClient(sessions) })
   } catch (error) {
     return NextResponse.json(
       { message: error instanceof Error ? error.message : 'Failed to fetch interviews' },

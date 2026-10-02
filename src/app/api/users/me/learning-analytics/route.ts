@@ -22,10 +22,16 @@ export async function GET() {
       AchievementModel.find({ userId }).sort({ unlockedAt: -1 }).lean(),
       getUserPracticeTotals(userId),
       UserPathProgressModel.find({ userId }).lean(),
-      InterviewSessionModel.find({ userId, status: 'completed' })
+      // Only sessions with a real content score feed the trend (Phase 4 — no more coverage math).
+      InterviewSessionModel.find({
+        userId,
+        status: 'completed',
+        evaluationStatus: 'ready',
+        'evaluation.contentScore': { $ne: null },
+      })
         .sort({ updatedAt: -1 })
         .limit(20)
-        .select('answers questions updatedAt')
+        .select('evaluation updatedAt')
         .lean(),
     ])
 
@@ -41,15 +47,12 @@ export async function GET() {
             }, 0) / pathProgress.length,
           )
 
-    const scoreTrend = recentScores.map((s) => {
-      const total = Array.isArray(s.questions) ? s.questions.length : 0
-      const answered = (s.answers || []).filter(
-        (a) => typeof a.answer === 'string' && a.answer.trim(),
-      ).length
-      return total ? Math.round((answered / total) * 100) : 0
-    })
+    const scoreTrend = recentScores
+      .map((s) => s.evaluation?.contentScore)
+      .filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
+      .map((v) => Math.round(v))
 
-    const confidence =
+    const contentScore =
       scoreTrend.length === 0
         ? null
         : Math.round(scoreTrend.reduce((a, b) => a + b, 0) / scoreTrend.length)
@@ -70,7 +73,8 @@ export async function GET() {
         pathsEnrolled: pathProgress.length,
         pathsCompleted: pathProgress.filter((p) => p.status === 'completed').length,
         avgStagesCompleted: completionAvg,
-        interviewConfidenceScore: confidence,
+        // Renamed from interviewConfidenceScore: this is graded content, not a mental state (§17).
+        interviewContentScore: contentScore,
         feedbackTrend: scoreTrend.reverse(),
       },
       achievements: achievements.map((a) => ({

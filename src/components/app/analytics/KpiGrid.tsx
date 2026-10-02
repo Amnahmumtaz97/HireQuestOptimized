@@ -159,7 +159,7 @@ export function KpiGrid({
     {
       icon: <Sparkles className="h-5 w-5" />,
       iconWrap: 'icon-wrap-green',
-      label: 'Confidence Score',
+      label: 'Interview Score',
       value: confidenceScore ?? 0,
       suffix: '%',
       hint: confidenceScore === null ? 'Complete interviews to unlock' : confidenceScore >= 70 ? 'Strong performance' : 'Keep practising',

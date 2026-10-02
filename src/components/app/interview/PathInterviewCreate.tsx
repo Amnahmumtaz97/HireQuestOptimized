@@ -19,6 +19,7 @@ import {
 } from '@/lib/interview-config/question-counts'
 import { DURATION_MIN, DURATION_MAX, DURATION_DEFAULT } from '@/lib/interview-config/durations'
 import { formatInterviewTypeKeyLabel } from '@/lib/interview-config/interview-types'
+import { InterviewGenerationLoader } from '@/components/app/interview/InterviewGenerationLoader'
 
 type PathInterviewCreateProps = {
   pathId: string
@@ -63,6 +64,7 @@ export function PathInterviewCreate({
       return
     }
     setCreating(true)
+    let navigated = false
     try {
       const res = await fetch('/api/interviews/from-path', {
         method: 'POST',
@@ -83,16 +85,19 @@ export function PathInterviewCreate({
           ? `Ready — ${data.questionCount ?? totalQuestions} questions generated`
           : 'Interview created',
       )
+      navigated = true
       router.replace(`/app/interviews/${data.sessionId}`)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Could not generate interview')
     } finally {
-      setCreating(false)
+      // Keep the loader up through navigation; only a failure returns to the form.
+      if (!navigated) setCreating(false)
     }
   }
 
   return (
     <div className="mx-auto max-w-xl space-y-6 pb-16">
+      {creating ? <InterviewGenerationLoader /> : null}
       <div className="flex items-center gap-3">
         <Link
           href={`/app/learning-paths/${pathId}`}

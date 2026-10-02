@@ -24,6 +24,12 @@ export function validateGeneratedQuestions(
   const topicSet = new Set(params.topics.map((t) => t.trim()).filter(Boolean))
   const seen = new Set<string>()
   const allowedKinds = new Set(decodeInterviewTypeKinds(params.interviewType, params.interviewTypes))
+  // Kinds are what the user selected; types are what questions carry. There is no
+  // "coding" or "system_design" type — both are stored as `technical` — so the
+  // per-question check must run against the types those kinds produce.
+  const allowedTypes = new Set(
+    [...allowedKinds].map((k) => (k === 'behavioral' || k === 'hr' ? k : 'technical')),
+  )
   const hrOnly = allowedKinds.size === 1 && allowedKinds.has('hr')
   const allowsHr = allowedKinds.has('hr')
 
@@ -72,7 +78,7 @@ export function validateGeneratedQuestions(
 
     if (coding) {
       // coding rounds are always technical; skip spoken-type constraints
-    } else if (allowedKinds.size > 0 && !allowedKinds.has(q.type)) {
+    } else if (allowedTypes.size > 0 && !allowedTypes.has(q.type)) {
       issues.push({
         level: 'error',
         index: i,
@@ -95,6 +101,14 @@ export function validateGeneratedQuestions(
 
     if (!allowsHr && GENERIC_PATTERNS.some((re) => re.test(q.question))) {
       issues.push({ level: 'warning', index: i, message: 'Question looks generic; consider regenerating.' })
+    }
+
+    if (!q.rubric || !q.keyPoints?.length) {
+      issues.push({
+        level: 'warning',
+        index: i,
+        message: 'Question has no answer key; it cannot be content-graded.',
+      })
     }
 
     if (topicSet.size > 0 && !topicSet.has(q.topic.trim())) {

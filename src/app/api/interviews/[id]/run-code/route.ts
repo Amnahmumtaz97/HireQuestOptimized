@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { isValidObjectId } from 'mongoose'
 import { z } from 'zod'
-import { createContext, Script } from 'vm'
 import { authOptions } from '@/lib/auth'
 import { connectToDatabase } from '@/lib/mongoose'
 import { InterviewSessionModel } from '@/models/InterviewSession'
+import { runOne, sanitizeFunctionName } from '@/lib/evaluation/code-runner'
 
 export const runtime = 'nodejs'
 
@@ -15,39 +15,6 @@ const bodySchema = z.object({
   language: z.enum(['javascript', 'typescript', 'python', 'java', 'cpp']).optional(),
   includeHidden: z.boolean().optional().default(false),
 })
-
-function parseArg(raw: string): unknown {
-  try {
-    return JSON.parse(raw)
-  } catch {
-    return raw
-  }
-}
-
-function runOne(
-  code: string,
-  functionName: string,
-  inputRaw: string,
-  expectedRaw: string,
-): { ok: boolean; actual?: string; error?: string } {
-  try {
-    const sandbox: Record<string, unknown> = { console: { log() {}, warn() {}, error() {} } }
-    const context = createContext(sandbox)
-    const script = new Script(`${code}\n;typeof ${functionName} === 'function' ? ${functionName} : null;`)
-    const fn = script.runInContext(context, { timeout: 800 })
-    if (typeof fn !== 'function') {
-      return { ok: false, error: `Function "${functionName}" not found` }
-    }
-    const input = parseArg(inputRaw)
-    const args = Array.isArray(input) ? input : [input]
-    const result = (fn as (...a: unknown[]) => unknown).apply(null, args)
-    const actual = JSON.stringify(result)
-    const expected = JSON.stringify(parseArg(expectedRaw))
-    return { ok: actual === expected, actual, error: actual === expected ? undefined : `expected ${expected}` }
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : 'Runtime error' }
-  }
-}
 
 export async function POST(
   request: Request,
@@ -90,33 +57,39 @@ export async function POST(
     )
   }
 
-  const functionName = (q.functionName || 'solve').replace(/[^\w$]/g, '') || 'solve'
+  const functionName = sanitizeFunctionName(q.functionName)
   const tests = [
     ...(q.publicTests || []),
     ...(parsed.data.includeHidden ? q.hiddenTests || [] : []),
   ]
 
+  const publicCount = (q.publicTests || []).length
   const results = tests.map((t, i) => {
     const r = runOne(parsed.data.code, functionName, t.input, t.expected)
+    const hidden = i >= publicCount
+    // Hidden tests report pass/fail only — their inputs are part of the answer key (§12).
     return {
       index: i,
-      input: t.input,
-      expected: t.expected,
+      input: hidden ? `hidden #${i - publicCount + 1}` : t.input,
+      expected: hidden ? '(hidden)' : t.expected,
       passed: r.ok,
-      actual: r.actual,
-      error: r.error,
+      actual: hidden ? undefined : r.actual,
+      error: hidden ? (r.ok ? undefined : 'Wrong answer') : r.error,
     }
   })
 
+  // Stored counts are a convenience for the UI only; the evaluator re-runs everything (§12).
   const passed = results.filter((r) => r.passed).length
   const answers = [...(doc.answers || [])]
   const existingIdx = answers.findIndex((a) => a.index === parsed.data.questionIndex)
   const entry = {
+    ...(existingIdx >= 0 ? answers[existingIdx] : {}),
     index: parsed.data.questionIndex,
     answer: parsed.data.code,
     updatedAt: new Date(),
     testsPassed: passed,
     testsTotal: results.length,
+    inputMode: 'coding' as const,
   }
   if (existingIdx >= 0) answers[existingIdx] = entry
   else answers.push(entry)

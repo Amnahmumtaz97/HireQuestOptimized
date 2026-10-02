@@ -24,6 +24,7 @@ import { BEHAVIORAL_COMPETENCY_SET } from '@/lib/interview-config/banks/behavior
 import { SYSTEM_DESIGN_TOPIC_SET } from '@/lib/interview-config/banks/system-design-topics'
 import { SENIORITY_UI_OPTIONS } from '@/lib/interview-config/experience'
 import { DIFFICULTY_UI_OPTIONS } from '@/lib/interview-config/difficulty'
+import { InterviewGenerationLoader } from '@/components/app/interview/InterviewGenerationLoader'
 
 type ConfigureInterviewScreenProps = {
   initial: InterviewSetupConfig
@@ -124,6 +125,7 @@ export function ConfigureInterviewScreen({
       return
     }
     setCreating(true)
+    let navigated = false
     try {
       const res = await fetch('/api/interviews/from-setup', {
         method: 'POST',
@@ -142,16 +144,19 @@ export function ConfigureInterviewScreen({
           ? 'Interview ready — questions from your confirmed selections'
           : 'Interview created',
       )
+      navigated = true
       router.push(`/app/interviews/${data.sessionId}`)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Could not generate interview')
     } finally {
-      setCreating(false)
+      // Keep the loader up through navigation; only a failure returns to the form.
+      if (!navigated) setCreating(false)
     }
   }
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 pb-16">
+      {creating ? <InterviewGenerationLoader /> : null}
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"

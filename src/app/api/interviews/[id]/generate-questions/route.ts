@@ -15,6 +15,7 @@ import { loadInterviewCatalogDepartments } from '@/lib/interview-catalog/load'
 import { resumeContextSchema } from '@/lib/interview/resume-context-schema'
 import { validatePathStageLinkage } from '@/lib/learning-paths/validate-link'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { redactSessionForClient } from '@/lib/evaluation/redact'
 
 const generateBodySchema = z.object({
   resumeContext: resumeContextSchema,
@@ -285,15 +286,22 @@ export async function POST(
     }
 
     return NextResponse.json({
-      session: updated,
+      session: redactSessionForClient(updated),
       source: result.source,
       warnings: result.warnings,
     })
   } catch (error) {
     console.error('[generate-questions]', error)
-    return NextResponse.json(
-      { message: 'Failed to generate questions. Please try again.' },
-      { status: 500 },
-    )
+    const detail = error instanceof Error ? error.message : ''
+    // Surface the upstream reason: a blocked or rate-limited model is actionable
+    // ("try again") in a way that a bare "failed" is not.
+    const message = /blocked|RECITATION|SAFETY/i.test(detail)
+      ? 'The AI declined this batch (content filter). Please try again — it usually succeeds on a retry.'
+      : /429|quota|rate.?limit|exhausted/i.test(detail)
+        ? 'The AI service is rate limited right now. Please try again in a minute.'
+        : /503|high demand|overloaded|unavailable/i.test(detail)
+          ? 'The AI model is overloaded right now (Google-side). Please try again in a minute.'
+          : 'Failed to generate questions. Please try again.'
+    return NextResponse.json({ message }, { status: 500 })
   }
 }

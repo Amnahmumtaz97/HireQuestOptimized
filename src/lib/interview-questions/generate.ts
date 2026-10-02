@@ -46,6 +46,7 @@ function normalizeCodingQuestion(
     ...q,
     type: 'technical',
     kind: 'coding',
+    rubric: 'coding',
     language: 'javascript',
     topic: q.topic?.trim() || fallbackTopic,
     difficulty,

@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { authOptions } from '@/lib/auth'
 import { connectToDatabase } from '@/lib/mongoose'
 import { InterviewSessionModel } from '@/models/InterviewSession'
-import { advancePathProgressForInterview } from '@/lib/learning-paths/advance-on-complete'
+import { redactSessionForClient } from '@/lib/evaluation/redact'
 
 function validateId(id: string): NextResponse | null {
   if (!isValidObjectId(id)) {
@@ -30,7 +30,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     if (!doc) {
       return NextResponse.json({ message: 'Interview not found' }, { status: 404 })
     }
-    return NextResponse.json({ session: doc })
+    return NextResponse.json({ session: redactSessionForClient(doc) })
   } catch (error) {
     return NextResponse.json(
       { message: error instanceof Error ? error.message : 'Failed to load interview' },
@@ -39,13 +39,62 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   }
 }
 
+/** DeliveryStats as produced by summarizeDelivery(); only the fields evaluation reads are enforced. */
+const deliveryStatsSchema = z
+  .object({
+    durationSec: z.number().min(0),
+    speakingSec: z.number().min(0),
+    wordCount: z.number().int().min(0),
+    tokenCount: z.number().int().min(0),
+    wordsPerMinute: z.number().min(0),
+    articulationRate: z.number().min(0),
+    disfluencies: z.object({
+      total: z.number().int().min(0),
+      perMinute: z.number().min(0),
+      breakdown: z.array(z.object({ word: z.string(), count: z.number().int().min(0) })).max(40),
+    }),
+    crutches: z.array(z.object({ phrase: z.string(), count: z.number().int().min(0) })).max(40),
+    pauses: z.object({
+      count: z.number().int().min(0),
+      totalSec: z.number().min(0),
+      longestSec: z.number().min(0),
+      averageSec: z.number().min(0),
+      byTier: z.object({
+        short: z.number().int().min(0),
+        medium: z.number().int().min(0),
+        long: z.number().int().min(0),
+      }),
+    }),
+    silenceRatio: z.number().min(0).max(1),
+  })
+  .strict()
+
+/**
+ * Phase 2 — what the editor captured alongside the text. Spoken answers carry the
+ * transcript + delivery stats; typed answers just say so, which clears any stale capture.
+ */
+const captureSchema = z.discriminatedUnion('inputMode', [
+  z.object({ inputMode: z.literal('typed') }),
+  z.object({
+    inputMode: z.literal('spoken'),
+    transcript: z.object({
+      verbatim: z.string().trim().min(1).max(20_000),
+      annotated: z.string().trim().min(1).max(30_000),
+    }),
+    delivery: deliveryStatsSchema,
+    audioConfidence: z.number().min(0).max(1).nullable().optional(),
+  }),
+])
+
 const patchSchema = z.object({
   status: z.enum(['created', 'in_progress', 'completed']).optional(),
   currentQuestionIndex: z.number().int().min(0).optional(),
   answer: z
     .object({
       index: z.number().int().min(0),
+      // Pause markers now live in transcript.annotated, so the cap only has to fit the words.
       answer: z.string().trim().min(1).max(10_000),
+      capture: captureSchema.optional(),
     })
     .optional(),
   flag: z
@@ -55,19 +104,6 @@ const patchSchema = z.object({
     })
     .optional(),
 })
-
-/** Share of questions with a non-empty answer (0–100). No invented baseline. */
-function completionScore(doc: {
-  questions?: unknown[]
-  answers?: Array<{ index?: number; answer?: string }>
-}): number {
-  const total = Array.isArray(doc.questions) ? doc.questions.length : 0
-  if (total <= 0) return 0
-  const answered = (doc.answers ?? []).filter(
-    (a) => typeof a.answer === 'string' && a.answer.trim().length > 0,
-  ).length
-  return Math.max(0, Math.min(100, Math.round((answered / total) * 100)))
-}
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions)
@@ -148,6 +184,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (typeof parsed.data.currentQuestionIndex === 'number') {
       baseSet.currentQuestionIndex = parsed.data.currentQuestionIndex
     }
+    // Completion only marks the session; scoring and any path advance happen in
+    // POST /evaluate once a real score exists (§19 step 7).
+    if (parsed.data.status === 'completed' && !wasCompleted) {
+      baseSet.evaluationStatus = 'pending'
+      baseSet.evaluation = null
+      baseSet.evaluationError = null
+    }
 
     let updated: unknown = exists
 
@@ -161,15 +204,40 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     if (parsed.data.answer) {
       const now = new Date()
-      const { index, answer } = parsed.data.answer
+      const { index, answer, capture } = parsed.data.answer
+      const isCoding = exists.questions?.[index]?.kind === 'coding'
+
+      // capture omitted → keep whatever was captured before (a text edit after a spoken
+      // answer must not throw away its delivery stats); explicit typed → clear it.
+      const captureSet: Record<string, unknown> = {}
+      const captureUnset: Record<string, 1> = {}
+      if (isCoding) {
+        captureSet.inputMode = 'coding'
+      } else if (capture?.inputMode === 'spoken') {
+        captureSet.inputMode = 'spoken'
+        captureSet.transcript = capture.transcript
+        captureSet.delivery = capture.delivery
+        captureSet.audioConfidence = capture.audioConfidence ?? null
+      } else if (capture?.inputMode === 'typed') {
+        captureSet.inputMode = 'typed'
+        captureUnset.transcript = 1
+        captureUnset.delivery = 1
+        captureUnset.audioConfidence = 1
+      }
+
+      const positional: Record<string, unknown> = {
+        'answers.$.answer': answer,
+        'answers.$.updatedAt': now,
+      }
+      for (const [k, v] of Object.entries(captureSet)) positional[`answers.$.${k}`] = v
+      const positionalUnset: Record<string, 1> = {}
+      for (const k of Object.keys(captureUnset)) positionalUnset[`answers.$.${k}`] = 1
 
       const afterAnswerUpdate = await InterviewSessionModel.findOneAndUpdate(
         { ...filter, 'answers.index': index },
         {
-          $set: {
-            'answers.$.answer': answer,
-            'answers.$.updatedAt': now,
-          },
+          $set: positional,
+          ...(Object.keys(positionalUnset).length ? { $unset: positionalUnset } : {}),
         },
         { returnDocument: 'after' },
       ).lean()
@@ -179,7 +247,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       } else {
         updated = await InterviewSessionModel.findOneAndUpdate(
           filter,
-          { $push: { answers: { index, answer, updatedAt: now } } },
+          {
+            $push: {
+              answers: { index, answer, updatedAt: now, inputMode: 'typed', ...captureSet },
+            },
+          },
           { returnDocument: 'after' },
         ).lean()
       }
@@ -204,10 +276,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       durationMinutes?: number | null
       interviewStartedAt?: Date | null
       status?: string
-      learningPathId?: string | null
-      learningStageId?: string | null
-      questions?: unknown[]
-      answers?: Array<{ index?: number; answer?: string }>
     }
     if (
       sessionDoc.durationMinutes &&
@@ -224,23 +292,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       }
     }
 
-    let pathProgress: { advanced: boolean; message?: string } | null = null
-    if (sessionDoc.status === 'completed' && !wasCompleted) {
-      pathProgress = await advancePathProgressForInterview({
-        userId: session.user.id,
-        learningPathId: sessionDoc.learningPathId,
-        learningStageId: sessionDoc.learningStageId,
-        score: completionScore(sessionDoc),
-        questionsAnswered: (sessionDoc.answers ?? []).filter(
-          (a) => typeof a.answer === 'string' && a.answer.trim().length > 0,
-        ).length,
-        remediationId: (sessionDoc as { pathRemediationId?: string | null }).pathRemediationId,
-      })
-    }
-
     return NextResponse.json({
-      session: updated,
-      ...(pathProgress ? { pathProgress } : {}),
+      session: redactSessionForClient(updated as Record<string, unknown>),
     })
   } catch (error) {
     return NextResponse.json(

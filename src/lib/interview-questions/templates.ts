@@ -10,6 +10,7 @@ import {
 import { buildLeetCodeCodingQuestions } from '@/lib/interview-questions/coding-templates'
 import { buildSystemDesignQuestions } from '@/lib/interview-questions/system-design-templates'
 import { assertConfirmedTopics } from '@/lib/interview-config/assert-selection'
+import { normalizeAnswerKey } from '@/lib/interview-questions/answer-keys'
 
 export function allocateKinds(
   interviewType: InterviewGenerationParams['interviewType'],
@@ -148,12 +149,16 @@ export function buildTemplateQuestions(params: InterviewGenerationParams): Inter
         : kind === 'hr'
           ? `In an HR interview at ${questionDifficulty} difficulty, discuss "${topic}" with a concrete example tied to your experience.`
           : `Describe a concrete situation related to "${topic}" at ${questionDifficulty} difficulty: your actions, stakeholders involved, and what you learned.`
+    // Template questions are generic, so the generic key (padded by normalizeAnswerKey)
+    // is the honest answer key for them.
     return {
       type: kind,
       topic,
       difficulty: questionDifficulty,
       question: cleanQuestionText(draft),
       kind: 'spoken' as const,
+      rubric: kind,
+      ...normalizeAnswerKey(null, kind, topic),
     }
   })
 }

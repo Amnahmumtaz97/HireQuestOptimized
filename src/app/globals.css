@@ -3113,6 +3113,272 @@
     opacity: 0.75;
   }
 
+  /* ---------- In-box voice prompt ---------- */
+  .hq-iv-answer__body {
+    position: relative;
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+  }
+
+  .hq-iv-voice {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 24px;
+    text-align: center;
+    /* Let clicks fall through to the textarea; only the mic is interactive. */
+    pointer-events: none;
+  }
+
+  .hq-iv-voice--live,
+  .hq-iv-voice--busy {
+    background: color-mix(in oklab, var(--card) 88%, transparent);
+    backdrop-filter: blur(2px);
+  }
+
+  /* Stage: wave | halo + mic | wave */
+  .hq-iv-voice__stage {
+    position: relative;
+    display: flex;
+    width: 100%;
+    max-width: 640px;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+  }
+
+  .hq-iv-voice__wave {
+    width: 0;
+    min-width: 0;
+    height: 64px;
+    flex: 1 1 0;
+    overflow: visible;
+  }
+
+  .hq-iv-voice__wave--left { transform: scaleX(-1); }
+
+  .hq-iv-voice__stop--near { stop-color: var(--primary); }
+  .hq-iv-voice__stop--far { stop-color: var(--hq-cyan); stop-opacity: 0; }
+
+  .hq-iv-voice__trace {
+    fill: none;
+    stroke-width: 2.25;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.45;
+    /* Long enough to cover the whole path so the draw animation never "pops". */
+    stroke-dasharray: 720;
+    stroke-dashoffset: 0;
+    filter: drop-shadow(0 0 6px color-mix(in oklab, var(--primary) 55%, transparent));
+    transition: opacity 240ms ease;
+  }
+
+  .hq-iv-voice__trace--echo {
+    stroke-width: 1.25;
+    opacity: 0.18;
+    filter: none;
+  }
+
+  .hq-iv-voice--live .hq-iv-voice__trace {
+    opacity: 0.95;
+    animation: hq-iv-voice-draw 1.5s linear infinite;
+  }
+
+  .hq-iv-voice--live .hq-iv-voice__trace--echo {
+    opacity: 0.4;
+    animation: hq-iv-voice-draw 2.2s linear infinite reverse;
+  }
+
+  .hq-iv-voice--busy .hq-iv-voice__trace {
+    opacity: 0.3;
+    animation: hq-iv-voice-draw 3s linear infinite;
+  }
+
+  @keyframes hq-iv-voice-draw {
+    from { stroke-dashoffset: 720; }
+    to { stroke-dashoffset: 0; }
+  }
+
+  /* Halo: soft radial glow + two slowly counter-rotating dotted orbits. */
+  .hq-iv-voice__halo {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 220px;
+    height: 220px;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .hq-iv-voice__glow {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: radial-gradient(
+      circle,
+      color-mix(in oklab, var(--primary) 34%, transparent) 0%,
+      color-mix(in oklab, var(--hq-cyan) 14%, transparent) 38%,
+      transparent 68%
+    );
+    animation: hq-iv-voice-breathe 3.6s ease-in-out infinite;
+  }
+
+  .hq-iv-voice--live .hq-iv-voice__glow {
+    background: radial-gradient(
+      circle,
+      color-mix(in oklab, var(--hq-red) 30%, transparent) 0%,
+      color-mix(in oklab, var(--primary) 16%, transparent) 40%,
+      transparent 68%
+    );
+    animation-duration: 1.4s;
+  }
+
+  @keyframes hq-iv-voice-breathe {
+    0%, 100% { transform: scale(0.92); opacity: 0.7; }
+    50% { transform: scale(1.08); opacity: 1; }
+  }
+
+  .hq-iv-voice__orbit {
+    position: absolute;
+    inset: 44px;
+    border: 1.5px dotted color-mix(in oklab, var(--primary) 55%, transparent);
+    border-radius: 999px;
+    animation: hq-iv-voice-orbit 28s linear infinite;
+  }
+
+  .hq-iv-voice__orbit--outer {
+    inset: 22px;
+    border-color: color-mix(in oklab, var(--hq-cyan) 40%, transparent);
+    border-style: dashed;
+    animation-duration: 44s;
+    animation-direction: reverse;
+  }
+
+  .hq-iv-voice--live .hq-iv-voice__orbit { animation-duration: 7s; }
+  .hq-iv-voice--live .hq-iv-voice__orbit--outer { animation-duration: 11s; }
+
+  @keyframes hq-iv-voice-orbit {
+    to { transform: rotate(360deg); }
+  }
+
+  .hq-iv-voice__mic {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    width: 72px;
+    height: 72px;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid color-mix(in oklab, var(--primary) 45%, transparent);
+    border-radius: 999px;
+    background:
+      radial-gradient(circle at 30% 25%, color-mix(in oklab, white 18%, transparent), transparent 55%),
+      color-mix(in oklab, var(--primary) 18%, var(--card));
+    color: var(--primary);
+    box-shadow:
+      0 0 0 6px color-mix(in oklab, var(--primary) 10%, transparent),
+      0 0 32px -6px color-mix(in oklab, var(--primary) 70%, transparent);
+    pointer-events: auto;
+    transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+  }
+
+  .hq-iv-voice__mic svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .hq-iv-voice__mic:hover {
+    transform: scale(1.05);
+    background: color-mix(in oklab, var(--primary) 22%, transparent);
+  }
+
+  .hq-iv-voice__mic:disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .hq-iv-voice--live .hq-iv-voice__mic {
+    border-color: color-mix(in oklab, var(--hq-red) 60%, transparent);
+    background: color-mix(in oklab, var(--hq-red) 18%, var(--card));
+    color: var(--hq-red);
+    box-shadow:
+      0 0 0 6px color-mix(in oklab, var(--hq-red) 12%, transparent),
+      0 0 36px -6px color-mix(in oklab, var(--hq-red) 70%, transparent);
+  }
+
+  .hq-iv-voice--live .hq-iv-voice__mic svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+  }
+
+  /* Two expanding rings while listening. */
+  .hq-iv-voice--live .hq-iv-voice__mic::before,
+  .hq-iv-voice--live .hq-iv-voice__mic::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border: 2px solid color-mix(in oklab, var(--hq-red) 55%, transparent);
+    border-radius: inherit;
+    animation: hq-iv-voice-ring 1.8s ease-out infinite;
+  }
+
+  .hq-iv-voice--live .hq-iv-voice__mic::after {
+    animation-delay: 0.9s;
+  }
+
+  @keyframes hq-iv-voice-ring {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(1.75); opacity: 0; }
+  }
+
+  .hq-iv-voice__spin {
+    animation: hq-iv-spin 0.9s linear infinite;
+  }
+
+  .hq-iv-voice__title {
+    color: var(--foreground);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .hq-iv-voice--live .hq-iv-voice__title {
+    color: var(--hq-red);
+  }
+
+  .hq-iv-voice__text {
+    max-width: 52ch;
+    color: var(--muted-foreground);
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+
+  .hq-iv-voice--live .hq-iv-voice__text {
+    color: var(--foreground);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hq-iv-voice--live .hq-iv-voice__mic::before,
+    .hq-iv-voice--live .hq-iv-voice__mic::after { animation: none; opacity: 0.5; }
+    .hq-iv-voice__trace,
+    .hq-iv-voice__glow,
+    .hq-iv-voice__orbit { animation: none !important; }
+  }
+
+  @media (max-width: 640px) {
+    .hq-iv-voice__wave { height: 48px; }
+    .hq-iv-voice__halo { width: 170px; height: 170px; }
+    .hq-iv-voice__orbit { inset: 30px; }
+    .hq-iv-voice__orbit--outer { inset: 12px; }
+  }
+
   .hq-iv-answer__foot {
     display: flex;
     flex: 0 0 auto;
@@ -3745,6 +4011,48 @@
     color: var(--success);
     font-size: 11px;
     font-weight: 700;
+  }
+
+  .hq-results-score-card__caption--muted { color: var(--muted-foreground); }
+
+  /* Two rings: content (primary) and delivery (cyan) — never merged (EVALUATION_PLAN §6). */
+  .hq-results-hero__body--two-rings { grid-template-columns: auto minmax(0, 1fr); }
+
+  .hq-results-rings {
+    display: flex;
+    gap: 8px;
+  }
+
+  .hq-results-score-ring--delivery {
+    background: conic-gradient(var(--hq-cyan) var(--coverage), color-mix(in oklab, var(--muted) 62%, transparent) 0);
+    box-shadow: inset 0 0 0 12px var(--card), 0 0 28px -16px var(--hq-cyan);
+  }
+
+  .hq-results-score-ring--pending {
+    background: color-mix(in oklab, var(--muted) 50%, transparent);
+    box-shadow: inset 0 0 0 12px var(--card);
+  }
+
+  .hq-results-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border: 1px solid color-mix(in oklab, currentColor 35%, transparent);
+    border-radius: 999px;
+    background: color-mix(in oklab, currentColor 10%, transparent);
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .hq-iv-annotated {
+    margin: 0 0 10px;
+    padding: 10px 12px;
+    border: 1px dashed color-mix(in oklab, var(--border) 80%, transparent);
+    border-radius: 8px;
+    color: var(--muted-foreground);
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
   }
 
   .hq-results-hero__stats { min-width: 0; }

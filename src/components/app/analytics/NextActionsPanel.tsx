@@ -68,7 +68,7 @@ function buildActions(
       description: 'Your score is below 60%. More practice with feedback will push it higher.',
       cta: 'Take a mock interview',
       href: '/app/mocks',
-      badge: `${confidenceScore}% confidence`,
+      badge: `${confidenceScore}% interview score`,
       badgeColor: 'text-red-400 bg-red-500/10 border-red-500/20',
     })
   }

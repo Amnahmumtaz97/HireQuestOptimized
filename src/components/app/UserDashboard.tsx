@@ -1545,6 +1545,9 @@ export function CreateInterviewWizard({
       return
     }
     setActionError(''); setActionMessage(''); setIsCreatingInterview(true)
+    // The loader stays up through navigation; it is only dismissed on failure,
+    // otherwise the wizard flashes back for a frame before the interview mounts.
+    let navigated = false
     try {
       const response = await fetch('/api/interviews', {
         method: 'POST',
@@ -1592,12 +1595,13 @@ export function CreateInterviewWizard({
         setActionMessage(`Interview ready — ${qCount} questions generated via ${source}.`)
         toast.success(`Interview ready — ${qCount} questions generated via ${source}.`)
       }
+      navigated = true
       router.push(`/app/interviews/${sessionId}`)
     } catch {
       setActionError('Failed to create interview')
       toast.error('Failed to create interview')
     }
-    finally { setIsCreatingInterview(false) }
+    finally { if (!navigated) setIsCreatingInterview(false) }
   }
 
   useEffect(() => {

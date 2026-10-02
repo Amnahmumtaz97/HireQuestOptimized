@@ -1,0 +1,133 @@
+{
+  "$comment": "EVALUATION_PLAN §21 — hand-graded answers with expected score ranges. Run `npm run eval:calibrate` before shipping any prompt change. Extend with more cases as the product grows; keep at least one strong / average / weak per rubric.",
+  "cases": [
+    {
+      "id": "tech-strong",
+      "rubric": "technical",
+      "expected": [78, 100],
+      "question": {
+        "question": "How would you handle a memory leak in a Node service?",
+        "type": "technical",
+        "topic": "Node.js",
+        "difficulty": "Medium",
+        "rubric": "technical",
+        "keyPoints": [
+          { "text": "Identifies symptoms — RSS growth, GC pressure, eventual OOM" },
+          { "text": "Names a tool — heap snapshots, clinic.js, --inspect" },
+          { "text": "Compares two snapshots to find retained objects" },
+          { "text": "Mentions a common cause — unbounded cache, listener leak, closure" },
+          { "text": "Describes verifying the fix under load" }
+        ],
+        "redFlags": ["Just says 'restart the server'", "Confuses a memory leak with high CPU"],
+        "idealAnswerSummary": "A strong answer walks from detection to diagnosis to root cause to verification."
+      },
+      "answer": "The first sign is usually RSS climbing steadily under a constant load until the process gets OOM-killed, often with GC pauses getting longer first. I'd confirm it by watching process.memoryUsage() over time, then attach with --inspect and take two heap snapshots a few minutes apart. Comparing them in Chrome DevTools shows which constructors are growing — retained objects that should have been collected. In my experience the cause is nearly always an unbounded in-memory cache, an event listener added per request and never removed, or a closure that keeps a big buffer alive. After fixing it I'd run the same load test again and confirm the heap plateaus instead of climbing."
+    },
+    {
+      "id": "tech-average",
+      "rubric": "technical",
+      "expected": [55, 78],
+      "question": { "$ref": "tech-strong" },
+      "answer": "I'd check if memory keeps going up over time. Then I'd take a heap snapshot with the Node inspector to see what is using memory. Usually it's something like a cache that never clears or listeners piling up. Then I'd fix that and redeploy."
+    },
+    {
+      "id": "tech-weak",
+      "rubric": "technical",
+      "expected": [0, 45],
+      "question": { "$ref": "tech-strong" },
+      "answer": "A memory leak means the server is using too much CPU, so I'd scale horizontally and add more instances. If that doesn't work I'd just restart the server on a schedule with a cron job so memory never gets too high."
+    },
+    {
+      "id": "behav-strong",
+      "rubric": "behavioral",
+      "expected": [80, 100],
+      "question": {
+        "question": "Tell me about a time you disagreed with a teammate.",
+        "type": "behavioral",
+        "topic": "Conflict resolution",
+        "difficulty": "Medium",
+        "rubric": "behavioral",
+        "competency": "conflict resolution",
+        "keyPoints": [
+          { "text": "Explains how they handled pushback" },
+          { "text": "Shows they sought to understand the other view" },
+          { "text": "Describes a concrete resolution and outcome" }
+        ],
+        "redFlags": ["Blames others without owning any part", "Story is hypothetical rather than a real past event"]
+      },
+      "answer": "Last March at my previous company, a teammate and I disagreed about how to version our billing API. He wanted to break the old endpoints; I thought we'd hurt three enterprise clients. I asked him to walk me through his reasoning first, and it turned out his main concern was the maintenance cost of two versions. So I spent two days prototyping a thin adapter layer that let us keep one implementation behind both paths. I presented both options with the numbers: my approach added about 200 lines but avoided a forced migration for clients worth roughly 30% of revenue. He agreed, we shipped it in the next sprint, and zero clients churned during the migration. I learned to prototype before arguing."
+    },
+    {
+      "id": "behav-average",
+      "rubric": "behavioral",
+      "expected": [50, 78],
+      "question": { "$ref": "behav-strong" },
+      "answer": "At my last job we had a disagreement about API design. I thought we should keep the old endpoints and my teammate wanted to remove them. We talked about it and looked at the trade-offs, and eventually we went with a compromise where we kept both for a while. It worked out and the team was happy with the pattern."
+    },
+    {
+      "id": "behav-weak",
+      "rubric": "behavioral",
+      "expected": [0, 40],
+      "question": { "$ref": "behav-strong" },
+      "answer": "If I disagreed with a teammate I would first try to understand their point of view. I would then explain my reasoning calmly. You should always keep it professional and never make it personal. I would escalate to a manager if we couldn't agree, and I would document the decision afterwards."
+    },
+    {
+      "id": "hr-strong",
+      "rubric": "hr",
+      "expected": [80, 100],
+      "question": {
+        "question": "Why do you want to join as a Backend Engineer?",
+        "type": "hr",
+        "topic": "Motivation",
+        "difficulty": "Easy",
+        "rubric": "hr",
+        "keyPoints": [
+          { "text": "Connects own goals to this role and company" },
+          { "text": "Mentions relevant experience" },
+          { "text": "Gives a concrete reason rather than a generic one" }
+        ],
+        "redFlags": ["Badmouths a previous employer", "Motivation is money-only"]
+      },
+      "answer": "I want to work on payment infrastructure at scale, and this team does exactly that. For the last four years I've built ledger and settlement services in Node and Postgres, and the part I enjoy most is the reliability work — idempotency, reconciliation, the things that keep money correct. Your engineering blog post on the double-entry migration is the kind of problem I want to spend the next few years on."
+    },
+    {
+      "id": "hr-weak",
+      "rubric": "hr",
+      "expected": [0, 45],
+      "question": { "$ref": "hr-strong" },
+      "answer": "Honestly my current company is a mess and the managers don't know what they're doing, so I need to get out. Your salary range is higher than what I make now, which is the main thing. I can do backend work, I've done some before."
+    },
+    {
+      "id": "sd-strong",
+      "rubric": "system_design",
+      "expected": [75, 100],
+      "question": {
+        "question": "## Design a URL Shortener\n\nDesign a service like bit.ly that turns long URLs into short codes and redirects with low latency.\n\n### Requirements\n- Create short links and redirect (read-heavy)\n- Custom aliases (optional), expiry, basic analytics (click counts)\n- Target: ~100M new links/day, ~10B redirects/day",
+        "type": "technical",
+        "topic": "Scalability",
+        "difficulty": "Medium",
+        "rubric": "system_design",
+        "keyPoints": [
+          { "text": "States the read/write ratio", "dimension": "requirements" },
+          { "text": "Clarifies custom alias and expiry handling", "dimension": "requirements" },
+          { "text": "API: POST /shorten, GET /:code redirect", "dimension": "components" },
+          { "text": "ID generation — base62 counter or hash", "dimension": "components" },
+          { "text": "Key-value store for code → URL", "dimension": "components" },
+          { "text": "Estimates QPS from the stated volumes", "dimension": "scale" },
+          { "text": "Caches hot redirects", "dimension": "scale" },
+          { "text": "Hash vs counter: collisions vs coordination", "dimension": "tradeoffs" }
+        ],
+        "redFlags": ["Single unreplicated database at the stated scale"],
+        "scaleHints": ["~10B redirects/day ≈ 115k rps"]
+      },
+      "answer": "Reads dominate: 10B redirects a day is about 115k requests per second average, maybe 300k at peak, against roughly 1,200 writes per second. Custom aliases need a uniqueness check, and expiry can be a TTL on the record. The API is POST /shorten returning the code and GET /:code doing a 302 redirect. For IDs I'd use a base62 encoding of a counter allocated in ranges from a coordination service, so each app node hands out IDs without a round trip. Storage is a key-value store keyed by code — DynamoDB or Cassandra — partitioned by code, which spreads evenly because codes are effectively random. The hot path is served from Redis in front of the store; redirects follow a power law so a cache of the top few percent of codes gets us a 90%+ hit rate. I considered hashing the URL with MD5 and truncating, but truncated hashes collide and need a retry loop, whereas the counter needs coordination but never collides; at this write rate coordination is the cheaper problem. I'd use 302 over 301 so analytics still see every click, at the cost of slightly more traffic."
+    },
+    {
+      "id": "sd-weak",
+      "rubric": "system_design",
+      "expected": [0, 45],
+      "question": { "$ref": "sd-strong" },
+      "answer": "I would build a REST API with a create endpoint and a redirect endpoint. The links would be stored in a MySQL database with an auto-increment id that we convert to a short string. To make it scalable we would put it behind a load balancer and make it scalable with more servers as needed. I'd use Cassandra because it's good for big data."
+    }
+  ]
+}

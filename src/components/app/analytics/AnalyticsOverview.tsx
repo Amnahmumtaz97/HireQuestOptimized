@@ -25,7 +25,7 @@ type AnalyticsPayload = {
     timeSpentMinutes: number
     pathsEnrolled: number
     pathsCompleted: number
-    interviewConfidenceScore: number | null
+    interviewContentScore: number | null
     feedbackTrend: number[]
   }
 }
@@ -100,7 +100,7 @@ export function AnalyticsOverview() {
         currentStreak={gam.currentStreak}
         longestStreak={gam.longestStreak}
         xp={gam.xp}
-        confidenceScore={an.interviewConfidenceScore}
+        confidenceScore={an.interviewContentScore}
       />
 
       {/* ── Trend + Skill row ── */}
@@ -112,7 +112,7 @@ export function AnalyticsOverview() {
           <SkillBreakdown
             questionsAnswered={an.questionsAnswered}
             interviewsCompleted={an.interviewsCompleted}
-            confidenceScore={an.interviewConfidenceScore}
+            confidenceScore={an.interviewContentScore}
           />
         </div>
       </div>
@@ -132,7 +132,7 @@ export function AnalyticsOverview() {
           <NextActionsPanel
             interviewsCompleted={an.interviewsCompleted}
             currentStreak={gam.currentStreak}
-            confidenceScore={an.interviewConfidenceScore}
+            confidenceScore={an.interviewContentScore}
             pathsEnrolled={an.pathsEnrolled}
           />
         </div>

@@ -1,5 +1,6 @@
 import type { InterviewQuestionItem } from '@/lib/interview-questions/schema'
 import type { Difficulty } from '@/lib/interview-questions/difficulty'
+import { normalizeAnswerKey } from '@/lib/interview-questions/answer-keys'
 
 type CodingTemplate = {
   topic: string
@@ -1252,6 +1253,84 @@ Implement \`firstBadVersion(n, bad)\` returning the first bad version. Prefer bi
   },
 ]
 
+type CodingAnswerKey = {
+  time: string
+  space: string
+  edgeCases: string[]
+  keyPoints: string[]
+}
+
+/**
+ * Static answer keys for the curated bank, keyed by functionName (EVALUATION_PLAN §4).
+ * Complexity is the optimal class the judge compares the candidate's solution against.
+ */
+const CODING_ANSWER_KEYS: Record<string, CodingAnswerKey> = {
+  twoSum: { time: 'O(n)', space: 'O(n)', edgeCases: ['Two equal numbers summing to target', 'Negative numbers'], keyPoints: ['Uses a hash map from value to index for O(1) complement lookup', 'Single pass over the array', 'Returns indices, not values'] },
+  twoSumHash: { time: 'O(n)', space: 'O(n)', edgeCases: ['Two equal numbers summing to target', 'Negative numbers'], keyPoints: ['Uses a hash map from value to index', 'Single pass', 'Checks complement before inserting the current value'] },
+  maxSubArray: { time: 'O(n)', space: 'O(1)', edgeCases: ['All negative numbers', 'Single element'], keyPoints: ["Kadane's algorithm: running sum reset when it drops below zero", 'Tracks the best sum seen so far', 'Handles all-negative arrays by seeding with the first element'] },
+  maxProfit: { time: 'O(n)', space: 'O(1)', edgeCases: ['Prices strictly decreasing (profit 0)', 'Two-day array'], keyPoints: ['Tracks the minimum price seen so far', 'Updates max profit at each day in one pass', 'Never sells before buying'] },
+  productExceptSelf: { time: 'O(n)', space: 'O(1)', edgeCases: ['Array containing a zero', 'Two elements'], keyPoints: ['Prefix products then suffix products', 'No division', 'Output array reused as the prefix buffer for O(1) extra space'] },
+  moveZeroes: { time: 'O(n)', space: 'O(1)', edgeCases: ['All zeros', 'No zeros', 'Single element'], keyPoints: ['Write pointer for the next non-zero slot', 'Preserves relative order of non-zero elements', 'In place, no copy'] },
+  rotate: { time: 'O(n)', space: 'O(1)', edgeCases: ['k larger than the array length', 'k equal to 0'], keyPoints: ['Reduces k modulo the length', 'Three-reversal technique or cyclic replacement', 'In place'] },
+  missingNumber: { time: 'O(n)', space: 'O(1)', edgeCases: ['Missing number is 0', 'Missing number is n'], keyPoints: ['Gauss sum n(n+1)/2 minus the actual sum, or XOR trick', 'Single pass'] },
+  merge: { time: 'O(m+n)', space: 'O(1)', edgeCases: ['nums2 empty', 'nums1 has no real elements (m = 0)'], keyPoints: ['Merges from the back to avoid overwriting', 'Three pointers', 'Copies remaining nums2 elements'] },
+  majorityElement: { time: 'O(n)', space: 'O(1)', edgeCases: ['Single element', 'Majority element at the end'], keyPoints: ['Boyer–Moore voting: candidate and counter', 'Single pass, constant space'] },
+  removeDuplicates: { time: 'O(n)', space: 'O(1)', edgeCases: ['All elements identical', 'No duplicates'], keyPoints: ['Slow/fast pointer', 'Writes unique values in place', 'Returns the count k'] },
+  plusOne: { time: 'O(n)', space: 'O(1)', edgeCases: ['All nines (length grows)', 'Single digit 9'], keyPoints: ['Iterates from the least significant digit', 'Carries and stops early when no carry', 'Prepends 1 when every digit was 9'] },
+  singleNumberArray: { time: 'O(n)', space: 'O(1)', edgeCases: ['Single element', 'Negative numbers'], keyPoints: ['XOR of all elements cancels pairs', 'Constant space'] },
+  singleNumber: { time: 'O(n)', space: 'O(1)', edgeCases: ['Single element', 'Negative numbers'], keyPoints: ['XOR of all elements cancels pairs', 'Constant space'] },
+  maxArea: { time: 'O(n)', space: 'O(1)', edgeCases: ['Two lines only', 'All heights equal'], keyPoints: ['Two pointers from both ends', 'Moves the shorter line inward', 'Tracks the maximum area'] },
+  characterReplacement: { time: 'O(n)', space: 'O(1)', edgeCases: ['k equal to 0', 'All characters identical'], keyPoints: ['Sliding window with a frequency count', 'Window valid while length − maxFreq ≤ k', 'Shrinks from the left when invalid'] },
+  searchInsert: { time: 'O(log n)', space: 'O(1)', edgeCases: ['Target smaller than every element', 'Target larger than every element'], keyPoints: ['Binary search', 'Returns the left bound when not found'] },
+  evalRPN: { time: 'O(n)', space: 'O(n)', edgeCases: ['Division truncating toward zero with negatives', 'Single number'], keyPoints: ['Stack of operands', 'Pops two, applies the operator, pushes the result', 'Truncates division toward zero'] },
+  rob: { time: 'O(n)', space: 'O(1)', edgeCases: ['Single house', 'Two houses'], keyPoints: ['DP: rob[i] = max(rob[i-1], rob[i-2] + nums[i])', 'Two rolling variables for O(1) space'] },
+  myPow: { time: 'O(log n)', space: 'O(1)', edgeCases: ['Negative exponent', 'Exponent 0'], keyPoints: ['Fast exponentiation by squaring', 'Handles negative n by inverting x'] },
+  jump: { time: 'O(n)', space: 'O(1)', edgeCases: ['Single element (0 jumps)', 'Every element 1'], keyPoints: ['Greedy: tracks the current jump end and the farthest reachable index', 'Increments jumps when the current end is reached'] },
+  findKthLargestSort: { time: 'O(n log n)', space: 'O(1)', edgeCases: ['k equal to the length', 'Duplicates'], keyPoints: ['Sorts descending and indexes k−1, or uses a heap / quickselect'] },
+  findKthLargest: { time: 'O(n log k)', space: 'O(k)', edgeCases: ['k equal to the length', 'Duplicates'], keyPoints: ['Min-heap of size k or quickselect', 'Better than a full sort'] },
+  findPeakElement: { time: 'O(log n)', space: 'O(1)', edgeCases: ['Single element', 'Peak at either end'], keyPoints: ['Binary search toward the rising side', 'Compares mid with mid+1'] },
+  countRecent: { time: 'O(log n)', space: 'O(1)', edgeCases: ['Single ping', 'All pings outside the window'], keyPoints: ['Binary search for the window start, or a linear scan', 'Inclusive bounds [t−3000, t]'] },
+  recentCounter: { time: 'O(n)', space: 'O(n)', edgeCases: ['Single ping', 'Pings exactly 3000 apart'], keyPoints: ['Sliding window / queue over the sorted timestamps', 'Inclusive window bounds'] },
+  isSameTreeArrays: { time: 'O(n)', space: 'O(1)', edgeCases: ['Different lengths', 'Null positions differing'], keyPoints: ['Compares lengths then element-wise including nulls'] },
+  maxDepth: { time: 'O(n)', space: 'O(n)', edgeCases: ['Empty tree', 'Skewed tree with nulls'], keyPoints: ['Level-order traversal counting levels, or index math on the array', 'Handles null children'] },
+  letterCombinationsCount: { time: 'O(n)', space: 'O(1)', edgeCases: ['Empty string (0)', 'Digit 7 or 9 (four letters)'], keyPoints: ['Product of letters per digit', 'Empty input returns 0'] },
+  hammingWeight: { time: 'O(1)', space: 'O(1)', edgeCases: ['Zero', 'Power of two'], keyPoints: ['n & (n−1) clears the lowest set bit', 'Counts iterations'] },
+  lastStoneWeight: { time: 'O(n log n)', space: 'O(n)', edgeCases: ['Single stone', 'Two equal stones (0)'], keyPoints: ['Max-heap or repeated sort', 'Smashes the two heaviest until one or none remains'] },
+  findCenter: { time: 'O(1)', space: 'O(1)', edgeCases: ['Exactly two edges'], keyPoints: ['The center appears in both of the first two edges', 'No need to scan every edge'] },
+  mergeTwoLists: { time: 'O(m+n)', space: 'O(m+n)', edgeCases: ['Both lists empty', 'One list empty'], keyPoints: ['Two pointers merging in order', 'Appends the remaining tail'] },
+  reverseWords: { time: 'O(n)', space: 'O(n)', edgeCases: ['Leading, trailing and multiple spaces', 'Single word'], keyPoints: ['Splits on whitespace runs', 'Filters empty tokens', 'Reverses and joins with a single space'] },
+  isAnagram: { time: 'O(n)', space: 'O(1)', edgeCases: ['Different lengths', 'Repeated letters'], keyPoints: ['Length check first', 'Frequency count of 26 letters', 'Compares counts'] },
+  lengthOfLongestSubstring: { time: 'O(n)', space: 'O(min(n, alphabet))', edgeCases: ['Empty string', 'All identical characters'], keyPoints: ['Sliding window with last-seen index map', 'Moves the left bound past repeats'] },
+  containsDuplicate: { time: 'O(n)', space: 'O(n)', edgeCases: ['No duplicates', 'Duplicate at the end'], keyPoints: ['Hash set of seen values', 'Returns early on first repeat'] },
+  isPalindrome: { time: 'O(n)', space: 'O(1)', edgeCases: ['Only non-alphanumerics (true)', 'Mixed case'], keyPoints: ['Two pointers skipping non-alphanumerics', 'Case-insensitive comparison'] },
+  findMaxAverage: { time: 'O(n)', space: 'O(1)', edgeCases: ['k equal to the array length', 'Negative numbers'], keyPoints: ['Sliding window sum of length k', 'Divides only once at the end'] },
+  search: { time: 'O(log n)', space: 'O(1)', edgeCases: ['Single element', 'Target absent'], keyPoints: ['Binary search with inclusive bounds', 'Returns −1 when not found'] },
+  isValid: { time: 'O(n)', space: 'O(n)', edgeCases: ['Unmatched opening bracket at the end', 'Closing bracket first'], keyPoints: ['Stack of expected closers', 'Empty stack at the end means valid'] },
+  reverseList: { time: 'O(n)', space: 'O(1)', edgeCases: ['Empty list', 'Single node'], keyPoints: ['Iterative pointer reversal (prev/current/next) or recursion', 'Returns the new head'] },
+  climbStairs: { time: 'O(n)', space: 'O(1)', edgeCases: ['n = 1', 'n = 2'], keyPoints: ['Fibonacci recurrence', 'Two rolling variables'] },
+  numIslands: { time: 'O(m·n)', space: 'O(m·n)', edgeCases: ['All water', 'Single cell'], keyPoints: ['BFS/DFS flood fill from each unvisited land cell', 'Marks visited cells', 'Counts starts'] },
+  fib: { time: 'O(n)', space: 'O(1)', edgeCases: ['n = 0', 'n = 1'], keyPoints: ['Iterative with two rolling variables or memoised recursion', 'No exponential recursion'] },
+  sortColors: { time: 'O(n)', space: 'O(1)', edgeCases: ['Single element', 'Already sorted'], keyPoints: ['Dutch national flag with three pointers', 'One pass, in place'] },
+  canJump: { time: 'O(n)', space: 'O(1)', edgeCases: ['Single element (true)', 'Zero blocking the path'], keyPoints: ['Greedy farthest-reach tracking', 'Fails when the index passes the farthest reach'] },
+  uniquePaths: { time: 'O(m·n)', space: 'O(n)', edgeCases: ['1×1 grid', 'Single row or column'], keyPoints: ['DP over the grid or the binomial coefficient C(m+n−2, m−1)', 'Rolling row for O(n) space'] },
+  firstBadVersion: { time: 'O(log n)', space: 'O(1)', edgeCases: ['First version bad', 'Last version bad'], keyPoints: ['Binary search for the first bad version', 'Keeps the right bound as a candidate'] },
+}
+
+function codingAnswerKey(tpl: CodingTemplate) {
+  const key = CODING_ANSWER_KEYS[tpl.functionName]
+  return normalizeAnswerKey(
+    key
+      ? {
+          expectedComplexity: { time: key.time, space: key.space },
+          edgeCases: key.edgeCases,
+          keyPoints: key.keyPoints,
+        }
+      : null,
+    'coding',
+    tpl.topic,
+  )
+}
+
 function difficultyRank(d: Difficulty): number {
   if (d === 'Easy') return 0
   if (d === 'Medium') return 1
@@ -1375,6 +1454,8 @@ export function buildLeetCodeCodingQuestions(params: {
       starterCode: tpl.starterCode,
       publicTests: tpl.publicTests,
       hiddenTests: tpl.hiddenTests,
+      rubric: 'coding' as const,
+      ...codingAnswerKey(tpl),
     }
   })
 }

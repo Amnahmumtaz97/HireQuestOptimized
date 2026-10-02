@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import type { AnswerCapture } from '@/lib/interview/answer-capture'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useInterviewSession } from '@/hooks/interview/useInterviewSession'
@@ -12,12 +13,12 @@ import {
 } from '@/components/app/interview/InterviewAnswerEditor'
 import { CodingAnswerEditor } from '@/components/app/interview/CodingAnswerEditor'
 import { InterviewQuestionCard } from '@/components/app/interview/InterviewQuestionCard'
+import { InterviewGenerationLoader } from '@/components/app/interview/InterviewGenerationLoader'
 import { InterviewQuestionMeta } from '@/components/app/interview/InterviewQuestionMeta'
 import {
   InterviewQuestionRail,
   type QuestionRailFilter,
 } from '@/components/app/interview/InterviewQuestionRail'
-import { InterviewProgressBar } from '@/components/app/interview/InterviewProgressBar'
 import { InterviewSessionTimer } from '@/components/app/interview/InterviewSessionTimer'
 import { InterviewTopBar } from '@/components/app/interview/InterviewTopBar'
 import { interviewExitHref, interviewExitLabel } from '@/lib/learning-paths/interview-exit'
@@ -31,6 +32,40 @@ import {
 
 /** Quiet enough not to fight the typist, short enough that "Autosaved" feels true. */
 const AUTOSAVE_DELAY_MS = 1200
+
+const EVALUATION_POLL_MS = 1500
+/** Hard stop so a stuck judge never traps the user on the animation (results page has Retry). */
+const EVALUATION_MAX_WAIT_MS = 4 * 60 * 1000
+
+/**
+ * Kicks off scoring and resolves once it is ready or failed (or the wait cap is
+ * hit). Any network error just resolves too: the results page copes with every
+ * status, so the worst case is a visible "retry" rather than a dead end.
+ */
+async function waitForEvaluation(interviewId: string): Promise<void> {
+  const deadline = Date.now() + EVALUATION_MAX_WAIT_MS
+  try {
+    await fetch(`/api/interviews/${interviewId}/evaluate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    })
+  } catch {
+    return
+  }
+  while (Date.now() < deadline) {
+    await new Promise((resolve) => window.setTimeout(resolve, EVALUATION_POLL_MS))
+    try {
+      const res = await fetch(`/api/interviews/${interviewId}`, { cache: 'no-store' })
+      if (!res.ok) continue
+      const data = (await res.json()) as { session?: { evaluationStatus?: string } }
+      const status = data.session?.evaluationStatus
+      if (status === 'ready' || status === 'failed') return
+    } catch {
+      /* keep polling */
+    }
+  }
+}
 
 export function InterviewSessionPage() {
   const params = useParams<{ id: string }>()
@@ -56,9 +91,15 @@ export function InterviewSessionPage() {
   } = useInterviewSession(id)
 
   const [answerDraft, setAnswerDraft] = useState('')
+  // Spoken capture for the current question: undefined = nothing new this visit,
+  // null = typed fresh, object = recorded. Sent with every save (Phase 2).
+  const [capture, setCapture] = useState<AnswerCapture | null | undefined>(undefined)
   const [railCollapsed, setRailCollapsed] = useState(false)
   const [railFilter, setRailFilter] = useState<QuestionRailFilter>('all')
   const [justSaved, setJustSaved] = useState(false)
+  // True from the moment Finish is clicked until the results page takes over,
+  // so the scoring animation starts immediately rather than after navigation.
+  const [finishing, setFinishing] = useState(false)
   const autoFinishStarted = useRef(false)
 
   const current = questions[index]
@@ -92,6 +133,10 @@ export function InterviewSessionPage() {
     setJustSaved(false)
   }, [answerMap, index, session])
 
+  useEffect(() => {
+    setCapture(undefined)
+  }, [index])
+
   /** Debounced background save. Coding answers are saved by the code editor itself. */
   useEffect(() => {
     if (!session || busy || !isDirty) return
@@ -99,13 +144,13 @@ export function InterviewSessionPage() {
     if (current?.kind === 'coding') return
 
     const timer = window.setTimeout(() => {
-      void saveAnswer(answerDraft, { silent: true }).then((next) => {
+      void saveAnswer(answerDraft, { silent: true, capture }).then((next) => {
         if (next) setJustSaved(true)
       })
     }, AUTOSAVE_DELAY_MS)
 
     return () => window.clearTimeout(timer)
-  }, [answerDraft, busy, current?.kind, isDirty, saveAnswer, session])
+  }, [answerDraft, busy, capture, current?.kind, isDirty, saveAnswer, session])
 
   const isFlagged = flaggedSet.has(index)
   const isLastQuestion = questions.length > 0 && index >= questions.length - 1
@@ -128,7 +173,7 @@ export function InterviewSessionPage() {
 
   const handleSaveAnswer = async () => {
     setError('')
-    const next = await saveAnswer(answerDraft)
+    const next = await saveAnswer(answerDraft, { capture })
     if (next) setJustSaved(true)
   }
 
@@ -140,9 +185,9 @@ export function InterviewSessionPage() {
   const saveDraftIfAny = useCallback(async (): Promise<boolean> => {
     const trimmed = answerDraft.trim()
     if (!trimmed || trimmed === savedAnswer.trim()) return true
-    const next = await saveAnswer(answerDraft)
+    const next = await saveAnswer(answerDraft, { capture })
     return next !== null
-  }, [answerDraft, saveAnswer, savedAnswer])
+  }, [answerDraft, capture, saveAnswer, savedAnswer])
 
   const handlePrevious = useCallback(async () => {
     if (index <= 0) return
@@ -162,14 +207,21 @@ export function InterviewSessionPage() {
     if (autoFinishStarted.current) return
     autoFinishStarted.current = true
     setError('')
+    setFinishing(true)
+    let navigated = false
     try {
       if (!(await saveDraftIfAny())) return
       const next = await finishInterview()
       if (next && id) {
+        // Score here, behind the full-screen animation, so the results page
+        // opens already complete instead of showing its own loading state.
+        await waitForEvaluation(id)
+        navigated = true
         router.replace(`/app/interviews/${id}/results`)
       }
     } finally {
       autoFinishStarted.current = false
+      if (!navigated) setFinishing(false)
     }
   }, [finishInterview, id, router, saveDraftIfAny, setError])
 
@@ -228,8 +280,8 @@ export function InterviewSessionPage() {
   const exitHref = interviewExitHref(session)
   const exitLabel = interviewExitLabel(session)
 
-  if (session.status === 'completed') {
-    return <div className="p-6 text-sm text-muted-foreground">Redirecting to results…</div>
+  if (finishing || session.status === 'completed') {
+    return <InterviewGenerationLoader variant="evaluation" />
   }
 
   if (!current) {
@@ -296,15 +348,6 @@ export function InterviewSessionPage() {
         }
       />
 
-      <InterviewProgressBar
-        current={index + 1}
-        total={questions.length}
-        answeredIndexes={answeredIndexes}
-        flaggedIndexes={flaggedSet}
-        onSelect={(i) => void handleQuestionSelect(i)}
-        disabled={busy}
-      />
-
       <div className="hq-iv-body">
         <InterviewQuestionRail
           questions={questions}
@@ -366,8 +409,10 @@ export function InterviewSessionPage() {
                 illustrationRequired={current.illustrationRequired}
               />
               <InterviewAnswerEditor
+                key={index}
                 value={answerDraft}
                 onChange={setAnswerDraft}
+                onCapture={setCapture}
                 disabled={busy}
                 saveState={saveState}
                 onSubmitShortcut={() =>

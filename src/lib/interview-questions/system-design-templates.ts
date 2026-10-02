@@ -1,6 +1,11 @@
 import type { InterviewQuestionItem } from '@/lib/interview-questions/schema'
 import type { Difficulty } from '@/lib/interview-questions/difficulty'
 import { SYSTEM_DESIGN_TOPICS } from '@/lib/interview-config/banks/system-design-topics'
+import {
+  guessSystemDesignDimension,
+  normalizeAnswerKey,
+} from '@/lib/interview-questions/answer-keys'
+import type { AnswerKey, KeyPoint } from '@/lib/evaluation/types'
 
 export type SystemDesignTemplate = {
   id: string
@@ -396,6 +401,70 @@ Business metrics as SLIs, anomaly detection, synthetic checks, and how you page 
   },
 ]
 
+/**
+ * Every template carries a "### Discuss" list — the ready-made answer key (§4).
+ * Numbered lines become one point each; a prose paragraph is split on commas / "and".
+ */
+export function keyPointsFromDiscuss(question: string): KeyPoint[] {
+  const section = question.split(/###\s*Discuss\s*/i)[1]
+  if (!section) return []
+  const body = section.split(/\n###/)[0].trim()
+  const lines = body
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+
+  const numbered = lines.filter((l) => /^\d+[.)]\s+/.test(l))
+  const fragments =
+    numbered.length > 0
+      ? numbered.map((l) => l.replace(/^\d+[.)]\s+/, ''))
+      : body
+          .replace(/\s+/g, ' ')
+          .split(/,\s*|;\s*|\s+and\s+(?=[a-z])/i)
+          .map((f) => f.replace(/\.$/, '').trim())
+          .filter((f) => f.length > 6)
+
+  return fragments.slice(0, 8).map((text) => {
+    const clean = text.charAt(0).toUpperCase() + text.slice(1)
+    return { text: clean, dimension: guessSystemDesignDimension(clean) }
+  })
+}
+
+/** Numbers stated in the prompt ("~10B redirects/day") become the scale hints the grader checks for. */
+function scaleHintsFromPrompt(question: string): string[] {
+  const hints = question.match(/~?\d[\d,.]*\s?[kmbKMB]?\+?\s?(?:[a-zA-Z%]+(?:\/[a-z]+)?)/g) ?? []
+  return [...new Set(hints.map((h) => h.trim()))].slice(0, 4)
+}
+
+export function systemDesignAnswerKey(tpl: SystemDesignTemplate): AnswerKey {
+  const points = keyPointsFromDiscuss(tpl.question)
+  const dims = new Set(points.map((p) => p.dimension))
+  // Guarantee coverage of every dimension so the per-dimension blend (§14) has something to score.
+  if (!dims.has('requirements')) {
+    points.unshift({ text: 'Clarifies the functional and non-functional requirements before designing', dimension: 'requirements' })
+  }
+  if (!dims.has('scale')) {
+    points.push({ text: 'Estimates load from the stated volumes and identifies the main bottleneck', dimension: 'scale' })
+  }
+  if (!dims.has('tradeoffs')) {
+    points.push({ text: 'Names an alternative approach and explains why it was rejected', dimension: 'tradeoffs' })
+  }
+  return normalizeAnswerKey(
+    {
+      keyPoints: points.slice(0, 8),
+      redFlags: [
+        'Proposes a single unreplicated database at the stated scale',
+        'Ignores the stated volumes or constraints entirely',
+        'Names technologies with no reason for choosing them',
+      ],
+      idealAnswerSummary: `A strong answer clarifies requirements, walks through the components for "${tpl.title}", quantifies the scale, and justifies its trade-offs.`,
+      scaleHints: scaleHintsFromPrompt(tpl.question),
+    },
+    'system_design',
+    tpl.topic,
+  )
+}
+
 function difficultyRank(d: Difficulty): number {
   if (d === 'Easy') return 0
   if (d === 'Medium') return 1
@@ -501,6 +570,8 @@ export function buildSystemDesignQuestions(params: {
       difficulty,
       question: tpl.question,
       kind: 'spoken' as const,
+      rubric: 'system_design' as const,
+      ...systemDesignAnswerKey(tpl),
     }
   })
 }

@@ -20,7 +20,7 @@ type AnalyticsPayload = {
     timeSpentMinutes: number
     pathsEnrolled: number
     pathsCompleted: number
-    interviewConfidenceScore: number | null
+    interviewContentScore: number | null
   }
   achievements: Array<{
     id: string
@@ -163,8 +163,8 @@ function AchievementsBlock({
             {g.interviewsCompleted} interviews · {g.questionsAnswered} answers
           </div>
           <div className="text-xs text-muted-foreground">
-            ~{a.timeSpentMinutes} min · confidence{' '}
-            {a.interviewConfidenceScore != null ? `${a.interviewConfidenceScore}%` : '—'}
+            ~{a.timeSpentMinutes} min · avg score{' '}
+            {a.interviewContentScore != null ? `${a.interviewContentScore}%` : '—'}
           </div>
           <LoadingButton
             type="button"

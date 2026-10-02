@@ -1,6 +1,15 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { AnswerCapture } from '@/lib/interview/answer-capture'
+
+/**
+ * What to tell the server about how the answer was produced:
+ * - `undefined` — unknown (page reloaded); keep whatever was captured before
+ * - `null` — the candidate typed this answer; clear any old spoken capture
+ * - `AnswerCapture` — spoken; save the transcript + delivery stats
+ */
+export type SaveCapture = AnswerCapture | null | undefined
 
 export type InterviewSessionState = {
   _id: string
@@ -35,7 +44,13 @@ export type InterviewSessionState = {
   }>
   currentQuestionIndex?: number
   flaggedQuestionIndexes?: number[]
-  answers?: Array<{ index: number; answer: string; updatedAt: string }>
+  answers?: Array<{
+    index: number
+    answer: string
+    updatedAt: string
+    inputMode?: 'typed' | 'spoken' | 'coding' | null
+  }>
+  evaluationStatus?: 'none' | 'pending' | 'running' | 'ready' | 'failed'
 }
 
 export function useInterviewSession(interviewId: string | undefined) {
@@ -157,7 +172,7 @@ export function useInterviewSession(interviewId: string | undefined) {
   ])
 
   const saveAnswer = useCallback(
-    async (answerText: string, options?: { silent?: boolean }) => {
+    async (answerText: string, options?: { silent?: boolean; capture?: SaveCapture }) => {
       if (!session) return null
       const trimmed = answerText.trim()
       if (!trimmed) {
@@ -165,13 +180,19 @@ export function useInterviewSession(interviewId: string | undefined) {
         if (!options?.silent) setError('Answer cannot be empty')
         return null
       }
+      const capture =
+        options?.capture === undefined
+          ? undefined
+          : options.capture === null
+            ? { inputMode: 'typed' as const }
+            : { inputMode: 'spoken' as const, ...options.capture }
       return patchSession(
         {
           status: session.status === 'created' ? 'in_progress' : session.status,
           currentQuestionIndex: index,
-          answer: { index, answer: trimmed },
+          answer: { index, answer: trimmed, ...(capture ? { capture } : {}) },
         },
-        options,
+        { silent: options?.silent },
       )
     },
     [index, patchSession, session],

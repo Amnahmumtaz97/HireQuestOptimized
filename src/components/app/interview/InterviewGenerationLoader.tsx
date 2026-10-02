@@ -73,7 +73,37 @@ function Pattern({ patternIndex }: { patternIndex: number }) {
   )
 }
 
-export function InterviewGenerationLoader() {
+/** Copy for the two places the loader appears; the animation is identical. */
+export const LOADER_COPY = {
+  generation: {
+    topline: 'HQ / INTERVIEW ENGINE',
+    signal: 'LIVE BUILD',
+    eyebrow: 'PERSONALIZED SESSION',
+    messages: GENERATION_MESSAGES,
+    srLabel: 'Building your interview. Please wait while your personalized session is prepared.',
+    footer: ['CONFIGURATION RECEIVED', 'QUESTIONS IN PROGRESS', 'SESSION PREPARING'],
+  },
+  evaluation: {
+    topline: 'HQ / SCORING ENGINE',
+    signal: 'LIVE GRADING',
+    eyebrow: 'EVALUATING YOUR ANSWERS',
+    messages: [
+      'Reading your answers',
+      'Checking against the answer key',
+      'Measuring pace and fluency',
+      'Scoring content and delivery',
+    ],
+    srLabel: 'Scoring your interview. Please wait while your answers are evaluated.',
+    footer: ['ANSWERS RECEIVED', 'GRADING IN PROGRESS', 'RESULTS PREPARING'],
+  },
+} as const
+
+type InterviewGenerationLoaderProps = {
+  variant?: keyof typeof LOADER_COPY
+}
+
+export function InterviewGenerationLoader({ variant = 'generation' }: InterviewGenerationLoaderProps) {
+  const copy = LOADER_COPY[variant]
   const [revealingTiles, setRevealingTiles] = useState<Set<number>>(() => new Set())
   const revealTimers = useRef<Map<number, number>>(new Map())
 
@@ -114,8 +144,8 @@ export function InterviewGenerationLoader() {
   return (
     <div className="hq-generation-loader" role="status" aria-live="polite" aria-busy="true">
       <div className="hq-generation-loader__topline" aria-hidden="true">
-        <span>HQ / INTERVIEW ENGINE</span>
-        <span className="hq-generation-loader__signal">LIVE BUILD</span>
+        <span>{copy.topline}</span>
+        <span className="hq-generation-loader__signal">{copy.signal}</span>
       </div>
 
       <div className="hq-generation-loader__grid">
@@ -142,10 +172,10 @@ export function InterviewGenerationLoader() {
       <div className="hq-generation-loader__content">
         <div className="hq-generation-loader__eyebrow">
           <span className="hq-generation-loader__dot" aria-hidden="true" />
-          PERSONALIZED SESSION
+          {copy.eyebrow}
         </div>
         <h1 className="hq-generation-loader__headline" aria-hidden="true">
-          {GENERATION_MESSAGES.map((message, index) => (
+          {copy.messages.map((message, index) => (
             <span
               key={message}
               className="hq-generation-loader__headline-line"
@@ -158,13 +188,13 @@ export function InterviewGenerationLoader() {
         <div className="hq-generation-loader__progress" aria-hidden="true">
           <span />
         </div>
-        <span className="sr-only">Building your interview. Please wait while your personalized session is prepared.</span>
+        <span className="sr-only">{copy.srLabel}</span>
       </div>
 
       <div className="hq-generation-loader__footer" aria-hidden="true">
-        <span>CONFIGURATION RECEIVED</span>
-        <span>QUESTIONS IN PROGRESS</span>
-        <span>SESSION PREPARING</span>
+        {copy.footer.map((label) => (
+          <span key={label}>{label}</span>
+        ))}
       </div>
     </div>
   )

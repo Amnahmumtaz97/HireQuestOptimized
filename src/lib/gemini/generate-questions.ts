@@ -7,13 +7,22 @@ import { assignTopicsEvenly } from '@/lib/interview-scope'
 import { formatGeneratedQuestion } from '@/lib/interview-questions/clean-question-text'
 import { parseGeminiQuestionJsonArray } from '@/lib/interview-questions/parse-gemini-json'
 import { generateDiagramImageDataUrl, type DiagramKind } from '@/lib/gemini/generate-diagram-image'
-import { isGeminiRateLimitError, resolveTextModelChain } from '@/lib/gemini/model-fallback'
+import {
+  DEFAULT_TEXT_MODEL_FALLBACKS,
+  isGeminiModelUnavailableError,
+  isGeminiRateLimitError,
+  isGeminiTransientError,
+  resolveTextModelChain,
+  sleep,
+} from '@/lib/gemini/model-fallback'
 import { difficultyForQuestionIndex, difficultyPromptLabel } from '@/lib/interview-questions/difficulty'
 import { formatIndustryDisplay, formatRoleCategoryDisplay } from '@/utils/dashboard/interview-labels'
 import { assertConfirmedTopics } from '@/lib/interview-config/assert-selection'
+import { normalizeAnswerKey } from '@/lib/interview-questions/answer-keys'
+import { routeRubric, sessionAllowsSystemDesign } from '@/lib/evaluation/route-rubric'
+import type { Rubric } from '@/lib/evaluation/types'
 
 const DEFAULT_MODEL = 'gemini-2.0-flash'
-const DEFAULT_MODEL_FALLBACK = 'gemini-2.5-flash-lite'
 
 /** Cap Gemini image calls per batch (same API key; keeps Mongo documents smaller). */
 /** Diagrams disabled - no diagram questions will be generated */
@@ -72,6 +81,29 @@ class GeminiTruncatedError extends Error {
   }
 }
 
+/**
+ * Gemini refuses a candidate whose text too closely matches its training data
+ * (RECITATION — classic problem statements are the usual trigger) or trips a
+ * safety filter. Both are stochastic, so the same request is worth repeating.
+ */
+class GeminiBlockedError extends Error {
+  constructor(modelId: string, reason: string) {
+    super(`Gemini model "${modelId}" blocked the response (${reason}).`)
+    this.name = 'GeminiBlockedError'
+  }
+}
+
+const BLOCKED_FINISH_REASONS = new Set(['RECITATION', 'SAFETY', 'BLOCKLIST', 'PROHIBITED_CONTENT', 'SPII'])
+
+function isBlockedError(e: unknown): boolean {
+  if (e instanceof GeminiBlockedError) return true
+  const msg = e instanceof Error ? e.message : String(e)
+  return /blocked due to|RECITATION|SAFETY/i.test(msg)
+}
+
+/** Same-model attempts per prompt before moving down the fallback chain. */
+const ATTEMPTS_PER_MODEL = 2
+
 function roleLabel(params: InterviewGenerationParams): string {
   const industryLabels = params.industryLabels?.filter(Boolean)
   const industryPart =
@@ -117,11 +149,23 @@ function buildBatchPrompt(params: InterviewGenerationParams): string {
     ),
   )
 
-  return `You generate interview questions for an online hiring product.
+  const systemDesignAllowed = sessionAllowsSystemDesign({
+    interviewType: params.interviewType,
+    interviewTypes: params.interviewTypes,
+  })
+
+  return `You generate interview questions for an online hiring product, each with the ANSWER KEY it will be graded against.
 
 Output ONLY valid JSON: an array of exactly ${n} objects. Each object must be exactly:
-{"question":"...","topic":"<one of the topic bank>","type":"technical"|"behavioral"|"hr","difficulty":"Easy"|"Medium"|"Hard","requiresDiagram":true|false}
+{"question":"...","topic":"<one of the topic bank>","type":"technical"|"behavioral"|"hr","rubric":"technical"|"behavioral"|"hr"${systemDesignAllowed ? '|"system_design"' : ''},"difficulty":"Easy"|"Medium"|"Hard","requiresDiagram":false,"keyPoints":[{"text":"..."${systemDesignAllowed ? ',"dimension":"requirements"|"components"|"scale"|"tradeoffs"' : ''}}],"redFlags":["..."],"idealAnswerSummary":"..."${systemDesignAllowed ? ',"scaleHints":["..."]' : ''},"competency":"..."}
 
+ANSWER KEY (critical — this is what the candidate's answer is graded against; a question without a usable key is worthless):
+- "keyPoints": 3–8 short, concrete, checkable statements a complete answer covers. Each must be verifiable from the answer text alone ("Names a tool such as heap snapshots or clinic.js"), never vague ("understands memory").
+- "redFlags": 1–4 statements that, if present, show the candidate is wrong or unprofessional (e.g. "Just says 'restart the server'", "Confuses a memory leak with high CPU").
+- "idealAnswerSummary": one or two sentences describing what a strong answer walks through.
+- "rubric": "behavioral" for STAR / competency questions, "hr" for screening questions, ${systemDesignAllowed ? '"system_design" for architecture / scale prompts, ' : ''}"technical" otherwise. Must agree with "type" (behavioral→behavioral, hr→hr, technical→technical${systemDesignAllowed ? ' or system_design' : ''}).
+- technical keyPoints: facts, mechanisms or steps. behavioral keyPoints: competency SIGNALS the story should show (e.g. "Explains how they handled pushback"), and set "competency" to the competency being tested. hr keyPoints: what a good answer includes (e.g. "Connects own goals to the role"). Omit "competency" for non-behavioral questions.
+${systemDesignAllowed ? '- system_design keyPoints: tag EVERY point with "dimension" — requirements (clarifying scope/volumes), components (API, services, storage), scale (estimates, caching, sharding, bottlenecks), tradeoffs (alternatives and why they were rejected). Include at least one point per dimension. "scaleHints": 1–3 back-of-envelope numbers derived from the prompt (e.g. "~10B redirects/day ≈ 115k rps").\n' : ''}
 CRITICAL — selected topics ONLY (do not invent or substitute):
 - Every question MUST set "topic" to exactly one string from this list: [${topicBankLine}]
 - Distribute questions evenly across the topic bank.
@@ -134,6 +178,7 @@ CRITICAL — candidate cannot draw or upload:
 - ALWAYS set requiresDiagram:false.
 
 Style rules:
+- Write every question and key point in your own original wording. Never reproduce a well-known interview question, textbook passage or documentation sentence verbatim — paraphrase and ground it in this role.
 - Technical: specific, grounded in the selected topic and the candidate profile when provided.
 - Behavioral/HR: short professional questions ending with "?".
 - Do NOT start with labels like "Technical:", "Easy:", or "For \\"Topic\\" at Easy difficulty:".
@@ -227,11 +272,18 @@ function buildCodingBatchPrompt(params: InterviewGenerationParams): string {
   return `You generate LeetCode-style CODING interview problems for a JavaScript Node sandbox (named function + JSON tests).
 
 Output ONLY valid JSON: an array of exactly ${n} objects. Each object MUST be:
-{"question":"<markdown problem statement>","topic":"<one of topic bank>","type":"technical","difficulty":"Easy"|"Medium"|"Hard","kind":"coding","language":"javascript","functionName":"<camelCaseName>","starterCode":"function name(args) {\\n  \\n}\\n","publicTests":[{"input":"<JSON array of arguments>","expected":"<JSON expected return>"}],"hiddenTests":[{"input":"...","expected":"..."}]}
+{"question":"<markdown problem statement>","topic":"<one of topic bank>","type":"technical","difficulty":"Easy"|"Medium"|"Hard","kind":"coding","language":"javascript","functionName":"<camelCaseName>","starterCode":"function name(args) {\\n  \\n}\\n","publicTests":[{"input":"<JSON array of arguments>","expected":"<JSON expected return>"}],"hiddenTests":[{"input":"...","expected":"..."}],"expectedComplexity":{"time":"O(n)","space":"O(1)"},"edgeCases":["..."],"keyPoints":[{"text":"..."}],"redFlags":["..."]}
+
+## Answer key (critical — used to grade the submission)
+- "expectedComplexity": the optimal time and space complexity in big-O, e.g. {"time":"O(n)","space":"O(n)"}
+- "edgeCases": 2–5 concrete inputs a correct solution must handle (empty input, single element, duplicates, negatives, overflow…). Hidden tests should cover them.
+- "keyPoints": 3–5 approach notes ("Uses a hash map for O(1) lookups", "Two pointers from both ends")
+- "redFlags": e.g. "Hard-codes the expected outputs of the test cases", "Uses eval"
 
 ## Problem style (LeetCode)
 - Write problems like LeetCode: title heading, clear statement, Examples with Input/Output/Explanation, Constraints, optional Follow-up.
 - Prefer classic patterns: Two Sum, sliding window, binary search, stack parentheses, DP climbing stairs, graph BFS/DFS counts, etc. — adapted to the topic bank.
+- Use ORIGINAL wording and fresh example values: describe each problem in your own words with a new scenario or name. Do not copy a published problem statement or its sample inputs verbatim.
 - Each problem must be uniquely solvable with a single return value (number, boolean, string, or array). Avoid answers whose order is ambiguous unless you require a canonical sorted form in the statement.
 - Difficulty should match: ${difficultyPromptLabel(params.difficulty)}
 - Distribute topics across: [${topicBankLine}]
@@ -274,7 +326,7 @@ export async function generateQuestionsWithGemini(
   const modelChain = resolveTextModelChain(
     DEFAULT_MODEL,
     process.env.GEMINI_MODEL,
-    process.env.GEMINI_MODEL_FALLBACK || DEFAULT_MODEL_FALLBACK,
+    process.env.GEMINI_MODEL_FALLBACK || DEFAULT_TEXT_MODEL_FALLBACKS,
   )
 
   const coding = wantsCodingRound(params)
@@ -283,31 +335,62 @@ export async function generateQuestionsWithGemini(
 
   let lastError: unknown = null
 
-  for (let i = 0; i < modelChain.length; i++) {
+  outer: for (let i = 0; i < modelChain.length; i++) {
     const modelId = modelChain[i]
     const isLast = i === modelChain.length - 1
-    try {
-      const model = getGenerativeModel(genAI, modelId)
-      const result = await model.generateContent(prompt)
-      const finishReason = result.response.candidates?.[0]?.finishReason
-      const text = result.response.text()
+    for (let attempt = 1; attempt <= ATTEMPTS_PER_MODEL; attempt++) {
+      const isLastAttempt = isLast && attempt === ATTEMPTS_PER_MODEL
+      try {
+        const model = getGenerativeModel(genAI, modelId)
+        const result = await model.generateContent(prompt)
+        const finishReason = result.response.candidates?.[0]?.finishReason
+        // Check before .text(): the SDK throws on a blocked candidate.
+        if (finishReason && BLOCKED_FINISH_REASONS.has(finishReason)) {
+          throw new GeminiBlockedError(modelId, finishReason)
+        }
+        const text = result.response.text()
 
-      if (finishReason === 'MAX_TOKENS') throw new GeminiTruncatedError(modelId)
-      if (!text.trim()) {
-        throw new Error(`Gemini model "${modelId}" returned an empty response (${finishReason ?? 'no finish reason'}).`)
-      }
+        if (finishReason === 'MAX_TOKENS') throw new GeminiTruncatedError(modelId)
+        if (!text.trim()) {
+          throw new Error(`Gemini model "${modelId}" returned an empty response (${finishReason ?? 'no finish reason'}).`)
+        }
 
-      rawText = text
-      break
-    } catch (e) {
-      lastError = e
-      // Quota, truncation and transient upstream faults are all worth another model.
-      const retryable = isGeminiRateLimitError(e) || e instanceof GeminiTruncatedError
-      if (retryable && !isLast) {
-        console.warn(`[gemini] Model "${modelId}" failed (${(e as Error).name}); trying next model.`)
-        continue
+        rawText = text
+        break outer
+      } catch (e) {
+        lastError = e
+        if (isGeminiModelUnavailableError(e)) {
+          // Retired or unknown model id: never retry it.
+          if (isLast) throw e
+          console.warn(`[gemini] Model "${modelId}" is not available (retired or unknown id); trying next model.`)
+          continue outer
+        }
+        if (isGeminiRateLimitError(e)) {
+          // Quota: no point retrying the same model.
+          if (isLast) throw e
+          console.warn(`[gemini] Model "${modelId}" rate limited; trying next model.`)
+          continue outer
+        }
+        if (isGeminiTransientError(e)) {
+          // 503 "high demand" / overloaded: brief pause, then the backup model.
+          // The busy model gets one more try only when it is the last option.
+          if (isLastAttempt) throw e
+          console.warn(`[gemini] Model "${modelId}" unavailable (${(e as Error).message.slice(0, 120)}); backing off.`)
+          await sleep(1500)
+          if (!isLast) continue outer
+          continue
+        }
+        // Blocked (RECITATION/SAFETY) and truncated responses are stochastic —
+        // retry the same model once, then move down the chain.
+        const retryable = isBlockedError(e) || e instanceof GeminiTruncatedError
+        if (retryable && !isLastAttempt) {
+          console.warn(
+            `[gemini] Model "${modelId}" attempt ${attempt} failed (${(e as Error).name}: ${(e as Error).message}); retrying.`,
+          )
+          continue
+        }
+        throw e
       }
-      throw e
     }
   }
 
@@ -359,9 +442,27 @@ export async function generateQuestionsWithGemini(
         publicTests: Array.isArray(item.publicTests) ? item.publicTests : [],
         hiddenTests: Array.isArray(item.hiddenTests) ? item.hiddenTests : [],
         illustrationRequired: false,
+        rubric: 'coding',
+        ...normalizeAnswerKey(item, 'coding', topic),
       })
     })
     return { questions, rawText }
+  }
+
+  const systemDesignAllowed = sessionAllowsSystemDesign({
+    interviewType: params.interviewType,
+    interviewTypes: params.interviewTypes,
+  })
+  /** §7 — the generator knows which technical prompts were system design; record it. */
+  const resolveRubric = (
+    kind: 'technical' | 'behavioral' | 'hr',
+    modelRubric: string | null | undefined,
+  ): Rubric => {
+    const hinted = modelRubric === 'system_design' && systemDesignAllowed ? 'system_design' : undefined
+    return routeRubric(
+      { kind: 'spoken', type: kind, rubric: hinted },
+      { interviewType: params.interviewType, interviewTypes: params.interviewTypes },
+    )
   }
 
   const diagramBudget = Math.min(MAX_DIAGRAM_QUESTIONS, params.totalQuestions)
@@ -395,6 +496,7 @@ export async function generateQuestionsWithGemini(
       rawTopic && topicBank.has(rawTopic)
         ? rawTopic
         : assignedTopics[i] ?? confirmedTopics[i % confirmedTopics.length]
+    const rubric = resolveRubric(kinds[i], item.rubric)
     return {
       type: kinds[i],
       topic,
@@ -402,6 +504,8 @@ export async function generateQuestionsWithGemini(
       question: formatGeneratedQuestion(item.question),
       kind: 'spoken' as const,
       illustrationRequired: Boolean(item.requiresDiagram),
+      rubric,
+      ...normalizeAnswerKey(item, rubric, topic),
     }
   })
 
