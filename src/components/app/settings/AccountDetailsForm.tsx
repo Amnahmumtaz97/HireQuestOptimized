@@ -1,7 +1,12 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { validateAccountProfile, type FieldErrors } from '@/lib/validation/client-forms'
+import {
+  validateAccountProfile,
+  validateEmail,
+  validatePhoneNumber,
+  type FieldErrors,
+} from '@/lib/validation/client-forms'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { BounceLoader } from '@/components/ui/bounce-loader'
 import { useToast } from '@/components/ui/toast'
@@ -93,6 +98,30 @@ export function AccountDetailsForm({
       }))
     }
 
+  const blurField = (field: keyof AccountFormData) => {
+    const value = formData[field]
+    let err: string | null = null
+    if (field === 'firstName') {
+      const t = value.trim()
+      if (!t) err = 'First name is required.'
+      else if (t.length > 60) err = 'First name is too long.'
+    } else if (field === 'lastName') {
+      const t = value.trim()
+      if (!t) err = 'Last name is required.'
+      else if (t.length > 60) err = 'Last name is too long.'
+    } else if (field === 'email') {
+      err = validateEmail(value)
+    } else if (field === 'phoneNumber') {
+      err = validatePhoneNumber(value)
+    }
+    setFieldErrors((prev) => {
+      const next = { ...prev }
+      if (err) next[field] = err
+      else delete next[field]
+      return next
+    })
+  }
+
   const handleSave = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setMessage('')
@@ -100,8 +129,6 @@ export function AccountDetailsForm({
     const { ok, errors } = validateAccountProfile(formData)
     if (!ok) {
       setFieldErrors(errors)
-      setError('Please fix the highlighted fields.')
-      toast.error('Please fix the highlighted fields.')
       return
     }
     setFieldErrors({})
@@ -118,9 +145,16 @@ export function AccountDetailsForm({
       const data = await response.json()
 
       if (!response.ok) {
-        const msg = data.message || 'Failed to update account settings'
-        setError(msg)
-        toast.error(msg)
+        const msg: string = data.message || 'Failed to update account settings'
+        const lower = msg.toLowerCase()
+        if (lower.includes('email') && (lower.includes('use') || lower.includes('exist'))) {
+          setFieldErrors({ email: 'An account with this email already exists.' })
+        } else if (lower.includes('email')) {
+          setFieldErrors({ email: msg.endsWith('.') ? msg : `${msg}.` })
+        } else {
+          setError(msg)
+          toast.error(msg)
+        }
         return
       }
 
@@ -156,19 +190,22 @@ export function AccountDetailsForm({
       <h2 className="text-sm font-semibold text-foreground">{title}</h2>
       <p className="mt-1 text-xs text-muted-foreground">{description}</p>
 
-      <form className="mt-6 space-y-4" onSubmit={handleSave}>
+      <form className="mt-6 space-y-4" onSubmit={handleSave} noValidate>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="space-y-1.5">
             <span className="text-xs text-muted-foreground">First Name</span>
             <input
               value={formData.firstName}
               onChange={handleChange('firstName')}
+              onBlur={() => blurField('firstName')}
               className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary"
-              required
               aria-invalid={Boolean(fieldErrors.firstName)}
+              aria-describedby={fieldErrors.firstName ? 'err-account-firstName' : undefined}
             />
             {fieldErrors.firstName ? (
-              <p className="text-xs text-red-400">{fieldErrors.firstName}</p>
+              <p id="err-account-firstName" className="text-xs text-red-400" role="alert">
+                {fieldErrors.firstName}
+              </p>
             ) : null}
           </label>
 
@@ -177,12 +214,15 @@ export function AccountDetailsForm({
             <input
               value={formData.lastName}
               onChange={handleChange('lastName')}
+              onBlur={() => blurField('lastName')}
               className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary"
-              required
               aria-invalid={Boolean(fieldErrors.lastName)}
+              aria-describedby={fieldErrors.lastName ? 'err-account-lastName' : undefined}
             />
             {fieldErrors.lastName ? (
-              <p className="text-xs text-red-400">{fieldErrors.lastName}</p>
+              <p id="err-account-lastName" className="text-xs text-red-400" role="alert">
+                {fieldErrors.lastName}
+              </p>
             ) : null}
           </label>
         </div>
@@ -193,11 +233,16 @@ export function AccountDetailsForm({
             type="email"
             value={formData.email}
             onChange={handleChange('email')}
+            onBlur={() => blurField('email')}
             className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary"
-            required
             aria-invalid={Boolean(fieldErrors.email)}
+            aria-describedby={fieldErrors.email ? 'err-account-email' : undefined}
           />
-          {fieldErrors.email ? <p className="text-xs text-red-400">{fieldErrors.email}</p> : null}
+          {fieldErrors.email ? (
+            <p id="err-account-email" className="text-xs text-red-400" role="alert">
+              {fieldErrors.email}
+            </p>
+          ) : null}
         </label>
 
         <label className="block space-y-1.5">
@@ -205,12 +250,16 @@ export function AccountDetailsForm({
           <input
             value={formData.phoneNumber}
             onChange={handleChange('phoneNumber')}
+            onBlur={() => blurField('phoneNumber')}
             className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary"
             placeholder="+91 9876543210"
             aria-invalid={Boolean(fieldErrors.phoneNumber)}
+            aria-describedby={fieldErrors.phoneNumber ? 'err-account-phone' : undefined}
           />
           {fieldErrors.phoneNumber ? (
-            <p className="text-xs text-red-400">{fieldErrors.phoneNumber}</p>
+            <p id="err-account-phone" className="text-xs text-red-400" role="alert">
+              {fieldErrors.phoneNumber}
+            </p>
           ) : null}
         </label>
 

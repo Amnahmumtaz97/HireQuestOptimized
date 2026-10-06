@@ -123,6 +123,20 @@ export function buildVerbatimTranscript(words: TranscriptWord[]): string {
     .trim()
 }
 
+/**
+ * User-facing answer text: speech tokens without verbal fillers (um/uh/…).
+ * Used only when there is no live browser transcript to freeze on Stop.
+ * Analysis still uses `buildVerbatimTranscript` + delivery stats separately.
+ */
+export function buildDisplayTranscript(words: TranscriptWord[]): string {
+  return words
+    .filter((w) => !isDisfluency(w.word) && !isDisfluency(w.punctuated))
+    .map((w) => w.punctuated || w.word)
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 /** Verbatim text with `[pause 1.4s]` markers inserted at every real hesitation. */
 export function buildAnnotatedTranscript(
   words: TranscriptWord[],

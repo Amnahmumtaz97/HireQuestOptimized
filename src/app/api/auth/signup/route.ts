@@ -6,15 +6,31 @@ import { UserModel } from '@/models/User'
 
 const signupSchema = z
   .object({
-    firstName: z.string().trim().min(1).max(60),
-    lastName: z.string().trim().min(1).max(60),
-    email: z.string().email(),
-    phoneNumber: z.string().trim().max(30).optional().default(''),
-    password: z.string().min(8),
-    confirmPassword: z.string().min(8),
+    firstName: z
+      .string()
+      .trim()
+      .min(1, 'First name is required.')
+      .max(60, 'First name is too long.'),
+    lastName: z
+      .string()
+      .trim()
+      .min(1, 'Last name is required.')
+      .max(60, 'Last name is too long.'),
+    email: z
+      .string()
+      .trim()
+      .min(1, 'Email is required.')
+      .email('Please enter a valid email address.'),
+    phoneNumber: z.string().trim().max(30, 'Phone number is too long.').optional().default(''),
+    password: z
+      .string()
+      .min(1, 'Password is required.')
+      .min(8, 'Password must be at least 8 characters.')
+      .max(128, 'Password is too long.'),
+    confirmPassword: z.string().min(1, 'Confirm your password.'),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
+    message: 'Passwords do not match.',
     path: ['confirmPassword'],
   })
 
@@ -37,7 +53,7 @@ export async function POST(request: Request) {
     const existingUser = await UserModel.findOne({ email: normalizedEmail })
     if (existingUser) {
       return NextResponse.json(
-        { message: 'Email is already in use' },
+        { message: 'Email is already in use.' },
         { status: 409 },
       )
     }

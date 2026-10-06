@@ -9,6 +9,7 @@ import { BounceLoader } from '@/components/ui/bounce-loader'
 import type { ResumeParseResult } from '@/lib/resume/schema'
 import type { InterviewSetupConfig } from '@/lib/interview-config/setup-types'
 import { buildSetupFromResume } from '@/lib/interview-config/from-resume'
+import { resolveDurationForQuestionCount } from '@/lib/interview-config/durations'
 import type { LearningStage } from '@/components/app/learning-paths/types'
 
 type ResumeInterviewFlowProps = {
@@ -77,8 +78,11 @@ export function ResumeInterviewFlow({
       systemDesignTopics: [],
       targetCompanyType: null,
       preferredQuestionFormat: null,
-      interviewDuration: 30,
       numberOfQuestions: stagePrefill?.totalQuestions || 12,
+      interviewDuration: resolveDurationForQuestionCount(
+        stagePrefill?.totalQuestions || 12,
+        null,
+      ),
       language: 'English',
       focusAreas: [],
       excludedTopics: [],

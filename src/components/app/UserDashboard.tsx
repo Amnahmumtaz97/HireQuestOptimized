@@ -1,6 +1,6 @@
 'use client'
 
-import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { DifficultySelector, type Difficulty } from '@/components/app/DifficultySelector'
@@ -20,7 +20,7 @@ import {
   MessageSquare, BarChart2, User,
   Plus, RotateCcw, Activity, CheckCircle2,
   Clock, Sparkles, CreditCard,
-  Briefcase, Tag, AlarmClock, ArrowLeft, ArrowRight,
+  Briefcase, ArrowLeft, ArrowRight,
   Trash2, Lightbulb, ListChecks, Check, ChevronDown, ChevronRight, Leaf, Mountain, FileText,
 } from 'lucide-react'
 import { ProgressRing } from '@/components/dashboard/ProgressRing'
@@ -35,8 +35,6 @@ import {
   formatDifficultyLabel,
   formatInterviewTypeLabel,
   formatInterviewSessionTitle,
-  formatSpecializationsDisplay,
-  formatTopicsDisplay,
   formatIndustryDisplay,
 } from '@/utils/dashboard/interview-labels'
 import {
@@ -47,7 +45,6 @@ import {
   mergeTopicsFromRoles,
   resolveRoleRefs,
   resolveRolesFromRefs,
-  unionDurationOptions,
 } from '@/lib/interview-scope'
 import { InterviewDeleteModal } from '@/components/app/InterviewDeleteModal'
 import { DashboardDateCalendarButton } from '@/components/app/dashboard/DashboardDateCalendarButton'
@@ -71,7 +68,10 @@ import {
 import { hrSectionLabel } from '@/lib/interview-config/banks/hr-sections'
 import { INTERVIEW_TYPE_UI_ORDER, DEFAULT_MIX_WEIGHTS, interviewTypeNeedsCatalog } from '@/lib/interview-config/interview-types'
 import { QUESTION_COUNT_PRESETS } from '@/lib/interview-config/question-counts'
-import { DURATION_OPTIONS_DEFAULT } from '@/lib/interview-config/durations'
+import {
+  durationOptionsForQuestionCount,
+  resolveDurationForQuestionCount,
+} from '@/lib/interview-config/durations'
 import type { MixKind } from '@/lib/interview-config/type-config'
 
 // Types moved to `src/components/app/dashboard/types.ts`.
@@ -199,23 +199,39 @@ function WizardStepper({
 }
 
 function SelectCard({
-  title, subtitle, selected, onClick,
+  title,
+  subtitle,
+  selected,
+  onClick,
+  compact,
 }: {
-  title: string; subtitle?: string; selected: boolean; onClick: () => void
+  title: string
+  subtitle?: string
+  selected: boolean
+  onClick: () => void
+  compact?: boolean
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={selected}
       className={[
-        'w-full rounded-2xl border p-4 text-left btn-micro',
+        'w-full rounded-2xl border text-left transition btn-micro',
+        compact ? 'min-h-14 px-3 py-3 sm:min-h-16 sm:px-4' : 'min-h-[4.5rem] p-3.5 sm:p-4',
         selected
-          ? 'border-primary bg-primary/5 shadow-[var(--shadow-card)]'
-          : 'border-border bg-input/30 hover:bg-input/50',
+          ? 'border-primary bg-primary/10 shadow-[var(--shadow-card)]'
+          : 'border-border bg-input/25 hover:border-primary/35 hover:bg-input/40',
       ].join(' ')}
     >
-      <div className="text-sm font-semibold text-foreground">{title}</div>
-      {subtitle ? <div className="mt-1 text-xs text-muted-foreground">{subtitle}</div> : null}
+      <div className={['font-semibold text-foreground', compact ? 'text-sm sm:text-base' : 'text-sm'].join(' ')}>
+        {title}
+      </div>
+      {subtitle ? (
+        <div className="mt-0.5 text-[11px] leading-snug text-muted-foreground sm:text-xs">
+          {subtitle}
+        </div>
+      ) : null}
     </button>
   )
 }
@@ -1087,10 +1103,10 @@ export function CreateInterviewWizard({
   const behavioralTopicOptions = topicScope.behavioralTopics
   const hrTopicOptions = topicScope.hrTopics
   const availableTopicOptions = topicScope.topics
-  const durationOptions = useMemo(() => {
-    const fromSpecs = unionDurationOptions(selectedSpecializations)
-    return fromSpecs.length > 0 ? fromSpecs : [...DURATION_OPTIONS_DEFAULT]
-  }, [selectedSpecializations])
+  const durationOptions = useMemo(
+    () => durationOptionsForQuestionCount(totalQuestions),
+    [totalQuestions],
+  )
 
   const topicAllowedKind = useMemo((): 'technical' | 'behavioral' | 'both' | 'hr' => {
     if (interviewType === 'technical' || interviewType === 'coding') return 'technical'
@@ -1233,127 +1249,6 @@ export function CreateInterviewWizard({
       { key: 'generate' as const, label: 'Generate', isComplete: stepStates.generateReady },
     ]
   }, [interviewType, needsCatalog, pastDifficulty, stepStates])
-
-  const summaryTopicsPreview = useMemo(
-    () =>
-      formatTopicsDisplay(topics, {
-        selectAll: selectAllTopics,
-        totalAvailable: availableTopicOptions.length,
-      }),
-    [availableTopicOptions.length, selectAllTopics, topics],
-  )
-
-  const summaryDepartmentsPreview = useMemo(() => {
-    if (!departmentKey) return '—'
-    return formatIndustryDisplay(departmentKey, configShim)
-  }, [configShim, departmentKey])
-
-  const summarySpecializationsPreview = useMemo(
-    () =>
-      formatSpecializationsDisplay(departmentKey ?? '', [], configShim, {
-        selectAll: selectAllSpecializations,
-        totalAvailable: scopedSpecializationOptions.length,
-        specializationRefs: resolvedSpecializationRefs,
-      }),
-    [
-      configShim,
-      departmentKey,
-      resolvedSpecializationRefs,
-      scopedSpecializationOptions.length,
-      selectAllSpecializations,
-    ],
-  )
-
-  const summarySelectionPreview = useMemo(() => {
-    if (interviewType === 'coding') return formatTopicsDisplay(codingCategories)
-    if (interviewType === 'behavioral') return formatTopicsDisplay(behavioralCompetencies)
-    if (interviewType === 'hr') {
-      return formatTopicsDisplay(hrSections.map((key) => hrSectionLabel(key)))
-    }
-    if (interviewType === 'system_design') return formatTopicsDisplay(systemDesignTopics)
-    if (interviewType === 'mixed' || interviewType === 'both') {
-      const parts = (Object.entries(mixWeights) as [MixKind, number][])
-        .filter(([, weight]) => weight > 0)
-        .map(([kind, weight]) => {
-          const count = mixSelections[kind]?.length ?? 0
-          return `${formatInterviewTypeLabel(kind)} ${weight}% (${count})`
-        })
-      return parts.length > 0 ? parts.join(' · ') : '—'
-    }
-    return summaryTopicsPreview
-  }, [
-    behavioralCompetencies,
-    codingCategories,
-    hrSections,
-    interviewType,
-    mixSelections,
-    mixWeights,
-    summaryTopicsPreview,
-    systemDesignTopics,
-  ])
-
-  const summarySelectionLabel = useMemo(() => {
-    if (interviewType === 'coding') return 'Categories'
-    if (interviewType === 'behavioral') return 'Competencies'
-    if (interviewType === 'hr') return 'Sections'
-    if (interviewType === 'system_design') return 'Topics'
-    if (interviewType === 'mixed' || interviewType === 'both') return 'Mix'
-    return 'Topics'
-  }, [interviewType])
-
-  const summaryQuestionsPreview = useMemo(() => {
-    if (!totalQuestions) return '—'
-    if (interviewType === 'mixed' || interviewType === 'both') {
-      const parts = (Object.entries(mixWeights) as [MixKind, number][])
-        .filter(([, weight]) => weight > 0)
-        .map(([kind, weight]) => `${formatInterviewTypeLabel(kind)} ${weight}%`)
-      return parts.length > 0 ? `${totalQuestions} (${parts.join(' / ')})` : String(totalQuestions)
-    }
-    if (interviewType === 'technical') return `${totalQuestions} (all technical)`
-    if (interviewType === 'behavioral') return `${totalQuestions} (all behavioral)`
-    if (interviewType === 'coding') return `${totalQuestions} (coding)`
-    if (interviewType === 'system_design') return `${totalQuestions} (system design)`
-    if (interviewType === 'hr') return `${totalQuestions} (screening HR)`
-    return String(totalQuestions)
-  }, [interviewType, mixWeights, totalQuestions])
-
-  const reviewRows = useMemo(() => {
-    const rows: Array<{ label: string; value: string }> = [
-      {
-        label: 'Type',
-        value: interviewType ? formatInterviewTypeLabel(interviewType) : '—',
-      },
-    ]
-
-    if (needsCatalog) {
-      rows.push(
-        { label: 'Department', value: summaryDepartmentsPreview },
-        { label: 'Specialization', value: summarySpecializationsPreview },
-      )
-    }
-
-    rows.push(
-      { label: summarySelectionLabel, value: summarySelectionPreview },
-      {
-        label: 'Difficulty',
-        value: difficulty ? formatDifficultyLabel(difficulty) : '—',
-      },
-      { label: 'Questions', value: summaryQuestionsPreview },
-      { label: 'Duration', value: duration ? `${duration} min` : '—' },
-    )
-
-    return rows
-  }, [
-    difficulty,
-    duration,
-    interviewType,
-    needsCatalog,
-    summaryDepartmentsPreview,
-    summaryQuestionsPreview,
-    summarySelectionLabel,
-    summarySelectionPreview,
-    summarySpecializationsPreview,
-  ])
 
   const selectionCount = useMemo(() => {
     if (interviewType === 'coding') return codingCategories.length
@@ -1630,6 +1525,18 @@ export function CreateInterviewWizard({
     }
   }, [interviewType, selectedSpecializations])
 
+  // Keep duration in the 3 valid options for the selected question count.
+  useEffect(() => {
+    setDuration((prev) => {
+      const next = resolveDurationForQuestionCount(
+        totalQuestions,
+        prev ? Number(prev) : null,
+      )
+      const asString = String(next)
+      return asString === prev ? prev : asString
+    })
+  }, [totalQuestions])
+
   const resetInterviewForm = useCallback(() => {
     setDepartmentKey(null)
     setDepartmentSearch('')
@@ -1640,7 +1547,7 @@ export function CreateInterviewWizard({
     setInterviewType(null)
     setTopics([])
     setTechnicalRatio(70)
-    setDuration('')
+    setDuration(String(resolveDurationForQuestionCount(20, 30)))
     setDifficulty(null)
     setTotalQuestions(20)
     setTopicSearch('')
@@ -1819,8 +1726,8 @@ export function CreateInterviewWizard({
       {isCreatingInterview ? <InterviewGenerationLoader /> : null}
       <div className="w-full">
       {configError ? <p className="mb-4 text-sm text-red-400">{configError}</p> : null}
-      <div className="grid grid-cols-12 gap-6">
-        <div className="col-span-12 space-y-6 lg:col-span-8">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(260px,320px)] xl:items-start">
+        <div className="min-w-0 space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="text-sm font-semibold text-foreground">Create New Interview</div>
               <button
@@ -2210,54 +2117,84 @@ export function CreateInterviewWizard({
 
                   {wizardStep === 'generate' ? (
                     <>
-                      <div className="space-y-3">
-                        <div className="text-sm font-semibold text-foreground">Question count</div>
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                          {QUESTION_COUNT_PRESETS.map((preset) => (
-                            <SelectCard
-                              key={preset.value}
-                              title={preset.title}
-                              subtitle={preset.subtitle}
-                              selected={totalQuestions === preset.value}
-                              onClick={() => setTotalQuestions(preset.value)}
-                            />
-                          ))}
+                      <div className="space-y-5">
+                        <div>
+                          <h3 className="text-sm font-semibold text-foreground">Session length</h3>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Pick how many questions you want — duration options update automatically
+                            (at least 1.5 minutes per question).
+                          </p>
                         </div>
+
+                        <div className="grid gap-5 lg:grid-cols-2">
+                          <section className="space-y-2.5">
+                            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              Questions
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                              {QUESTION_COUNT_PRESETS.map((preset) => (
+                                <SelectCard
+                                  key={preset.value}
+                                  title={preset.title}
+                                  subtitle={preset.subtitle}
+                                  selected={totalQuestions === preset.value}
+                                  onClick={() => {
+                                    setTotalQuestions(preset.value)
+                                    setDuration(
+                                      String(
+                                        resolveDurationForQuestionCount(
+                                          preset.value,
+                                          duration ? Number(duration) : null,
+                                        ),
+                                      ),
+                                    )
+                                  }}
+                                />
+                              ))}
+                            </div>
+                          </section>
+
+                          <section className="space-y-2.5">
+                            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              Duration
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                              {durationOptions.map((opt) => (
+                                <SelectCard
+                                  key={opt}
+                                  compact
+                                  title={`${opt}`}
+                                  subtitle="min"
+                                  selected={duration === opt.toString()}
+                                  onClick={() => setDuration(opt.toString())}
+                                />
+                              ))}
+                            </div>
+                          </section>
+                        </div>
+
                         {interviewType === 'mixed' || interviewType === 'both' ? (
                           <div className="rounded-2xl border border-border bg-input/20 p-4">
                             <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
-                              <span>Technical: <strong className="text-foreground">{technicalRatio}%</strong></span>
-                              <span>Behavioral: <strong className="text-foreground">{100 - technicalRatio}%</strong></span>
+                              <span>
+                                Technical:{' '}
+                                <strong className="text-foreground">{technicalRatio}%</strong>
+                              </span>
+                              <span>
+                                Behavioral:{' '}
+                                <strong className="text-foreground">{100 - technicalRatio}%</strong>
+                              </span>
                             </div>
-                            <input type="range" min={0} max={100} value={technicalRatio} onChange={(e) => setTechnicalRatio(Number(e.target.value))} className="w-full accent-primary" />
+                            <input
+                              type="range"
+                              min={0}
+                              max={100}
+                              value={technicalRatio}
+                              onChange={(e) => setTechnicalRatio(Number(e.target.value))}
+                              className="w-full accent-primary"
+                            />
                           </div>
                         ) : null}
-                      </div>
-
-                      <div className="space-y-3">
-                        <div className="text-sm font-semibold text-foreground">Duration</div>
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                          {durationOptions.map((opt) => (
-                            <SelectCard
-                              key={opt}
-                              title={`${opt} min`}
-                              selected={duration === opt.toString()}
-                              onClick={() => setDuration(opt.toString())}
-                            />
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="rounded-2xl border border-border bg-input/20 p-4 sm:p-5">
-                        <div className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">Review</div>
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                          {reviewRows.map((row) => (
-                            <Fragment key={row.label}>
-                              <div className="text-sm text-muted-foreground">{row.label}</div>
-                              <div className="text-sm font-semibold text-foreground">{row.value}</div>
-                            </Fragment>
-                          ))}
-                        </div>
                       </div>
 
                       <StartInterviewButton
@@ -2296,51 +2233,16 @@ export function CreateInterviewWizard({
                 </button>
               ) : (
                 <div className="text-center text-xs text-muted-foreground sm:text-right">
-                  {isCreatingInterview ? 'Generating questions…' : 'Review details below, then generate your interview.'}
+                  {isCreatingInterview
+                    ? 'Generating questions…'
+                    : 'Choose questions and duration, then generate.'}
                 </div>
               )}
             </div>
         </div>
 
-        <aside className="col-span-12 lg:col-span-4">
-          <div className="space-y-4 lg:sticky lg:top-6">
-            <div className="rounded-2xl border border-border bg-input/10 p-4 sm:p-5">
-              <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                <Briefcase className="h-3.5 w-3.5 text-[var(--hq-display-blue)]" aria-hidden />
-                Interview summary
-              </div>
-              <dl className="space-y-3 text-sm">
-                {reviewRows.map((row) => (
-                  <div
-                    key={row.label}
-                    className="flex flex-col gap-0.5 border-b border-border/60 pb-3 last:border-0 last:pb-0"
-                  >
-                    <dt className="text-xs text-muted-foreground">{row.label}</dt>
-                    <dd className="break-words font-medium text-foreground">
-                      {row.label === 'Difficulty' && difficulty ? (
-                        <span
-                          className={[
-                            'inline-flex rounded-md px-2 py-0.5 text-xs font-bold',
-                            difficulty === 'Easy'
-                              ? 'bg-success-muted text-success'
-                              : difficulty === 'Medium'
-                                ? 'bg-warning-muted text-warning'
-                                : difficulty === 'Hard'
-                                  ? 'bg-destructive-muted text-destructive'
-                                  : 'bg-primary/15 text-primary',
-                          ].join(' ')}
-                        >
-                          {row.value}
-                        </span>
-                      ) : (
-                        row.value
-                      )}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-
+        <aside className="min-w-0 xl:sticky xl:top-6">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
             <div className="rounded-2xl border border-border bg-input/10 p-4 sm:p-5">
               <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 <ListChecks className="h-3.5 w-3.5 text-[var(--hq-display-blue)]" aria-hidden />
@@ -2359,10 +2261,10 @@ export function CreateInterviewWizard({
                   </p>
                 </div>
                 <div className="shrink-0">
-                  <ProgressRing size={76} progress={progressPct / 100} />
+                  <ProgressRing size={72} progress={progressPct / 100} />
                 </div>
               </div>
-              <ol className="mt-3 space-y-2 text-xs">
+              <ol className="mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-2 xl:grid-cols-1">
                 {wizardSteps.map((s) => (
                   <li key={s.key} className="flex items-center gap-2">
                     {s.isComplete ? (
@@ -2372,7 +2274,13 @@ export function CreateInterviewWizard({
                         ·
                       </span>
                     )}
-                    <span className={s.key === wizardStep ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
+                    <span
+                      className={
+                        s.key === wizardStep
+                          ? 'font-semibold text-foreground'
+                          : 'text-muted-foreground'
+                      }
+                    >
                       {s.label}
                     </span>
                   </li>
@@ -2380,52 +2288,31 @@ export function CreateInterviewWizard({
               </ol>
             </div>
 
-            <AIAssistantCard />
+            <div className="space-y-4 sm:col-span-1">
+              <AIAssistantCard />
 
-            <div className="rounded-2xl border border-border bg-input/10 p-4 sm:p-5">
-              <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                <Sparkles className="h-3.5 w-3.5 text-[var(--hq-display-blue)]" aria-hidden />
-                Preview
+              <div className="rounded-2xl border border-border bg-input/5 p-4 sm:p-5">
+                <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <Lightbulb className="h-3.5 w-3.5 text-amber-500/90" aria-hidden />
+                  Tips
+                </div>
+                <ul className="list-disc space-y-2 pl-4 text-xs leading-relaxed text-muted-foreground">
+                  {needsCatalog ? (
+                    <li>
+                      Use Select all to practice across every department, specialization, or topic
+                      quickly.
+                    </li>
+                  ) : (
+                    <li>
+                      Pick categories, competencies, or sections that match the round you are
+                      preparing for.
+                    </li>
+                  )}
+                  <li>Pick interview type first — the next steps adapt to that format.</li>
+                  <li>Duration options stay at least 1.5 minutes per question.</li>
+                  <li>You can save a draft locally before generating questions.</li>
+                </ul>
               </div>
-              <ul className="space-y-2 text-sm text-foreground">
-                <li className="flex justify-between gap-2">
-                  <span className="text-muted-foreground">Questions</span>
-                  <span className="text-right font-medium">{summaryQuestionsPreview}</span>
-                </li>
-                <li className="flex justify-between gap-2">
-                  <span className="text-muted-foreground">Mode</span>
-                  <span className="text-right font-medium">
-                    {interviewType ? formatInterviewTypeLabel(interviewType) : '—'}
-                  </span>
-                </li>
-                <li className="flex justify-between gap-2">
-                  <span className="text-muted-foreground">{summarySelectionLabel}</span>
-                  <span className="text-right font-medium">{summarySelectionPreview}</span>
-                </li>
-                <li className="flex justify-between gap-2">
-                  <span className="text-muted-foreground">Duration</span>
-                  <span className="text-right font-medium">
-                    {duration ? `${duration} min` : '—'}
-                  </span>
-                </li>
-              </ul>
-            </div>
-
-            <div className="rounded-2xl border border-border bg-input/5 p-4 sm:p-5">
-              <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                <Lightbulb className="h-3.5 w-3.5 text-amber-500/90" aria-hidden />
-                Tips
-              </div>
-              <ul className="list-disc space-y-2 pl-4 text-xs leading-relaxed text-muted-foreground">
-                {needsCatalog ? (
-                  <li>Use Select all to practice across every department, specialization, or topic quickly.</li>
-                ) : (
-                  <li>Pick categories, competencies, or sections that match the round you are preparing for.</li>
-                )}
-                <li>Pick interview type first — the next steps adapt to that format.</li>
-                <li>Choose a duration so the session timer matches your practice goal.</li>
-                <li>You can save a draft locally before generating questions.</li>
-              </ul>
             </div>
           </div>
         </aside>

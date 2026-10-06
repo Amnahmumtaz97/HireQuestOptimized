@@ -14,10 +14,25 @@ const preferencesSchema = z
   .optional()
 
 const updateAccountSchema = z.object({
-  firstName: z.string().trim().min(1).max(60).optional(),
-  lastName: z.string().trim().min(1).max(60).optional(),
-  email: z.string().trim().email().optional(),
-  phoneNumber: z.string().trim().max(30).optional(),
+  firstName: z
+    .string()
+    .trim()
+    .min(1, 'First name is required.')
+    .max(60, 'First name is too long.')
+    .optional(),
+  lastName: z
+    .string()
+    .trim()
+    .min(1, 'Last name is required.')
+    .max(60, 'Last name is too long.')
+    .optional(),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Email is required.')
+    .email('Please enter a valid email address.')
+    .optional(),
+  phoneNumber: z.string().trim().max(30, 'Phone number is too long.').optional(),
   preferences: preferencesSchema,
 })
 
@@ -112,7 +127,7 @@ export async function PATCH(request: Request) {
 
       if (existingEmailOwner) {
         return NextResponse.json(
-          { message: 'Email is already in use' },
+          { message: 'Email is already in use.' },
           { status: 409 },
         )
       }

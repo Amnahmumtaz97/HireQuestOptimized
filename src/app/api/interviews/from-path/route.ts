@@ -15,7 +15,12 @@ import {
   QUESTION_COUNT_MIN,
   QUESTION_COUNT_MAX,
 } from '@/lib/interview-config/question-counts'
-import { DURATION_MIN, DURATION_MAX } from '@/lib/interview-config/durations'
+import {
+  DURATION_MIN,
+  DURATION_MAX,
+  durationQuestionCountError,
+  isValidDurationForQuestionCount,
+} from '@/lib/interview-config/durations'
 import {
   NON_CATALOG_SCOPE,
   preferredFormatForType,
@@ -64,6 +69,17 @@ const bodySchema = z.object({
   totalQuestions: z.number().int().min(QUESTION_COUNT_MIN).max(QUESTION_COUNT_MAX),
   durationMinutes: z.number().int().min(DURATION_MIN).max(DURATION_MAX).nullable().optional(),
   difficulty: z.enum(SESSION_DIFFICULTIES).optional(),
+}).superRefine((data, ctx) => {
+  if (
+    data.durationMinutes != null &&
+    !isValidDurationForQuestionCount(data.durationMinutes, data.totalQuestions)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: durationQuestionCountError(data.durationMinutes, data.totalQuestions),
+      path: ['durationMinutes'],
+    })
+  }
 })
 
 export async function POST(request: Request) {

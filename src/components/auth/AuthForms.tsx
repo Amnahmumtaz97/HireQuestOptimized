@@ -2,16 +2,18 @@
 
 import { useEffect, useState } from 'react'
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight, ArrowLeft, Phone, AlertCircle, CheckCircle2 } from 'lucide-react'
-import { AlertBanner } from '@/components/ui/alert-banner'
 import Link from 'next/link'
 import { getSession, signIn } from 'next-auth/react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
+  AUTH_CREDENTIALS_ERROR,
   validateSignInFields,
   validateSignupFields,
   validateEmail,
   validatePassword,
+  validateSignInPassword,
+  validatePhoneNumber,
   type FieldErrors,
 } from '@/lib/validation/client-forms'
 import type { EnabledOAuthProviders } from '@/lib/oauth-config'
@@ -27,12 +29,22 @@ function FieldIcon({ children, hasError }: { children: React.ReactNode; hasError
   )
 }
 
-function FieldError({ message }: { message?: string }) {
-  if (!message) return null
+function FieldError({ id, message }: { id?: string; message?: string }) {
+  if (!message?.trim()) return null
   return (
-    <div className="flex items-start gap-1.5 pt-0.5" role="alert" aria-live="polite">
+    <div id={id} className="flex items-start gap-1.5 pt-0.5" role="alert" aria-live="polite">
       <AlertCircle className="mt-px h-3 w-3 shrink-0 text-red-500" aria-hidden />
       <p className="text-[11px] font-medium leading-tight text-red-500">{message}</p>
+    </div>
+  )
+}
+
+function FieldHint({ message }: { message?: string }) {
+  if (!message?.trim()) return null
+  return (
+    <div className="flex items-start gap-1.5 pt-0.5" role="status" aria-live="polite">
+      <CheckCircle2 className="mt-px h-3 w-3 shrink-0 text-emerald-500" aria-hidden />
+      <p className="text-[11px] font-medium leading-tight text-emerald-500">{message}</p>
     </div>
   )
 }
@@ -77,8 +89,7 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
   const [showConfirm, setShowConfirm] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | null>(null)
-  const [errorMessage, setErrorMessage] = useState('')
-  const [successMessage, setSuccessMessage] = useState('')
+  const [formHint, setFormHint] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
@@ -95,20 +106,22 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
   const showOAuth = showGoogle || showGitHub
 
   const handleOAuth = async (provider: 'google' | 'github') => {
-    setErrorMessage('')
+    setFieldErrors({})
+    setFormHint('')
     setOauthLoading(provider)
     try {
       await signIn(provider, { callbackUrl: '/app/new-interview' })
     } catch {
-      setErrorMessage('Could not start social sign-in. Please try again.')
+      setFieldErrors({
+        form: 'Could not start social sign-in. Please try again.',
+      })
       setOauthLoading(null)
     }
   }
 
   useEffect(() => {
     setFieldErrors({})
-    setErrorMessage('')
-    setSuccessMessage('')
+    setFormHint('')
     setTouched({})
   }, [mode])
 
@@ -137,13 +150,12 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
 
   const blurPassword = () => {
     markTouched('password')
-    const err = validatePassword(password)
+    const err = isSignIn ? validateSignInPassword(password) : validatePassword(password)
     setFieldError('password', err ?? undefined)
-    // Re-check confirm match when password changes
     if (!isSignIn && touched.confirmPassword && confirmPassword) {
       setFieldError(
         'confirmPassword',
-        password !== confirmPassword ? 'Passwords do not match' : undefined,
+        password !== confirmPassword ? 'Passwords do not match.' : undefined,
       )
     }
   }
@@ -151,9 +163,9 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
   const blurConfirm = () => {
     markTouched('confirmPassword')
     if (!confirmPassword) {
-      setFieldError('confirmPassword', 'Confirm your password')
+      setFieldError('confirmPassword', 'Confirm your password.')
     } else if (password !== confirmPassword) {
-      setFieldError('confirmPassword', 'Passwords do not match')
+      setFieldError('confirmPassword', 'Passwords do not match.')
     } else {
       clearFieldError('confirmPassword')
     }
@@ -161,28 +173,35 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
 
   const blurFirstName = () => {
     markTouched('firstName')
-    if (!firstName.trim()) setFieldError('firstName', 'First name is required')
-    else if (firstName.trim().length > 60) setFieldError('firstName', 'First name is too long')
+    if (!firstName.trim()) setFieldError('firstName', 'First name is required.')
+    else if (firstName.trim().length > 60) setFieldError('firstName', 'First name is too long.')
     else clearFieldError('firstName')
   }
 
   const blurLastName = () => {
     markTouched('lastName')
-    if (!lastName.trim()) setFieldError('lastName', 'Last name is required')
-    else if (lastName.trim().length > 60) setFieldError('lastName', 'Last name is too long')
+    if (!lastName.trim()) setFieldError('lastName', 'Last name is required.')
+    else if (lastName.trim().length > 60) setFieldError('lastName', 'Last name is too long.')
     else clearFieldError('lastName')
+  }
+
+  const blurPhone = () => {
+    markTouched('phoneNumber')
+    const err = validatePhoneNumber(phoneNumber)
+    setFieldError('phoneNumber', err ?? undefined)
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setErrorMessage('')
-    setSuccessMessage('')
+    setFormHint('')
     setFieldErrors({})
 
     if (isSignIn) {
       const { ok, errors } = validateSignInFields(email, password)
       if (!ok) {
         setFieldErrors(errors)
+        const firstKey = Object.keys(errors)[0]
+        if (firstKey) document.getElementById(firstKey)?.focus()
         return
       }
     } else {
@@ -209,9 +228,12 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
           return
         }
 
-        // Map credential error to field
-        setFieldErrors({ email: ' ', password: 'Incorrect email or password.' })
-        setErrorMessage('The email or password you entered is incorrect.')
+        // NextAuth credentials return a generic failure (no account enumeration).
+        // Keep email free of misleading validation copy; show auth error on password.
+        setFieldErrors({
+          password: AUTH_CREDENTIALS_ERROR,
+        })
+        document.getElementById('password')?.focus()
         return
       }
 
@@ -227,14 +249,16 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
         const msg: string = signupData.message ?? 'Could not create account'
         // Route server errors to the right field when possible
         const lower = msg.toLowerCase()
-        if (lower.includes('email') && lower.includes('exist')) {
+        if (lower.includes('email') && (lower.includes('exist') || lower.includes('in use'))) {
           setFieldErrors({ email: 'An account with this email already exists.' })
         } else if (lower.includes('email')) {
-          setFieldErrors({ email: msg })
+          setFieldErrors({ email: msg.endsWith('.') ? msg : `${msg}.` })
+        } else if (lower.includes('password') && lower.includes('match')) {
+          setFieldErrors({ confirmPassword: 'Passwords do not match.' })
         } else if (lower.includes('password')) {
-          setFieldErrors({ password: msg })
+          setFieldErrors({ password: msg.endsWith('.') ? msg : `${msg}.` })
         } else {
-          setErrorMessage(msg)
+          setFieldErrors({ form: msg.endsWith('.') ? msg : `${msg}.` })
         }
         return
       }
@@ -242,14 +266,16 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
       const loginResponse = await signIn('credentials', { email, password, redirect: false })
 
       if (!loginResponse?.ok) {
-        setSuccessMessage('Account created! Please sign in.')
+        setFormHint('Account created! Please sign in.')
         onToggle()
         return
       }
 
       await redirectAfterAuth()
     } catch {
-      setErrorMessage('Network error — please check your connection and try again.')
+      setFieldErrors({
+        form: 'Network error — please check your connection and try again.',
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -293,7 +319,7 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
                       aria-describedby={fieldErrors.firstName ? 'err-firstName' : undefined}
                     />
                   </div>
-                  <FieldError message={fieldErrors.firstName} />
+                  <FieldError id="err-firstName" message={fieldErrors.firstName} />
                 </div>
 
                 {/* Last name */}
@@ -316,7 +342,7 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
                       aria-describedby={fieldErrors.lastName ? 'err-lastName' : undefined}
                     />
                   </div>
-                  <FieldError message={fieldErrors.lastName} />
+                  <FieldError id="err-lastName" message={fieldErrors.lastName} />
                 </div>
               </div>
 
@@ -337,11 +363,12 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
                     className="h-10 pl-9 text-sm"
                     value={phoneNumber}
                     onChange={(e) => { setPhoneNumber(e.target.value); clearFieldError('phoneNumber') }}
-                    onBlur={() => markTouched('phoneNumber')}
+                    onBlur={blurPhone}
                     aria-invalid={Boolean(fieldErrors.phoneNumber)}
+                    aria-describedby={fieldErrors.phoneNumber ? 'err-phoneNumber' : undefined}
                   />
                 </div>
-                <FieldError message={fieldErrors.phoneNumber} />
+                <FieldError id="err-phoneNumber" message={fieldErrors.phoneNumber} />
               </div>
             </>
           )}
@@ -368,7 +395,7 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
                 autoComplete={isSignIn ? 'email' : 'username'}
               />
             </div>
-            <FieldError message={fieldErrors.email?.trim() ? fieldErrors.email : undefined} />
+            <FieldError id="err-email" message={fieldErrors.email} />
           </div>
 
           {/* Password */}
@@ -388,7 +415,7 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); clearFieldError('password') }}
                 onBlur={blurPassword}
-                minLength={8}
+                minLength={isSignIn ? undefined : 8}
                 aria-invalid={Boolean(fieldErrors.password)}
                 aria-describedby={fieldErrors.password ? 'err-password' : undefined}
                 autoComplete={isSignIn ? 'current-password' : 'new-password'}
@@ -403,7 +430,7 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-            <FieldError message={fieldErrors.password} />
+            <FieldError id="err-password" message={fieldErrors.password} />
             {!isSignIn && !fieldErrors.password && password.length > 0 && password.length < 8 ? (
               <p className="flex items-center gap-1 text-[11px] text-amber-400">
                 <AlertCircle className="h-3 w-3" aria-hidden />
@@ -434,13 +461,14 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
                     // Live match check
                     if (touched.confirmPassword && password && e.target.value) {
                       if (password !== e.target.value) {
-                        setFieldErrors((prev) => ({ ...prev, confirmPassword: 'Passwords do not match' }))
+                        setFieldErrors((prev) => ({ ...prev, confirmPassword: 'Passwords do not match.' }))
                       }
                     }
                   }}
                   onBlur={blurConfirm}
                   minLength={8}
                   aria-invalid={Boolean(fieldErrors.confirmPassword)}
+                  aria-describedby={fieldErrors.confirmPassword ? 'err-confirmPassword' : undefined}
                   autoComplete="new-password"
                 />
                 <button
@@ -458,13 +486,13 @@ export function AuthForms({ mode, onToggle, oauth }: Props) {
                   <CheckCircle2 className="h-3 w-3" aria-hidden /> Passwords match
                 </p>
               ) : (
-                <FieldError message={fieldErrors.confirmPassword} />
+                <FieldError id="err-confirmPassword" message={fieldErrors.confirmPassword} />
               )}
             </div>
           )}
 
-          {errorMessage ? <AlertBanner variant="error">{errorMessage}</AlertBanner> : null}
-          {successMessage ? <AlertBanner variant="success">{successMessage}</AlertBanner> : null}
+          <FieldError id="err-form" message={fieldErrors.form} />
+          <FieldHint message={formHint} />
 
           {isSignIn && (
             <div className="flex items-center justify-between text-[12px]">

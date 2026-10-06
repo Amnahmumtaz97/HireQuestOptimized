@@ -16,6 +16,7 @@ import { StarfieldBackground } from '@/components/landing/StarfieldBackground'
 import { useReveal } from '@/hooks/use-reveal'
 import { useToast } from '@/components/ui/toast'
 import { StyledSelect } from '@/components/ui/styled-select'
+import { validateEmail } from '@/lib/validation/client-forms'
 
 const TOPICS = [
   { value: 'general', label: 'General question' },
@@ -111,25 +112,44 @@ export function ContactPageContent() {
   const [message, setMessage] = useState('')
   const [sent, setSent] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<{
+    name?: string
+    email?: string
+    message?: string
+  }>({})
+
+  const clearField = (key: 'name' | 'email' | 'message') => {
+    setFieldErrors((prev) => {
+      if (!prev[key]) return prev
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+  }
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
     const trimmedName = name.trim()
     const trimmedEmail = email.trim()
     const trimmedMessage = message.trim()
+    const errors: typeof fieldErrors = {}
 
-    if (trimmedName.length < 2) {
-      toast.error('Please enter your name')
+    if (!trimmedName) errors.name = 'Name is required.'
+    else if (trimmedName.length < 2) errors.name = 'Name must be at least 2 characters.'
+
+    const emailErr = validateEmail(trimmedEmail)
+    if (emailErr) errors.email = emailErr
+
+    if (!trimmedMessage) errors.message = 'Message is required.'
+    else if (trimmedMessage.length < 12) {
+      errors.message = 'Please add a bit more detail to your message.'
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors)
       return
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-      toast.error('Please enter a valid email')
-      return
-    }
-    if (trimmedMessage.length < 12) {
-      toast.error('Please add a bit more detail to your message')
-      return
-    }
+    setFieldErrors({})
 
     setSubmitting(true)
     const topicLabel = TOPICS.find((t) => t.value === topic)?.label ?? topic
@@ -230,11 +250,30 @@ export function ContactPageContent() {
                     <input
                       className={fieldClass}
                       value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      onChange={(e) => {
+                        setName(e.target.value)
+                        clearField('name')
+                      }}
+                      onBlur={() => {
+                        const t = name.trim()
+                        if (!t) setFieldErrors((p) => ({ ...p, name: 'Name is required.' }))
+                        else if (t.length < 2) {
+                          setFieldErrors((p) => ({
+                            ...p,
+                            name: 'Name must be at least 2 characters.',
+                          }))
+                        } else clearField('name')
+                      }}
                       placeholder="Alex Morgan"
                       autoComplete="name"
-                      required
+                      aria-invalid={Boolean(fieldErrors.name)}
+                      aria-describedby={fieldErrors.name ? 'err-contact-name' : undefined}
                     />
+                    {fieldErrors.name ? (
+                      <p id="err-contact-name" className="text-xs text-red-400" role="alert">
+                        {fieldErrors.name}
+                      </p>
+                    ) : null}
                   </label>
                   <label className="block space-y-1.5">
                     <span className="text-xs font-semibold text-muted-foreground">Email</span>
@@ -242,11 +281,29 @@ export function ContactPageContent() {
                       type="email"
                       className={fieldClass}
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value)
+                        clearField('email')
+                      }}
+                      onBlur={() => {
+                        const err = validateEmail(email)
+                        setFieldErrors((p) => {
+                          const next = { ...p }
+                          if (err) next.email = err
+                          else delete next.email
+                          return next
+                        })
+                      }}
                       placeholder="you@company.com"
                       autoComplete="email"
-                      required
+                      aria-invalid={Boolean(fieldErrors.email)}
+                      aria-describedby={fieldErrors.email ? 'err-contact-email' : undefined}
                     />
+                    {fieldErrors.email ? (
+                      <p id="err-contact-email" className="text-xs text-red-400" role="alert">
+                        {fieldErrors.email}
+                      </p>
+                    ) : null}
                   </label>
                 </div>
 
@@ -273,10 +330,30 @@ export function ContactPageContent() {
                     maxLength={1200}
                     className="w-full resize-y rounded-xl border border-border bg-input/15 px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-primary/50 focus:bg-input/25"
                     value={message}
-                    onChange={(e) => setMessage(e.target.value)}
+                    onChange={(e) => {
+                      setMessage(e.target.value)
+                      clearField('message')
+                    }}
+                    onBlur={() => {
+                      const t = message.trim()
+                      if (!t) {
+                        setFieldErrors((p) => ({ ...p, message: 'Message is required.' }))
+                      } else if (t.length < 12) {
+                        setFieldErrors((p) => ({
+                          ...p,
+                          message: 'Please add a bit more detail to your message.',
+                        }))
+                      } else clearField('message')
+                    }}
                     placeholder="Tell us what you need help with…"
-                    required
+                    aria-invalid={Boolean(fieldErrors.message)}
+                    aria-describedby={fieldErrors.message ? 'err-contact-message' : undefined}
                   />
+                  {fieldErrors.message ? (
+                    <p id="err-contact-message" className="text-xs text-red-400" role="alert">
+                      {fieldErrors.message}
+                    </p>
+                  ) : null}
                 </label>
 
                 <button

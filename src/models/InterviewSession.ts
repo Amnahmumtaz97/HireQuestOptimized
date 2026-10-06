@@ -43,8 +43,12 @@ export interface IInterviewAnswer {
   updatedAt: Date
   testsPassed?: number
   testsTotal?: number
-  /** Spoken answers: exact words, plus the `[pause 1.4s]` form kept OUT of `answer` (§22). */
+  /**
+   * Speech analysis for spoken answers (verbatim + pause-annotated forms).
+   * Kept OUT of `answer` — the submitted/displayed answer is frozen STT text (§22).
+   */
   transcript?: AnswerTranscript | null
+  /** Delivery metrics for evaluation (fillers, pauses, pace) — never rewritten into `answer`. */
   delivery?: DeliveryStats | null
   /** Deepgram recognition confidence — an audio-quality gate, not candidate confidence (§17). */
   audioConfidence?: number | null

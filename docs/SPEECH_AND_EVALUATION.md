@@ -48,7 +48,8 @@ Written for engineers working on HireQuest. Every section names the file it desc
    ├─ useAudioRecorder.start()   → MediaRecorder captures raw audio (webm/opus)
    ├─ useSpeechDictation.start() → Web Speech API shows live words (preview only)
    │ user taps stop
-   ├─ dictation.stop()
+   ├─ dictation.stop() → invalidate session (ignore late Web Speech)
+   ├─ keep browser preview visible while Deepgram runs
    ├─ recorder.stop() → Blob
    │
    └─ POST /api/speech/transcribe (multipart: audio) ─────────▶ transcribe/route.ts
@@ -58,15 +59,16 @@ Written for engineers working on HireQuest. Every section names the file it desc
                                                                  ├─ summarizeDelivery(words)   (transcript.ts — pure maths)
                                                                  ◀── { verbatim, annotated, words, pauses, delivery, meta }
    ◀────────────────────────────────────────────────────────────┘
-   ├─ textarea ← verbatim words (replaces the live preview)
-   ├─ clips[] ← { verbatim, annotated, delivery, confidence }
+   ├─ answer ← Deepgram `verbatim` once (finalTranscript); then immutable
+   │   · on Deepgram failure: keep browser preview as browser-fallback
+   ├─ clips[] ← speechAnalysis { verbatim, annotated, delivery, confidence }
    └─ onCapture(mergeClips(clips)) → page state
                 │ autosave (1.2s) / Next / Finish
-                └─ PATCH /api/interviews/[id] { answer, capture: { inputMode:'spoken', transcript, delivery, audioConfidence } }
+                └─ PATCH /api/interviews/[id] { answer: finalTranscript, capture: { inputMode:'spoken', transcript, delivery, audioConfidence } }
                                                                → answers[i].{ answer, transcript, delivery, audioConfidence, inputMode }
 ```
 
-Two independent things happen while you speak: the **recorder** (source of truth, sent to Deepgram) and the **live preview** (Web Speech, cosmetic). When you stop, the exact Deepgram transcript replaces whatever the preview wrote.
+**Web Speech** = live preview. **Deepgram Nova-3** = final transcript (exactly once after Stop). **Speech metadata** (`transcript` + `delivery`) = Results metrics only — never continuously rewrites the answer.
 
 ## A2. Configuration
 
@@ -100,7 +102,8 @@ Read in [src/lib/speech/deepgram.ts](../src/lib/speech/deepgram.ts):
 - Uses the browser's `SpeechRecognition` / `webkitSpeechRecognition`. Chromium only; `supported` is false on Firefox/Safari, and the editor works without it.
 - `continuous: true`, `interimResults: true`. `interim` is the not-yet-final text shown under the mic while listening; finalised chunks are pushed through `onTranscript` and appended to the draft.
 - Chrome ends the recogniser on every pause; `onend` restarts it while `wantsListeningRef` is true.
-- **Nothing from this hook is saved.** It exists so the user sees words appear while they talk. The Deepgram transcript overwrites it.
+- Live preview is `finals + interim` (`liveTranscript`). Stop snapshots it, sets `accepting=false`, bumps a session id, and aborts recognition so late Chrome callbacks are ignored.
+- Deepgram then replaces the dictated span **once** with `verbatim` as `finalTranscript`. Annotated/delivery stay in speech analysis for Results. On Deepgram failure the browser snapshot is kept as `browser-fallback`.
 
 ## A5. Browser: the answer editor ties it together
 

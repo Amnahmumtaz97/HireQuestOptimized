@@ -2222,7 +2222,7 @@
 
   /* ---- Full-screen interview workspace ---- */
   .hq-iv {
-    --iv-rail-w: 286px;
+    --iv-rail-w: 320px;
     --iv-gap: 14px;
     --iv-radius: 14px;
     --iv-hairline: color-mix(in oklab, var(--border) 74%, transparent);
@@ -2232,7 +2232,7 @@
     display: flex;
     height: 100dvh;
     min-height: 0;
-    flex-direction: column;
+    flex-direction: row;
     overflow: hidden;
     background:
       radial-gradient(ellipse 70% 46% at 78% -6%, color-mix(in oklab, var(--primary) 14%, transparent), transparent 70%),
@@ -2505,27 +2505,29 @@
     .hq-iv-progress__meta { display: none; }
   }
 
-  /* ---------- Body shell ---------- */
-  .hq-iv-body {
-    display: grid;
+  /* ---------- Workspace beside the docked rail ---------- */
+  .hq-iv-stage {
+    display: flex;
+    min-width: 0;
     min-height: 0;
-    flex: 1;
-    grid-template-columns: var(--iv-rail-w) minmax(0, 1fr);
-    gap: var(--iv-gap);
-    padding: var(--iv-gap) 20px;
+    flex: 1 1 auto;
+    flex-direction: column;
   }
 
   /* ---------- Question rail ---------- */
   .hq-iv-rail {
     display: flex;
+    width: var(--iv-rail-w);
     min-width: 0;
     min-height: 0;
+    flex: 0 0 var(--iv-rail-w);
     flex-direction: column;
+    align-self: stretch;
     overflow: hidden;
-    border: 1px solid var(--iv-hairline);
-    border-radius: var(--iv-radius);
+    border: 0;
+    border-right: 1px solid var(--iv-hairline);
+    border-radius: 0;
     background: var(--iv-surface);
-    box-shadow: var(--shadow-card);
   }
 
   .hq-iv-rail__head {
@@ -2679,13 +2681,32 @@
     color: var(--primary-foreground, #fff);
   }
 
+  .hq-iv-rail__copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+  }
+
   .hq-iv-rail__preview {
     display: -webkit-box;
     overflow: hidden;
-    font-size: 12px;
-    line-height: 1.4;
+    color: var(--foreground);
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.35;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
+  }
+
+  .hq-iv-rail__type {
+    overflow: hidden;
+    color: var(--muted-foreground);
+    font-size: 10.5px;
+    font-weight: 650;
+    letter-spacing: 0.01em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .hq-iv-rail__state {
@@ -2759,9 +2780,11 @@
     display: flex;
     min-width: 0;
     min-height: 0;
+    flex: 1 1 auto;
     flex-direction: column;
     gap: 14px;
     overflow: hidden;
+    margin: var(--iv-gap) 16px;
     padding: 18px;
     border: 1px solid var(--iv-hairline);
     border-radius: var(--iv-radius);
@@ -3140,6 +3163,12 @@
   .hq-iv-voice--busy {
     background: color-mix(in oklab, var(--card) 88%, transparent);
     backdrop-filter: blur(2px);
+    pointer-events: none;
+  }
+
+  .hq-iv-voice--live .hq-iv-voice__mic,
+  .hq-iv-voice--busy .hq-iv-voice__mic {
+    pointer-events: auto;
   }
 
   /* Stage: wave | halo + mic | wave */
@@ -3364,6 +3393,81 @@
     color: var(--foreground);
   }
 
+  /* Live speech preview under the waveform (reference UX). */
+  .hq-iv-voice__live-transcript {
+    position: relative;
+    max-width: 40rem;
+    margin: 0.35rem auto 0;
+    padding: 0 0.75rem;
+    color: var(--foreground);
+    font-size: 1.05rem;
+    font-weight: 500;
+    line-height: 1.55;
+    letter-spacing: -0.015em;
+    text-align: center;
+    text-wrap: pretty;
+    white-space: pre-wrap;
+  }
+
+  .hq-iv-voice__interim-caret {
+    display: inline-block;
+    width: 0.55ch;
+    height: 1.05em;
+    margin-left: 0.15ch;
+    vertical-align: text-bottom;
+    background: var(--primary);
+    animation: hq-iv-caret 1s steps(1) infinite;
+  }
+
+  @keyframes hq-iv-caret {
+    50% { opacity: 0; }
+  }
+
+  .hq-iv-answer__input--frozen {
+    cursor: default;
+    opacity: 0.95;
+  }
+
+  .hq-iv-frozen {
+    display: flex;
+    min-height: 12rem;
+    flex: 1;
+    flex-direction: column;
+    margin: 0;
+    padding: 1rem 1.1rem;
+    border-radius: 0;
+    border: none;
+    background: transparent;
+  }
+
+  .hq-iv-frozen__status {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0 0 0.65rem;
+    color: var(--muted-foreground);
+    font-size: 0.75rem;
+  }
+
+  .hq-iv-frozen__label {
+    margin: 0 0 0.35rem;
+    color: var(--muted-foreground);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .hq-iv-frozen__text {
+    margin: 0;
+    color: var(--foreground);
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    text-wrap: pretty;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .hq-iv-voice--live .hq-iv-voice__mic::before,
     .hq-iv-voice--live .hq-iv-voice__mic::after { animation: none; opacity: 0.5; }
@@ -3556,39 +3660,6 @@
     .hq-iv-btn { padding-inline: 13px; }
   }
 
-  /* ---------- Loading ---------- */
-  .hq-iv-loading {
-    display: grid;
-    min-height: 100%;
-    place-items: center;
-    color: var(--muted-foreground);
-    font-size: 12.5px;
-  }
-
-  .hq-iv-loading__bar {
-    width: 104px;
-    height: 3px;
-    margin-bottom: 12px;
-    border-radius: 999px;
-    background: color-mix(in oklab, var(--primary) 26%, transparent);
-    overflow: hidden;
-  }
-
-  .hq-iv-loading__bar::after {
-    content: '';
-    display: block;
-    width: 42%;
-    height: 100%;
-    border-radius: 999px;
-    background: var(--primary);
-    animation: hq-iv-slide 1.15s ease-in-out infinite;
-  }
-
-  @keyframes hq-iv-slide {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(240%); }
-  }
-
   /* ---------- Coding variant ---------- */
   .hq-iv--coding .hq-coding-workspace {
     min-height: 0;
@@ -3597,37 +3668,27 @@
   }
 
   /* ---------- Responsive ---------- */
-  @media (max-width: 1023px) {
-    .hq-iv { height: auto; min-height: 100dvh; overflow: visible; }
-
-    .hq-iv-body {
-      grid-template-columns: minmax(0, 1fr);
-      padding-inline: 14px;
+  @media (max-width: 860px) {
+    .hq-iv {
+      height: auto;
+      min-height: 100dvh;
+      flex-direction: column;
+      overflow: visible;
     }
 
     .hq-iv-rail {
-      max-height: 190px;
+      width: 100%;
+      max-height: 280px;
+      flex-basis: auto;
+      border-right: 0;
+      border-bottom: 1px solid var(--iv-hairline);
     }
 
-    .hq-iv-rail__list {
-      flex-direction: row;
-      overflow-x: auto;
-      overflow-y: hidden;
+    .hq-iv-main {
+      margin-inline: 14px;
+      overflow: visible;
     }
 
-    .hq-iv-rail__item {
-      flex: 0 0 auto;
-      grid-template-columns: 1fr;
-      justify-items: center;
-    }
-
-    .hq-iv-rail__preview,
-    .hq-iv-rail__state,
-    .hq-iv-rail__toggle {
-      display: none;
-    }
-
-    .hq-iv-main { overflow: visible; }
     .hq-iv-scroll { overflow: visible; }
   }
 

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import {
   AlertTriangle,
   ArrowLeft,
@@ -150,6 +150,7 @@ function ringStyle(score: number | null): CSSProperties {
 
 export function InterviewResultsPage() {
   const params = useParams<{ id: string }>()
+  const router = useRouter()
   const id = params?.id
   const [session, setSession] = useState<ResultsSession | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -161,6 +162,8 @@ export function InterviewResultsPage() {
   const [pathLoading, setPathLoading] = useState(false)
   const [evalError, setEvalError] = useState('')
   const [retrying, setRetrying] = useState(false)
+  const [retaking, setRetaking] = useState(false)
+  const [retakeError, setRetakeError] = useState('')
   const pollAttempts = useRef(0)
   const evaluateRequested = useRef(false)
 
@@ -361,6 +364,23 @@ export function InterviewResultsPage() {
     )
   }
 
+  const handleRetake = async () => {
+    if (!id || retaking) return
+    setRetaking(true)
+    setRetakeError('')
+    try {
+      const res = await fetch(`/api/interviews/${id}/retake`, { method: 'POST' })
+      const data = (await res.json()) as { sessionId?: string; message?: string }
+      if (!res.ok || !data.sessionId) {
+        throw new Error(data.message ?? 'Could not start a retake')
+      }
+      router.push(`/app/interviews/${data.sessionId}`)
+    } catch (e) {
+      setRetakeError(e instanceof Error ? e.message : 'Could not start a retake')
+      setRetaking(false)
+    }
+  }
+
   const isPathInterview = Boolean(session.learningPathId)
   const exitHref = interviewExitHref(session)
   const scoring = isCompleted && (evaluationStatus === 'running' || evaluationStatus === 'pending' || evaluationStatus === 'none')
@@ -384,13 +404,19 @@ export function InterviewResultsPage() {
           <Link href={`/app/interviews/${id}`} className="hq-btn-outline h-10 px-4 text-sm btn-micro">
             <ArrowLeft className="h-4 w-4" /> Review interview
           </Link>
-          <Link href={`/app/new-interview?type=${encodeURIComponent(session.interviewType)}`} className="hq-btn-primary h-10 px-4 text-sm btn-micro">
-            <Sparkles className="h-4 w-4" /> Retake interview
-          </Link>
+          <button
+            type="button"
+            onClick={() => void handleRetake()}
+            disabled={retaking}
+            className="hq-btn-primary h-10 px-4 text-sm btn-micro disabled:opacity-60"
+          >
+            <Sparkles className="h-4 w-4" /> {retaking ? 'Starting…' : 'Retake interview'}
+          </button>
         </div>
       </header>
 
       <div className="space-y-5">
+        {retakeError ? <AlertBanner variant="error">{retakeError}</AlertBanner> : null}
         {!isCompleted ? (
           <AlertBanner variant="warning">
             This interview is not marked complete yet.{' '}

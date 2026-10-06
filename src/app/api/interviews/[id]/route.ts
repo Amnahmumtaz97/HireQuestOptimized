@@ -6,6 +6,10 @@ import { authOptions } from '@/lib/auth'
 import { connectToDatabase } from '@/lib/mongoose'
 import { InterviewSessionModel } from '@/models/InterviewSession'
 import { redactSessionForClient } from '@/lib/evaluation/redact'
+import {
+  softSkillsRequiresSpoken,
+  SOFT_SKILLS_TYPED_REJECT_MESSAGE,
+} from '@/lib/interview/soft-skills-answer'
 
 function validateId(id: string): NextResponse | null {
   if (!isValidObjectId(id)) {
@@ -205,7 +209,31 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (parsed.data.answer) {
       const now = new Date()
       const { index, answer, capture } = parsed.data.answer
-      const isCoding = exists.questions?.[index]?.kind === 'coding'
+      const question = exists.questions?.[index]
+      const isCoding = question?.kind === 'coding'
+      const voiceOnly = softSkillsRequiresSpoken({
+        interviewType: exists.interviewType,
+        questionType: question?.type,
+        questionKind: question?.kind,
+      })
+
+      if (voiceOnly) {
+        const prior = Array.isArray(exists.answers)
+          ? exists.answers.find((a) => a.index === index)
+          : undefined
+        if (capture?.inputMode === 'typed') {
+          return NextResponse.json(
+            { message: SOFT_SKILLS_TYPED_REJECT_MESSAGE },
+            { status: 400 },
+          )
+        }
+        if (capture?.inputMode !== 'spoken' && prior?.inputMode !== 'spoken') {
+          return NextResponse.json(
+            { message: SOFT_SKILLS_TYPED_REJECT_MESSAGE },
+            { status: 400 },
+          )
+        }
+      }
 
       // capture omitted → keep whatever was captured before (a text edit after a spoken
       // answer must not throw away its delivery stats); explicit typed → clear it.

@@ -7,9 +7,12 @@ import {
   INTERVIEW_TYPE_KEYS,
   INTERVIEW_TYPE_LABELS,
   INTERVIEW_TYPE_UI_ORDER,
+  SOFT_SKILLS_INTERVIEW_TYPES,
   STORED_INTERVIEW_TYPE_KEYS,
   DEFAULT_MIX_WEIGHTS,
+  isSoftSkillsInterviewType,
   normalizeStoredInterviewType,
+  requiresSpokenAnswer,
 } from '@/lib/interview-config/interview-types'
 import {
   DIFFICULTY_UI_OPTIONS,
@@ -26,8 +29,13 @@ import {
 import {
   DURATION_MAX,
   DURATION_MIN,
+  DURATION_OPTIONS_BY_QUESTION_COUNT,
   DURATION_OPTIONS_DEFAULT,
+  durationOptionsForQuestionCount,
+  isValidDurationForQuestionCount,
   isValidDurationMinutes,
+  minDurationForQuestionCount,
+  resolveDurationForQuestionCount,
 } from '@/lib/interview-config/durations'
 import { SENIORITY_LEVELS } from '@/lib/interview-config/experience'
 import { CODING_CATEGORIES } from '@/lib/interview-config/banks/coding-categories'
@@ -106,8 +114,46 @@ describe('difficulty / counts / durations', () => {
     expect(isValidDurationMinutes(DURATION_MAX + 1)).toBe(false)
   })
 
+  it('duration options are exactly 3 and meet 1.5 min per question', () => {
+    expect(DURATION_OPTIONS_BY_QUESTION_COUNT[10]).toEqual([15, 20, 25])
+    expect(DURATION_OPTIONS_BY_QUESTION_COUNT[20]).toEqual([30, 35, 40])
+    expect(DURATION_OPTIONS_BY_QUESTION_COUNT[30]).toEqual([45, 50, 60])
+
+    for (const q of [10, 20, 30] as const) {
+      const opts = durationOptionsForQuestionCount(q)
+      expect(opts).toHaveLength(3)
+      const min = minDurationForQuestionCount(q)
+      expect(min).toBe(q * 1.5)
+      for (const d of opts) {
+        expect(isValidDurationForQuestionCount(d, q)).toBe(true)
+        expect(d).toBeGreaterThanOrEqual(min)
+      }
+      expect(isValidDurationForQuestionCount(min - 1, q)).toBe(false)
+    }
+
+    expect(resolveDurationForQuestionCount(20, 25)).toBe(30)
+    expect(resolveDurationForQuestionCount(10, 40)).toBe(25)
+    expect(resolveDurationForQuestionCount(30, 40)).toBe(45)
+  })
+
   it('seniority levels are canonical', () => {
     expect([...SENIORITY_LEVELS]).toEqual(['junior', 'mid', 'senior'])
+  })
+
+  it('Soft Skills interviews require spoken answers', () => {
+    expect([...SOFT_SKILLS_INTERVIEW_TYPES]).toEqual(['behavioral', 'hr'])
+    expect(isSoftSkillsInterviewType('behavioral')).toBe(true)
+    expect(isSoftSkillsInterviewType('hr')).toBe(true)
+    expect(isSoftSkillsInterviewType('technical')).toBe(false)
+    expect(requiresSpokenAnswer({ interviewType: 'behavioral' })).toBe(true)
+    expect(requiresSpokenAnswer({ interviewType: 'hr' })).toBe(true)
+    expect(requiresSpokenAnswer({ interviewType: 'mixed', questionType: 'behavioral' })).toBe(
+      true,
+    )
+    expect(requiresSpokenAnswer({ interviewType: 'mixed', questionType: 'technical' })).toBe(
+      false,
+    )
+    expect(requiresSpokenAnswer({ interviewType: 'coding' })).toBe(false)
   })
 })
 

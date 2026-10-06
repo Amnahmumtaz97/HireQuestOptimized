@@ -21,6 +21,7 @@ import { ThemeSwitch } from '@/components/ui/theme-switch'
 import { BounceLoader } from '@/components/ui/bounce-loader'
 import {
   validateChangePassword,
+  validatePassword,
   type FieldErrors,
 } from '@/lib/validation/client-forms'
 import { AccountDetailsForm } from '@/components/app/settings/AccountDetailsForm'
@@ -125,6 +126,15 @@ function SecurityPanel({
     )
   }
 
+  const clearField = (key: keyof FieldErrors) => {
+    setFieldErrors((prev) => {
+      if (!prev[key]) return prev
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+  }
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     setError('')
@@ -135,7 +145,6 @@ function SecurityPanel({
     })
     if (!ok) {
       setFieldErrors(errors)
-      toast.error('Please fix the highlighted fields.')
       return
     }
     setFieldErrors({})
@@ -148,9 +157,16 @@ function SecurityPanel({
       })
       const data = await response.json()
       if (!response.ok) {
-        const msg = data.message || 'Failed to update password'
-        setError(msg)
-        toast.error(msg)
+        const msg: string = data.message || 'Failed to update password'
+        const field = data.field as string | undefined
+        if (field === 'currentPassword' || msg.toLowerCase().includes('current password')) {
+          setFieldErrors({ currentPassword: msg.endsWith('.') ? msg : `${msg}.` })
+        } else if (field === 'newPassword' || msg.toLowerCase().includes('new password')) {
+          setFieldErrors({ newPassword: msg.endsWith('.') ? msg : `${msg}.` })
+        } else {
+          setError(msg)
+          toast.error(msg)
+        }
         return
       }
       setCurrentPassword('')
@@ -174,7 +190,7 @@ function SecurityPanel({
         </p>
       </div>
 
-      <form className="space-y-3" onSubmit={handleSubmit}>
+      <form className="space-y-3" onSubmit={handleSubmit} noValidate>
         <label className="block space-y-1.5">
           <span className="text-xs text-muted-foreground">Current password</span>
           <input
@@ -183,18 +199,24 @@ function SecurityPanel({
             value={currentPassword}
             onChange={(e) => {
               setCurrentPassword(e.target.value)
-              setFieldErrors((prev) => {
-                if (!prev.currentPassword) return prev
-                const next = { ...prev }
-                delete next.currentPassword
-                return next
-              })
+              clearField('currentPassword')
+            }}
+            onBlur={() => {
+              if (!currentPassword) {
+                setFieldErrors((prev) => ({
+                  ...prev,
+                  currentPassword: 'Current password is required.',
+                }))
+              }
             }}
             className="h-11 w-full rounded-2xl border border-border bg-input/15 px-4 text-sm"
             aria-invalid={Boolean(fieldErrors.currentPassword)}
+            aria-describedby={fieldErrors.currentPassword ? 'err-currentPassword' : undefined}
           />
           {fieldErrors.currentPassword ? (
-            <p className="text-xs text-red-400">{fieldErrors.currentPassword}</p>
+            <p id="err-currentPassword" className="text-xs text-red-400" role="alert">
+              {fieldErrors.currentPassword}
+            </p>
           ) : null}
         </label>
         <label className="block space-y-1.5">
@@ -205,18 +227,25 @@ function SecurityPanel({
             value={newPassword}
             onChange={(e) => {
               setNewPassword(e.target.value)
+              clearField('newPassword')
+            }}
+            onBlur={() => {
+              const err = validatePassword(newPassword)
               setFieldErrors((prev) => {
-                if (!prev.newPassword) return prev
                 const next = { ...prev }
-                delete next.newPassword
+                if (err) next.newPassword = err
+                else delete next.newPassword
                 return next
               })
             }}
             className="h-11 w-full rounded-2xl border border-border bg-input/15 px-4 text-sm"
             aria-invalid={Boolean(fieldErrors.newPassword)}
+            aria-describedby={fieldErrors.newPassword ? 'err-newPassword' : undefined}
           />
           {fieldErrors.newPassword ? (
-            <p className="text-xs text-red-400">{fieldErrors.newPassword}</p>
+            <p id="err-newPassword" className="text-xs text-red-400" role="alert">
+              {fieldErrors.newPassword}
+            </p>
           ) : null}
         </label>
         <label className="block space-y-1.5">
@@ -227,18 +256,27 @@ function SecurityPanel({
             value={confirmPassword}
             onChange={(e) => {
               setConfirmPassword(e.target.value)
+              clearField('confirmPassword')
+            }}
+            onBlur={() => {
+              let err: string | undefined
+              if (!confirmPassword) err = 'Confirm your new password.'
+              else if (newPassword !== confirmPassword) err = 'Passwords do not match.'
               setFieldErrors((prev) => {
-                if (!prev.confirmPassword) return prev
                 const next = { ...prev }
-                delete next.confirmPassword
+                if (err) next.confirmPassword = err
+                else delete next.confirmPassword
                 return next
               })
             }}
             className="h-11 w-full rounded-2xl border border-border bg-input/15 px-4 text-sm"
             aria-invalid={Boolean(fieldErrors.confirmPassword)}
+            aria-describedby={fieldErrors.confirmPassword ? 'err-confirmPassword' : undefined}
           />
           {fieldErrors.confirmPassword ? (
-            <p className="text-xs text-red-400">{fieldErrors.confirmPassword}</p>
+            <p id="err-confirmPassword" className="text-xs text-red-400" role="alert">
+              {fieldErrors.confirmPassword}
+            </p>
           ) : null}
         </label>
         {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}

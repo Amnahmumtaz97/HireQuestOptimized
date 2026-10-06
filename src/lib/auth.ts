@@ -7,7 +7,8 @@ import { getEnabledOAuthProviders } from '@/lib/oauth-config'
 
 const credentialsSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8),
+  // Login: require a password value only — signup strength is enforced at registration.
+  password: z.string().min(1),
 })
 
 function splitName(fullName?: string | null): { firstName: string; lastName: string } {

@@ -9,7 +9,11 @@ import { STORED_INTERVIEW_TYPE_KEYS } from '@/lib/interview-config/interview-typ
 import { SETUP_DIFFICULTIES } from '@/lib/interview-config/difficulty'
 import { SENIORITY_LEVELS } from '@/lib/interview-config/experience'
 import { QUESTION_COUNT_MAX } from '@/lib/interview-config/question-counts'
-import { DURATION_MAX } from '@/lib/interview-config/durations'
+import {
+  DURATION_MAX,
+  durationQuestionCountError,
+  isValidDurationForQuestionCount,
+} from '@/lib/interview-config/durations'
 
 export const interviewSetupConfigSchema = z.object({
   // Resume information
@@ -88,6 +92,18 @@ export const interviewSetupConfigSchema = z.object({
 
   resumeParsedFields: z.array(z.string()).optional().default([]),
   manuallyFilledFields: z.array(z.string()).optional().default([]),
+}).superRefine((data, ctx) => {
+  if (
+    data.interviewDuration != null &&
+    data.numberOfQuestions != null &&
+    !isValidDurationForQuestionCount(data.interviewDuration, data.numberOfQuestions)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: durationQuestionCountError(data.interviewDuration, data.numberOfQuestions),
+      path: ['interviewDuration'],
+    })
+  }
 })
 
 export type InterviewSetupConfig = z.infer<typeof interviewSetupConfigSchema>
@@ -144,6 +160,17 @@ export function validateInterviewSetupForGenerate(
     issues.push({
       field: 'topics',
       message: 'Select at least one option for this interview type',
+    })
+  }
+
+  if (
+    config.interviewDuration != null &&
+    config.numberOfQuestions != null &&
+    !isValidDurationForQuestionCount(config.interviewDuration, config.numberOfQuestions)
+  ) {
+    issues.push({
+      field: 'interviewDuration',
+      message: durationQuestionCountError(config.interviewDuration, config.numberOfQuestions),
     })
   }
 

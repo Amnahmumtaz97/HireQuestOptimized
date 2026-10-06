@@ -24,6 +24,10 @@ import { BEHAVIORAL_COMPETENCY_SET } from '@/lib/interview-config/banks/behavior
 import { SYSTEM_DESIGN_TOPIC_SET } from '@/lib/interview-config/banks/system-design-topics'
 import { SENIORITY_UI_OPTIONS } from '@/lib/interview-config/experience'
 import { DIFFICULTY_UI_OPTIONS } from '@/lib/interview-config/difficulty'
+import {
+  durationOptionsForQuestionCount,
+  resolveDurationForQuestionCount,
+} from '@/lib/interview-config/durations'
 import { InterviewGenerationLoader } from '@/components/app/interview/InterviewGenerationLoader'
 
 type ConfigureInterviewScreenProps = {
@@ -77,17 +81,29 @@ export function ConfigureInterviewScreen({
   const issues = useMemo(() => validateInterviewSetupForGenerate(config), [config])
   const canGenerate = issues.length === 0
   const interviewType = (config.interviewType ?? null) as InterviewType | null
+  const questionCount = config.numberOfQuestions ?? 12
+  const durationOptions = useMemo(
+    () => durationOptionsForQuestionCount(questionCount),
+    [questionCount],
+  )
 
   const fromResume = (field: string) =>
     (config.resumeParsedFields || []).includes(field) &&
     !(config.manuallyFilledFields || []).includes(field)
 
   const patch = <K extends keyof InterviewSetupConfig>(key: K, value: InterviewSetupConfig[K]) => {
-    setConfig((prev) => ({
-      ...prev,
-      [key]: value,
-      manuallyFilledFields: [...new Set([...(prev.manuallyFilledFields || []), String(key)])],
-    }))
+    setConfig((prev) => {
+      const next: InterviewSetupConfig = {
+        ...prev,
+        [key]: value,
+        manuallyFilledFields: [...new Set([...(prev.manuallyFilledFields || []), String(key)])],
+      }
+      if (key === 'numberOfQuestions') {
+        const q = typeof value === 'number' ? value : prev.numberOfQuestions ?? 12
+        next.interviewDuration = resolveDurationForQuestionCount(q, prev.interviewDuration)
+      }
+      return next
+    })
   }
 
   const handleInterviewTypeChange = (next: InterviewType) => {
@@ -353,17 +369,6 @@ export function ConfigureInterviewScreen({
             />
           </div>
           <label className="space-y-1.5">
-            <span className="text-xs text-muted-foreground">Duration (minutes)</span>
-            <input
-              type="number"
-              min={10}
-              max={180}
-              value={config.interviewDuration ?? 30}
-              onChange={(e) => patch('interviewDuration', Number(e.target.value) || 30)}
-              className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
-            />
-          </label>
-          <label className="space-y-1.5">
             <span className="text-xs text-muted-foreground">Number of questions</span>
             <input
               type="number"
@@ -376,6 +381,26 @@ export function ConfigureInterviewScreen({
               className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
             />
           </label>
+          <div className="space-y-1.5">
+            <span className="text-xs text-muted-foreground">Duration (minutes)</span>
+            <div className="grid grid-cols-3 gap-2">
+              {durationOptions.map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => patch('interviewDuration', opt)}
+                  className={[
+                    'h-10 rounded-xl border text-sm font-semibold transition',
+                    (config.interviewDuration ?? 0) === opt
+                      ? 'border-primary bg-primary/15 text-foreground'
+                      : 'border-border bg-input/30 text-muted-foreground hover:border-primary/40',
+                  ].join(' ')}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 

@@ -23,12 +23,14 @@ import { InterviewSessionTimer } from '@/components/app/interview/InterviewSessi
 import { InterviewTopBar } from '@/components/app/interview/InterviewTopBar'
 import { interviewExitHref, interviewExitLabel } from '@/lib/learning-paths/interview-exit'
 import { useOnceGuidance } from '@/hooks/useOnceGuidance'
-import { GUIDANCE_TIPS } from '@/lib/guidance/tips'
+import { interviewSessionGuidance } from '@/lib/guidance/tips'
 import {
   formatDifficultyLabel,
   formatInterviewSessionTitle,
   formatInterviewTypeLabel,
 } from '@/utils/dashboard/interview-labels'
+import { softSkillsRequiresSpoken } from '@/lib/interview/soft-skills-answer'
+import { BounceLoader } from '@/components/ui/bounce-loader'
 
 /** Quiet enough not to fight the typist, short enough that "Autosaved" feels true. */
 const AUTOSAVE_DELAY_MS = 1200
@@ -106,17 +108,24 @@ export function InterviewSessionPage() {
   const busy = isSaving
   const savedAnswer = answerMap.get(index) ?? ''
   const isDirty = answerDraft.trim() !== savedAnswer.trim()
+  const voiceOnly = softSkillsRequiresSpoken({
+    interviewType: session?.interviewType,
+    questionType: current?.type,
+    questionKind: current?.kind,
+  })
 
-  const sessionGuidance = useMemo(() => {
-    if (isLoading || !session || session.status === 'completed') return null
-    if (!current) {
-      return { key: 'interview-generate', message: GUIDANCE_TIPS['interview-generate'] } as const
-    }
-    if (current.kind === 'coding') {
-      return { key: 'interview-coding', message: GUIDANCE_TIPS['interview-coding'] } as const
-    }
-    return { key: 'interview-session', message: GUIDANCE_TIPS['interview-session'] } as const
-  }, [current, isLoading, session])
+  const sessionGuidance = useMemo(
+    () =>
+      interviewSessionGuidance({
+        loading: isLoading,
+        hasSession: Boolean(session),
+        completed: session?.status === 'completed',
+        hasQuestion: Boolean(current),
+        coding: current?.kind === 'coding',
+        voiceOnly,
+      }),
+    [current, isLoading, session, voiceOnly],
+  )
 
   useOnceGuidance(sessionGuidance?.key ?? null, sessionGuidance?.message ?? '', {
     delayMs: 700,
@@ -137,20 +146,37 @@ export function InterviewSessionPage() {
     setCapture(undefined)
   }, [index])
 
+  /** Soft Skills: never send typed mode; wait for spoken capture on first save. */
+  const effectiveCapture = voiceOnly && capture === null ? undefined : capture
+  const canSaveVoiceOnly =
+    !voiceOnly ||
+    effectiveCapture != null ||
+    Boolean(savedAnswer.trim())
+
   /** Debounced background save. Coding answers are saved by the code editor itself. */
   useEffect(() => {
     if (!session || busy || !isDirty) return
     if (!answerDraft.trim()) return
     if (current?.kind === 'coding') return
+    if (!canSaveVoiceOnly) return
 
     const timer = window.setTimeout(() => {
-      void saveAnswer(answerDraft, { silent: true, capture }).then((next) => {
+      void saveAnswer(answerDraft, { silent: true, capture: effectiveCapture }).then((next) => {
         if (next) setJustSaved(true)
       })
     }, AUTOSAVE_DELAY_MS)
 
     return () => window.clearTimeout(timer)
-  }, [answerDraft, busy, capture, current?.kind, isDirty, saveAnswer, session])
+  }, [
+    answerDraft,
+    busy,
+    canSaveVoiceOnly,
+    current?.kind,
+    effectiveCapture,
+    isDirty,
+    saveAnswer,
+    session,
+  ])
 
   const isFlagged = flaggedSet.has(index)
   const isLastQuestion = questions.length > 0 && index >= questions.length - 1
@@ -173,7 +199,11 @@ export function InterviewSessionPage() {
 
   const handleSaveAnswer = async () => {
     setError('')
-    const next = await saveAnswer(answerDraft, { capture })
+    if (voiceOnly && !canSaveVoiceOnly) {
+      setError('Speak your answer with the microphone — Soft Skills is voice-only.')
+      return
+    }
+    const next = await saveAnswer(answerDraft, { capture: effectiveCapture })
     if (next) setJustSaved(true)
   }
 
@@ -185,9 +215,21 @@ export function InterviewSessionPage() {
   const saveDraftIfAny = useCallback(async (): Promise<boolean> => {
     const trimmed = answerDraft.trim()
     if (!trimmed || trimmed === savedAnswer.trim()) return true
-    const next = await saveAnswer(answerDraft, { capture })
+    if (voiceOnly && !canSaveVoiceOnly) {
+      setError('Speak your answer with the microphone — Soft Skills is voice-only.')
+      return false
+    }
+    const next = await saveAnswer(answerDraft, { capture: effectiveCapture })
     return next !== null
-  }, [answerDraft, capture, saveAnswer, savedAnswer])
+  }, [
+    answerDraft,
+    canSaveVoiceOnly,
+    effectiveCapture,
+    saveAnswer,
+    savedAnswer,
+    setError,
+    voiceOnly,
+  ])
 
   const handlePrevious = useCallback(async () => {
     if (index <= 0) return
@@ -253,11 +295,8 @@ export function InterviewSessionPage() {
 
   if (isLoading) {
     return (
-      <div className="hq-interview-session hq-iv" aria-busy="true">
-        <div className="hq-iv-loading" role="status">
-          <span className="hq-iv-loading__bar" aria-hidden="true" />
-          Loading interview workspace
-        </div>
+      <div className="flex min-h-dvh items-center justify-center">
+        <BounceLoader label="Loading interview" />
       </div>
     )
   }
@@ -330,36 +369,36 @@ export function InterviewSessionPage() {
         railCollapsed ? 'hq-iv--rail-collapsed' : '',
       ].join(' ')}
     >
-      <InterviewTopBar
-        title={title}
-        tags={topBarTags}
-        exitHref={exitHref}
-        exitLabel={exitLabel}
-        unansweredCount={unansweredCount}
-        flaggedCount={flaggedSet.size}
-        onConfirmExit={handleFinish}
-        timer={
-          <InterviewSessionTimer
-            durationMinutes={session.durationMinutes ?? null}
-            interviewStartedAt={session.interviewStartedAt ?? undefined}
-            status={session.status}
-            onTimeExpired={() => void handleFinish()}
-          />
-        }
+      <InterviewQuestionRail
+        questions={questions}
+        index={index}
+        answerMap={answerMap}
+        flaggedSet={flaggedSet}
+        filter={railFilter}
+        onFilterChange={setRailFilter}
+        collapsed={railCollapsed}
+        onToggleCollapsed={() => setRailCollapsed((c) => !c)}
+        onSelect={(i) => void handleQuestionSelect(i)}
+        disabled={busy}
       />
 
-      <div className="hq-iv-body">
-        <InterviewQuestionRail
-          questions={questions}
-          index={index}
-          answerMap={answerMap}
-          flaggedSet={flaggedSet}
-          filter={railFilter}
-          onFilterChange={setRailFilter}
-          collapsed={railCollapsed}
-          onToggleCollapsed={() => setRailCollapsed((c) => !c)}
-          onSelect={(i) => void handleQuestionSelect(i)}
-          disabled={busy}
+      <div className="hq-iv-stage">
+        <InterviewTopBar
+          title={title}
+          tags={topBarTags}
+          exitHref={exitHref}
+          exitLabel={exitLabel}
+          unansweredCount={unansweredCount}
+          flaggedCount={flaggedSet.size}
+          onConfirmExit={handleFinish}
+          timer={
+            <InterviewSessionTimer
+              durationMinutes={session.durationMinutes ?? null}
+              interviewStartedAt={session.interviewStartedAt ?? undefined}
+              status={session.status}
+              onTimeExpired={() => void handleFinish()}
+            />
+          }
         />
 
         <main className="hq-iv-main hq-interview-session__main">
@@ -415,6 +454,7 @@ export function InterviewSessionPage() {
                 onCapture={setCapture}
                 disabled={busy}
                 saveState={saveState}
+                voiceOnly={voiceOnly}
                 onSubmitShortcut={() =>
                   void (isLastQuestion && canShowFinish ? handleFinish() : handleNext())
                 }
@@ -422,20 +462,20 @@ export function InterviewSessionPage() {
             </div>
           )}
         </main>
-      </div>
 
-      <InterviewActions
-        isSaving={busy}
-        isFlagged={isFlagged}
-        isFirstQuestion={index === 0}
-        isLastQuestion={isLastQuestion}
-        canShowFinish={canShowFinish}
-        onSaveAnswer={() => void handleSaveAnswer()}
-        onToggleFlag={() => void handleToggleFlag()}
-        onPrevious={() => void handlePrevious()}
-        onNext={() => void handleNext()}
-        onFinish={() => void handleFinish()}
-      />
+        <InterviewActions
+          isSaving={busy}
+          isFlagged={isFlagged}
+          isFirstQuestion={index === 0}
+          isLastQuestion={isLastQuestion}
+          canShowFinish={canShowFinish}
+          onSaveAnswer={() => void handleSaveAnswer()}
+          onToggleFlag={() => void handleToggleFlag()}
+          onPrevious={() => void handlePrevious()}
+          onNext={() => void handleNext()}
+          onFinish={() => void handleFinish()}
+        />
+      </div>
     </div>
   )
 }

@@ -20,6 +20,10 @@ import { hrSectionLabel } from '@/lib/interview-config/banks/hr-sections'
 import { STORED_INTERVIEW_TYPE_KEYS } from '@/lib/interview-config/interview-types'
 import { SESSION_DIFFICULTIES } from '@/lib/interview-config/difficulty'
 import { QUESTION_COUNT_MAX } from '@/lib/interview-config/question-counts'
+import {
+  durationQuestionCountError,
+  isValidDurationForQuestionCount,
+} from '@/lib/interview-config/durations'
 import { connectToDatabase } from '@/lib/mongoose'
 import { InterviewSessionModel } from '@/models/InterviewSession'
 import { resumeContextSchema } from '@/lib/interview/resume-context-schema'
@@ -178,6 +182,17 @@ const createInterviewSchema = z
           path: ['mixSections'],
         })
       }
+    }
+
+    if (
+      data.durationMinutes != null &&
+      !isValidDurationForQuestionCount(data.durationMinutes, data.totalQuestions)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: durationQuestionCountError(data.durationMinutes, data.totalQuestions),
+        path: ['durationMinutes'],
+      })
     }
   })
 

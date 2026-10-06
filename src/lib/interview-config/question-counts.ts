@@ -2,11 +2,11 @@
  * Single source of truth for question-count presets and valid ranges.
  */
 
-/** Manual / resume wizard preset tiles. */
+/** Manual / resume wizard preset tiles (duration floors: 15 / 30 / 45 min). */
 export const QUESTION_COUNT_PRESETS = [
-  { value: 10, title: '10', subtitle: 'Quick (~5 min)' },
-  { value: 20, title: '20', subtitle: 'Standard (~10 min)' },
-  { value: 30, title: '30', subtitle: 'Thorough (~15 min)' },
+  { value: 10, title: '10', subtitle: 'Quick (15–25 min)' },
+  { value: 20, title: '20', subtitle: 'Standard (30–40 min)' },
+  { value: 30, title: '30', subtitle: 'Thorough (45–60 min)' },
 ] as const
 
 export const QUESTION_COUNT_PRESET_VALUES = QUESTION_COUNT_PRESETS.map((p) => p.value)

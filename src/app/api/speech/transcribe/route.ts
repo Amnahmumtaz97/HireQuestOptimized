@@ -9,6 +9,7 @@ import {
 } from '@/lib/speech/deepgram'
 import {
   buildAnnotatedTranscript,
+  buildDisplayTranscript,
   buildVerbatimTranscript,
   computePauses,
   summarizeDelivery,
@@ -95,11 +96,14 @@ export async function POST(request: Request) {
       audioDurationSec: result.durationSec,
     })
 
+    const verbatim = buildVerbatimTranscript(result.words)
     return NextResponse.json({
-      // Exactly what was said, fillers included, no markers.
-      verbatim: buildVerbatimTranscript(result.words),
-      // Same text with [pause 1.4s] markers at every hesitation.
+      // Final STT for the answer field (exact Deepgram transcript, fillers included).
+      verbatim,
+      // Pause-annotated form — speech analysis / evaluation only (not shown as answer UI).
       annotated: buildAnnotatedTranscript(result.words),
+      // Optional filler-stripped view for tooling; the editor uses `verbatim` as finalTranscript.
+      display: buildDisplayTranscript(result.words),
       words: result.words,
       pauses: computePauses(result.words),
       delivery,

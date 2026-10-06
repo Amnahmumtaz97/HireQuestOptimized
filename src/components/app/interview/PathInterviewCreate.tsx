@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, ListChecks, Clock, Sparkles } from 'lucide-react'
@@ -17,7 +17,10 @@ import {
   QUESTION_COUNT_MAX,
   QUESTION_COUNT_PATH_DEFAULT,
 } from '@/lib/interview-config/question-counts'
-import { DURATION_MIN, DURATION_MAX, DURATION_DEFAULT } from '@/lib/interview-config/durations'
+import {
+  durationOptionsForQuestionCount,
+  resolveDurationForQuestionCount,
+} from '@/lib/interview-config/durations'
 import { formatInterviewTypeKeyLabel } from '@/lib/interview-config/interview-types'
 import { InterviewGenerationLoader } from '@/components/app/interview/InterviewGenerationLoader'
 
@@ -38,10 +41,12 @@ export function PathInterviewCreate({
 }: PathInterviewCreateProps) {
   const router = useRouter()
   const toast = useToast()
-  const [totalQuestions, setTotalQuestions] = useState(
-    typeof stage.totalQuestions === 'number' ? stage.totalQuestions : QUESTION_COUNT_PATH_DEFAULT,
+  const initialQuestions =
+    typeof stage.totalQuestions === 'number' ? stage.totalQuestions : QUESTION_COUNT_PATH_DEFAULT
+  const [totalQuestions, setTotalQuestions] = useState(initialQuestions)
+  const [durationMinutes, setDurationMinutes] = useState(() =>
+    resolveDurationForQuestionCount(initialQuestions, null),
   )
-  const [durationMinutes, setDurationMinutes] = useState(DURATION_DEFAULT)
   const [difficulty, setDifficulty] = useState<SessionDifficulty>(
     (stage.difficulty as SessionDifficulty) || 'Medium',
   )
@@ -51,6 +56,15 @@ export function PathInterviewCreate({
     () => (stage.suggestedTopics || []).filter(Boolean),
     [stage.suggestedTopics],
   )
+
+  const durationOptions = useMemo(
+    () => durationOptionsForQuestionCount(totalQuestions),
+    [totalQuestions],
+  )
+
+  useEffect(() => {
+    setDurationMinutes((prev) => resolveDurationForQuestionCount(totalQuestions, prev))
+  }, [totalQuestions])
 
   const canGenerate = topics.length > 0 && totalQuestions >= 5 && totalQuestions <= 40
 
@@ -170,19 +184,28 @@ export function PathInterviewCreate({
               className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
             />
           </label>
-          <label className="block space-y-1.5">
+          <div className="block space-y-1.5">
             <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
               <Clock className="h-3.5 w-3.5" /> Duration (minutes)
             </span>
-            <input
-              type="number"
-              min={DURATION_MIN}
-              max={DURATION_MAX}
-              value={durationMinutes}
-              onChange={(e) => setDurationMinutes(Number(e.target.value) || DURATION_DEFAULT)}
-              className="h-10 w-full rounded-xl border border-border bg-input/30 px-3 text-sm"
-            />
-          </label>
+            <div className="grid grid-cols-3 gap-2">
+              {durationOptions.map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setDurationMinutes(opt)}
+                  className={[
+                    'h-10 rounded-xl border text-sm font-semibold transition',
+                    durationMinutes === opt
+                      ? 'border-primary bg-primary/15 text-foreground'
+                      : 'border-border bg-input/30 text-muted-foreground hover:border-primary/40',
+                  ].join(' ')}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="block space-y-1.5 sm:col-span-2">
             <span className="text-xs text-muted-foreground">Difficulty</span>
             <StyledSelect

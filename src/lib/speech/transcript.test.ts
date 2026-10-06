@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildAnnotatedTranscript,
+  buildDisplayTranscript,
   buildVerbatimTranscript,
   computePauses,
   isDisfluency,
@@ -68,6 +69,10 @@ describe('transcript building', () => {
     expect(buildVerbatimTranscript(sample)).toBe('So, um, I shipped it.')
   })
 
+  it('omits fillers from the display transcript used as a frozen answer fallback', () => {
+    expect(buildDisplayTranscript(sample)).toBe('So, I shipped it.')
+  })
+
   it('inserts a pause marker at the hesitation', () => {
     expect(buildAnnotatedTranscript(sample)).toBe(
       'So, um, [pause 1.7s] I shipped it.',
@@ -77,6 +82,7 @@ describe('transcript building', () => {
   it('returns an empty string with no words', () => {
     expect(buildAnnotatedTranscript([])).toBe('')
     expect(buildVerbatimTranscript([])).toBe('')
+    expect(buildDisplayTranscript([])).toBe('')
   })
 })
 

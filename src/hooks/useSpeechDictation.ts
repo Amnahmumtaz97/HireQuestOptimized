@@ -41,54 +41,121 @@ function getRecognitionCtor(): SpeechRecognitionCtor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null
 }
 
+function joinSpeech(previous: string, chunk: string) {
+  const addition = chunk.trim()
+  if (!addition) return previous
+  if (!previous) return addition
+  return `${previous.replace(/\s+$/, '')} ${addition}`
+}
+
 export type SpeechDictationState = {
   /** False on Firefox/Safari, where the API is absent. */
   supported: boolean
   listening: boolean
-  /** Text recognised but not yet finalised; render it as a preview. */
+  /**
+   * Live preview for the current session: committed finals + current interim.
+   * This is what the user sees while speaking; Stop freezes a snapshot of it.
+   */
+  liveTranscript: string
+  /** Not-yet-final fragment (also included at the end of `liveTranscript`). */
   interim: string
   error: string | null
   start: () => void
-  stop: () => void
+  /**
+   * Hard-stop: invalidates the session synchronously and returns the exact
+   * live transcript visible at that moment (finals + interim). Late callbacks
+   * for the old session id are ignored.
+   */
+  stop: () => string
   toggle: () => void
 }
 
 type UseSpeechDictationOptions = {
-  /** Called with each finalised chunk, ready to append to the answer. */
-  onTranscript: (text: string) => void
   lang?: string
   disabled?: boolean
+  /** Fired on every live-transcript change while the session is active. */
+  onLiveTranscript?: (live: string) => void
 }
 
 export function useSpeechDictation({
-  onTranscript,
   lang = 'en-US',
   disabled,
-}: UseSpeechDictationOptions): SpeechDictationState {
+  onLiveTranscript,
+}: UseSpeechDictationOptions = {}): SpeechDictationState {
   const [supported, setSupported] = useState(false)
   const [listening, setListening] = useState(false)
+  const [liveTranscript, setLiveTranscript] = useState('')
   const [interim, setInterim] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
-  // Kept in a ref so restarting never rebuilds the recogniser mid-session.
-  const onTranscriptRef = useRef(onTranscript)
+  const onLiveRef = useRef(onLiveTranscript)
   const wantsListeningRef = useRef(false)
+  /** Monotonic session id — Stop bumps it so late Chrome callbacks are ignored. */
+  const sessionIdRef = useRef(0)
+  const finalsRef = useRef('')
+  const interimRef = useRef('')
+  const liveRef = useRef('')
 
   useEffect(() => {
-    onTranscriptRef.current = onTranscript
-  }, [onTranscript])
+    onLiveRef.current = onLiveTranscript
+  }, [onLiveTranscript])
 
   useEffect(() => {
     setSupported(getRecognitionCtor() != null)
   }, [])
 
-  const stop = useCallback(() => {
+  /** False after Stop until the next Start — belt-and-suspenders with session id. */
+  const acceptingRef = useRef(false)
+
+  const publishLive = useCallback((finals: string, pending: string, sessionId: number) => {
+    // Drop anything that arrives after Stop / session invalidation.
+    if (!acceptingRef.current || sessionIdRef.current !== sessionId) return
+    const live = joinSpeech(finals, pending)
+    finalsRef.current = finals
+    interimRef.current = pending
+    liveRef.current = live
+    setInterim(pending)
+    setLiveTranscript(live)
+    onLiveRef.current?.(live)
+  }, [])
+
+  const invalidateSession = useCallback(() => {
     wantsListeningRef.current = false
-    recognitionRef.current?.stop()
+    acceptingRef.current = false
+    // Bump first so any in-flight callback sees a mismatched session id.
+    sessionIdRef.current += 1
+    const recognition = recognitionRef.current
+    if (recognition) {
+      recognition.onresult = null
+      recognition.onerror = null
+      recognition.onend = null
+      try {
+        recognition.abort()
+      } catch {
+        try {
+          recognition.stop()
+        } catch {
+          /* already stopped */
+        }
+      }
+    }
+    recognitionRef.current = null
     setListening(false)
     setInterim('')
+    interimRef.current = ''
   }, [])
+
+  const stop = useCallback(() => {
+    // Snapshot BEFORE invalidation — browser preview frozen at this instant.
+    const frozen = liveRef.current
+    acceptingRef.current = false
+    invalidateSession()
+    // Keep liveTranscript equal to the frozen snapshot for the UI; do not clear it.
+    setLiveTranscript(frozen)
+    liveRef.current = frozen
+    return frozen
+  }, [invalidateSession])
 
   const start = useCallback(() => {
     if (disabled) return
@@ -98,26 +165,39 @@ export function useSpeechDictation({
       return
     }
 
+    invalidateSession()
+    const sessionId = sessionIdRef.current + 1
+    sessionIdRef.current = sessionId
+    acceptingRef.current = true
+
+    finalsRef.current = ''
+    interimRef.current = ''
+    liveRef.current = ''
+    setLiveTranscript('')
+    setInterim('')
     setError(null)
+
     const recognition = new Ctor()
     recognition.lang = lang
     recognition.continuous = true
     recognition.interimResults = true
 
     recognition.onresult = (event) => {
-      let finalChunk = ''
+      if (!acceptingRef.current || sessionIdRef.current !== sessionId) return
+
+      let finals = finalsRef.current
       let pending = ''
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i]
         const text = result[0]?.transcript ?? ''
-        if (result.isFinal) finalChunk += text
+        if (result.isFinal) finals = joinSpeech(finals, text)
         else pending += text
       }
-      setInterim(pending)
-      if (finalChunk.trim()) onTranscriptRef.current(finalChunk)
+      publishLive(finals, pending.trim(), sessionId)
     }
 
     recognition.onerror = (event) => {
+      if (!acceptingRef.current || sessionIdRef.current !== sessionId) return
       if (event.error === 'no-speech' || event.error === 'aborted') return
       setError(
         event.error === 'not-allowed'
@@ -125,18 +205,25 @@ export function useSpeechDictation({
           : 'Voice input stopped unexpectedly.',
       )
       wantsListeningRef.current = false
+      acceptingRef.current = false
       setListening(false)
       setInterim('')
+      interimRef.current = ''
     }
 
-    // Chrome ends the stream on every pause; restart while the user still wants it.
+    // Chrome ends the stream on every pause; restart while this session is active.
     recognition.onend = () => {
+      if (!acceptingRef.current || sessionIdRef.current !== sessionId) return
       setInterim('')
-      if (wantsListeningRef.current) {
+      interimRef.current = ''
+      // Keep finals; clear only the pending interim fragment.
+      publishLive(finalsRef.current, '', sessionId)
+      if (wantsListeningRef.current && acceptingRef.current) {
         try {
           recognition.start()
         } catch {
           wantsListeningRef.current = false
+          acceptingRef.current = false
           setListening(false)
         }
         return
@@ -151,9 +238,10 @@ export function useSpeechDictation({
       setListening(true)
     } catch {
       wantsListeningRef.current = false
+      acceptingRef.current = false
       setError('Could not start voice input.')
     }
-  }, [disabled, lang])
+  }, [disabled, invalidateSession, lang, publishLive])
 
   const toggle = useCallback(() => {
     if (listening) stop()
@@ -166,10 +254,9 @@ export function useSpeechDictation({
 
   useEffect(() => {
     return () => {
-      wantsListeningRef.current = false
-      recognitionRef.current?.abort()
+      invalidateSession()
     }
-  }, [])
+  }, [invalidateSession])
 
-  return { supported, listening, interim, error, start, stop, toggle }
+  return { supported, listening, liveTranscript, interim, error, start, stop, toggle }
 }

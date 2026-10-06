@@ -104,6 +104,36 @@ export function interviewTypeUsesStaticBank(type: string | null | undefined): bo
   )
 }
 
+/**
+ * Soft Skills practice group (UI): Behavioral + Screening HR.
+ * Categories (Communication, Leadership, Teamwork, etc.) live in the existing banks.
+ */
+export const SOFT_SKILLS_INTERVIEW_TYPES = ['behavioral', 'hr'] as const
+export type SoftSkillsInterviewType = (typeof SOFT_SKILLS_INTERVIEW_TYPES)[number]
+
+export function isSoftSkillsInterviewType(type: string | null | undefined): boolean {
+  const t = normalizeStoredInterviewType(type)
+  return t === 'behavioral' || t === 'hr'
+}
+
+/** Per-question type stored on generated questions. */
+export function isSoftSkillsQuestionType(type: string | null | undefined): boolean {
+  return type === 'behavioral' || type === 'hr'
+}
+
+/**
+ * Soft Skills answers are STT/voice-only — no typed mode.
+ * Pure Soft Skills sessions, or Soft Skills questions inside a mixed session.
+ */
+export function requiresSpokenAnswer(input: {
+  interviewType?: string | null
+  questionType?: string | null
+}): boolean {
+  if (isSoftSkillsQuestionType(input.questionType)) return true
+  if (isSoftSkillsInterviewType(input.interviewType)) return true
+  return false
+}
+
 /** Default mix weight template (must sum to 100). */
 export const DEFAULT_MIX_WEIGHTS = {
   coding: 40,

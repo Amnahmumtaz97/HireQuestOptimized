@@ -7,8 +7,12 @@ import { connectToDatabase } from '@/lib/mongoose'
 import { UserModel } from '@/models/User'
 
 const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1),
-  newPassword: z.string().min(8).max(128),
+  currentPassword: z.string().min(1, 'Current password is required.'),
+  newPassword: z
+    .string()
+    .min(1, 'Password is required.')
+    .min(8, 'Password must be at least 8 characters.')
+    .max(128, 'Password is too long.'),
 })
 
 export async function POST(request: Request) {
@@ -51,14 +55,17 @@ export async function POST(request: Request) {
     )
     if (!matches) {
       return NextResponse.json(
-        { message: 'Current password is incorrect' },
+        { message: 'Current password is incorrect.', field: 'currentPassword' },
         { status: 400 },
       )
     }
 
     if (parsed.data.currentPassword === parsed.data.newPassword) {
       return NextResponse.json(
-        { message: 'New password must be different from the current password' },
+        {
+          message: 'New password must be different from the current password.',
+          field: 'newPassword',
+        },
         { status: 400 },
       )
     }

@@ -2,12 +2,16 @@
 
 import { useMemo } from 'react'
 import { Check, Flag, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { formatGeneratedQuestion } from '@/lib/interview-questions/clean-question-text'
+import { formatQuestionTypeLabel } from '@/utils/dashboard/interview-labels'
 
 export type QuestionRailFilter = 'all' | 'unanswered' | 'flagged'
 
 type RailQuestion = {
   question: string
   topic?: string
+  type?: string
+  kind?: string
 }
 
 type InterviewQuestionRailProps = {
@@ -28,6 +32,25 @@ const FILTERS: Array<{ value: QuestionRailFilter; label: string }> = [
   { value: 'unanswered', label: 'Unanswered' },
   { value: 'flagged', label: 'Flagged' },
 ]
+
+function railTypeLabel(question: RailQuestion): string {
+  if (question.kind === 'coding') return 'Coding'
+  return formatQuestionTypeLabel(question.type)
+}
+
+/** One-line preview for the rail. Question bodies are markdown. */
+function railQuestionText(raw: string): string {
+  const formatted = formatGeneratedQuestion(raw)
+  return formatted
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/!\[[^\]]*]\([^)]*\)/g, '')
+    .replace(/\[([^\]]+)]\([^)]*\)/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/[*_~>|]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
 
 export function InterviewQuestionRail({
   questions,
@@ -126,7 +149,10 @@ export function InterviewQuestionRail({
               <span className="hq-iv-rail__num">{i + 1}</span>
               {!collapsed ? (
                 <>
-                  <span className="hq-iv-rail__preview">{q.topic?.trim() || q.question}</span>
+                  <span className="hq-iv-rail__copy">
+                    <span className="hq-iv-rail__preview">{railQuestionText(q.question)}</span>
+                    <span className="hq-iv-rail__type">{railTypeLabel(q)}</span>
+                  </span>
                   <span className="hq-iv-rail__state" aria-hidden="true">
                     {flagged ? (
                       <Flag className="hq-iv-rail__ico hq-iv-rail__ico--flag" />

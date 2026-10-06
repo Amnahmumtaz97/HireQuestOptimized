@@ -2,6 +2,7 @@ import type { ResumeParseResult } from '@/lib/resume/schema'
 import type { InterviewSetupConfig } from '@/lib/interview-config/setup-types'
 import { mapSkillsToTaxonomyTopics } from '@/lib/interview-taxonomy/map-resume-skills'
 import { categoriesContainingTopics } from '@/lib/interview-taxonomy/map-resume-skills'
+import { resolveDurationForQuestionCount } from '@/lib/interview-config/durations'
 
 function markFilled(fields: string[], key: string, value: unknown) {
   if (value == null) return
@@ -84,8 +85,8 @@ export function buildSetupFromResume(resume: ResumeParseResult): InterviewSetupC
     systemDesignTopics: [],
     targetCompanyType: null,
     preferredQuestionFormat: null,
-    interviewDuration: 30,
     numberOfQuestions: 12,
+    interviewDuration: resolveDurationForQuestionCount(12, null),
     language: 'English',
     focusAreas: [],
     excludedTopics: [],
